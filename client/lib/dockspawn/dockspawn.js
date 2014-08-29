@@ -78,7 +78,7 @@ dockspawn.TabHandle.prototype._performUndock = function(e, dragOffset)
         return null;
 };
 
-dockspawn.TabHandle.prototype.onMouseClicked = function()
+dockspawn.TabHandle.prototype.onMouseClicked = function(e)
 {
     this.parent.onSelected();
 };
@@ -2376,6 +2376,31 @@ dockspawn.newFontAdjustButton = function() {
     $(e).click(dockspawn.popupFontSlider);     
     return e;
 };
+dockspawn.newModeButton = function() {
+    var e = document.createElement('div');
+    e.innerHTML = '<i class="fa fa-cube"></i>';
+        
+    
+    //http://getbootstrap.com/javascript/#dropdowns    
+    var E = $(e);
+    
+    var menu = $('<ul class="dropdown-menu" role="menu"></ul>').appendTo(E);
+    menu.css('position', 'absolute').css('z-index', '100').css('max-width', '35px').
+            css('min-width', '35px').
+            css('left', 'auto').css('right','auto').css('top', 'auto').css('bottom', 'auto');
+    menu.append('<button>x</button>');
+    menu.append('<br/>');
+    menu.append('<button>y</button>');
+    menu.hide();
+        
+    E.click(function() {
+        console.log('clicked icon button');
+        menu.toggle();
+        return false;
+    });
+    
+    return e;
+};
 
 dockspawn.PanelContainer.prototype._initialize = function()
 {
@@ -2386,6 +2411,7 @@ dockspawn.PanelContainer.prototype._initialize = function()
     this.elementContentHost = document.createElement('div');
     this.elementButtonClose = document.createElement('div');
     this.elementButtonFont = dockspawn.newFontAdjustButton();
+    this.elementButtonMode = dockspawn.newModeButton();
 
     this.elementPanel.appendChild(this.elementTitle);
     this.elementTitle.appendChild(this.elementTitleText);
@@ -2396,7 +2422,10 @@ dockspawn.PanelContainer.prototype._initialize = function()
     this.elementButtonClose.classList.add("titlebar-button");
     this.elementButtonFont.classList.add("panel-titlebar-button");
     this.elementButtonFont.classList.add("titlebar-button");
+    this.elementButtonMode.classList.add("panel-titlebar-button");
+    this.elementButtonMode.classList.add("titlebar-button");
 
+    this.elementTitle.appendChild(this.elementButtonMode);
     this.elementTitle.appendChild(this.elementButtonFont);
     
     this.elementPanel.appendChild(this.elementContentHost);
@@ -2530,10 +2559,12 @@ dockspawn.PanelContainer.prototype.setTitleIcon = function(iconName)
     this._updateTitle();
 };
 
-dockspawn.PanelContainer.prototype._updateTitle = function()
-{
-    this.elementTitleText.innerHTML = 
-            (this.iconName ? '<i class="' + this.iconName + '"></i> ' : '') + this.title;
+dockspawn.PanelContainer.prototype._updateTitle = function() {
+    
+    //var iconButton = $('<i class="' + this.iconName + '"></i>'); 
+    
+    $(this.elementTitleText).append(/*iconButton,*/ '&nbsp;', this.title);
+
 };
 
 dockspawn.PanelContainer.prototype.getRawTitle = function()

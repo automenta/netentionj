@@ -21,10 +21,12 @@
     float: right; 
     padding-right:8px;
     font-weight: bold;
+}
+.titlebar-button i {
     color:#aaa;
 }
 
-.titlebar-button:hover {
+.titlebar-button:hover i {
     color:#fff;
 }
 
