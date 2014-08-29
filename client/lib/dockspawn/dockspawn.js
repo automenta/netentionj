@@ -824,10 +824,7 @@ dockspawn.Exception.prototype.toString = function()
     this.element = element;
     this.context = this.dockWheel = this.layoutEngine = this.mouseMoveHandler = undefined;
     this.layoutEventListeners = [];
-};
 
-dockspawn.DockManager.prototype.initialize = function()
-{
     this.context = new dockspawn.DockManagerContext(this);
     var documentNode = new dockspawn.DockNode(this.context.documentManagerView);
     this.context.model.rootNode = documentNode;
@@ -837,8 +834,21 @@ dockspawn.DockManager.prototype.initialize = function()
     this.resize(this.element.clientWidth, this.element.clientHeight);
     this.dockWheel = new dockspawn.DockWheel(this);
     this.layoutEngine = new dockspawn.DockLayoutEngine(this);
-
+    this.content = this.context.model.documentManagerNode;
     this.rebuildLayout(this.context.model.rootNode);
+};
+
+dockspawn.DockManager.prototype.resizable = function() {
+    var dockDiv = this.element;
+    
+    var that = this;
+    
+    // Let the dock manager element fill in the entire screen
+    var onResized = function(e) {
+        that.resize(window.innerWidth - (dockDiv.clientLeft + dockDiv.offsetLeft), window.innerHeight - (dockDiv.clientTop + dockDiv.offsetTop));
+    };
+    window.onresize = onResized;
+    onResized(null);
 };
 
 dockspawn.DockManager.prototype.rebuildLayout = function(node)
@@ -858,6 +868,9 @@ dockspawn.DockManager.prototype.resize = function(width, height)
     this.element.style.width = width + "px";
     this.element.style.height = height + "px";
     this.context.model.rootNode.container.resize(width, height);
+};
+dockspawn.DockManager.prototype.contain = function(elementContent, title) {
+    return new dockspawn.PanelContainer(elementContent, this, title);
 };
 
 /**
@@ -2217,6 +2230,9 @@ dockspawn.PanelContainer = function(elementContent, dockManager, title)
 {
     if (!title)
         title = "Panel";
+    if (typeof elementContent === "string")
+        elementContent = document.getElementById(elementContent);
+    
     this.elementContent = elementContent;
     this.dockManager = dockManager;
     this.title = title;
@@ -2236,6 +2252,27 @@ Object.defineProperty(dockspawn.PanelContainer.prototype, "floatingDialog", {
         this.undockInitiator.enabled = canUndock;
     }
 });
+
+dockspawn.PanelContainer.prototype.dockLeft = function(size, parent) {
+    if (!parent) parent = this.dockManager.content;
+    return this.dockManager.dockLeft(parent, this, size);
+};
+dockspawn.PanelContainer.prototype.dockRight = function(size, parent) {
+    if (!parent) parent = this.dockManager.content;
+    return this.dockManager.dockRight(parent, this, size);
+};
+dockspawn.PanelContainer.prototype.dockDown = function(size, parent) {
+    if (!parent) parent = this.dockManager.content;
+    return this.dockManager.dockDown(parent, this, size);
+};
+dockspawn.PanelContainer.prototype.dockUp = function(size, parent) {
+    if (!parent) parent = this.dockManager.content;
+    return this.dockManager.dockUp(parent, this, size);
+};
+dockspawn.PanelContainer.prototype.dockFill = function(parent) {
+    if (!parent) parent = this.dockManager.content;
+    return this.dockManager.dockFill(parent, this);
+};
 
 dockspawn.PanelContainer.loadFromState = function(state, dockManager)
 {
