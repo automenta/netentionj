@@ -472,6 +472,10 @@ dockspawn.DraggableContainer.prototype.removeDecorator = function()
 
 dockspawn.DraggableContainer.prototype.onMouseDown = function(event)
 {
+    //only drag when this event relates to the panel itself, not other elements
+    if (!dockspawn.isDraggableElement(event.target))
+        return;
+
     this._startDragging(event);
     this.previousMousePosition = { x: event.pageX, y: event.pageY };
     if (this.mouseMoveHandler)
@@ -1657,6 +1661,9 @@ dockspawn.DockWheel.prototype.showWheel = function()
     var baseY = Math.floor(containerHeight / 2) + element.offsetTop;
     this.elementMainWheel.style.left = baseX + "px";
     this.elementMainWheel.style.top = baseY + "px";
+    
+    this.elementMainWheel.style.display = 'none'; //for fade-in
+    this.elementSideWheel.style.display = 'none'; //for fade-in
 
     // The positioning of the main dock wheel buttons is done automatically through CSS
     // Dynamically calculate the positions of the buttons on the extreme sides of the dock manager
@@ -1668,9 +1675,13 @@ dockspawn.DockWheel.prototype.showWheel = function()
 
     removeNode(this.elementMainWheel);
     removeNode(this.elementSideWheel);
+    
     element.appendChild(this.elementMainWheel);
     this.dockManager.element.appendChild(this.elementSideWheel);
 
+    $(this.elementMainWheel).fadeIn("fast");
+    $(this.elementSideWheel).fadeIn("slow");
+    
     this._setWheelButtonPosition("left-s",   sideMargin, -dockManagerHeight / 2);
     this._setWheelButtonPosition("right-s",  dockManagerWidth - sideMargin * 2, -dockManagerHeight / 2);
     this._setWheelButtonPosition("top-s",    dockManagerWidth / 2, -dockManagerHeight + sideMargin);
@@ -2307,6 +2318,31 @@ Object.defineProperty(dockspawn.PanelContainer.prototype, "containerElement", {
     get: function() { return this.elementPanel; }
 });
 
+dockspawn.popupFontSlider = function(e) {
+    var element = $(this);
+    
+    function removeSlide() {
+        element.find('.slider').each(function() { $(this).remove(); });
+    }
+    
+    if (element.find('.slider').length > 0) {
+        removeSlide();
+        return;
+    }
+    
+    var slider = $('<input id="ex4" type="text" data-slider-min="-5" data-slider-max="20" data-slider-step="1" data-slider-value="-3" data-slider-orientation="vertical"/>');
+    element.append(slider);
+    var s = slider.slider({ reversed : true });    
+    s.parent().css('top', '2em');
+    s.parent().css('position', 'absolute');
+    
+    s.on('slideStop', function() {
+        removeSlide();
+    });
+    
+    return false;
+};
+
 dockspawn.PanelContainer.prototype._initialize = function()
 {
     this.name = getNextId("panel_");
@@ -2315,12 +2351,22 @@ dockspawn.PanelContainer.prototype._initialize = function()
     this.elementTitleText = document.createElement('div');
     this.elementContentHost = document.createElement('div');
     this.elementButtonClose = document.createElement('div');
+    this.elementButtonFont = document.createElement('div');
 
     this.elementPanel.appendChild(this.elementTitle);
     this.elementTitle.appendChild(this.elementTitleText);
+    
     this.elementTitle.appendChild(this.elementButtonClose);
-    this.elementButtonClose.innerHTML = '<i class="icon-remove"></i>';
-    this.elementButtonClose.classList.add("panel-titlebar-button-close");
+    this.elementButtonClose.innerHTML = '<i class="fa fa-times"></i>';
+    this.elementButtonClose.classList.add("panel-titlebar-close-button");
+    this.elementButtonClose.classList.add("titlebar-button");
+
+    this.elementTitle.appendChild(this.elementButtonFont);
+    this.elementButtonFont.innerHTML = '<i class="fa fa-font"></i>';
+    this.elementButtonFont.classList.add("panel-titlebar-button");
+    this.elementButtonFont.classList.add("titlebar-button");
+    $(this.elementButtonFont).click(dockspawn.popupFontSlider);
+    
     this.elementPanel.appendChild(this.elementContentHost);
 
     this.elementPanel.classList.add("panel-base");
@@ -2512,7 +2558,7 @@ dockspawn.SplitterBar.prototype.onMouseMoved = function(e)
     if (!this.readyToProcessNextDrag)
         return;
     this.readyToProcessNextDrag = false;
-
+ 
     var dockManager = this.previousContainer.dockManager;
     dockManager.suspendLayout();
     var dx = e.pageX - this.previousMouseEvent.pageX;
@@ -2575,6 +2621,8 @@ dockspawn.SplitterBar.prototype._startDragging = function(e)
     this.mouseMovedHandler = new dockspawn.EventHandler(window, 'mousemove', this.onMouseMoved.bind(this));
     this.mouseUpHandler = new dockspawn.EventHandler(window, 'mouseup', this.onMouseUp.bind(this));
     this.previousMouseEvent = e;
+    
+    
 };
 
 dockspawn.SplitterBar.prototype._stopDragging = function(e)
@@ -2817,8 +2865,17 @@ Object.defineProperty(dockspawn.UndockInitiator.prototype, "enabled", {
     }
 });
 
+dockspawn.isDraggableElement = function(e) {
+    var cn = e.className;
+    return cn.indexOf('tab-handle')!==-1 || cn.indexOf('panel-titlebar')!==-1;
+};
+
 dockspawn.UndockInitiator.prototype.onMouseDown = function(e)
 {
+    //only drag when this event relates to the panel itself, not other elements
+    if (!dockspawn.isDraggableElement(e.target))
+        return;
+        
     // Make sure we dont do this on floating dialogs
     if (this.enabled)
     {
