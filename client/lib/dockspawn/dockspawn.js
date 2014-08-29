@@ -5,8 +5,7 @@
 /**
  * A tab handle represents the tab button on the tab strip
  */
-dockspawn.TabHandle = function(parent)
-{
+dockspawn.TabHandle = function(parent) {
     this.parent = parent;
     var undockHandler = dockspawn.TabHandle.prototype._performUndock.bind(this);
     this.elementBase = document.createElement('div');
@@ -18,6 +17,11 @@ dockspawn.TabHandle = function(parent)
     this.elementCloseButton.classList.add("tab-handle-close-button");
     this.elementCloseButton.classList.add("close");
     this.elementBase.appendChild(this.elementText);
+    
+    this.fontButton = dockspawn.newFontAdjustButton();
+    this.fontButton.classList.add("tab-button");
+    this.elementBase.appendChild(this.fontButton);
+        
     if (this.parent.host.displayCloseButton)
         this.elementBase.appendChild(this.elementCloseButton);
 
@@ -152,6 +156,8 @@ dockspawn.TabHost = function(tabStripDirection, displayCloseButton)
     this.tabListElement.classList.add("tab-handle-list-container");
     this.separatorElement.classList.add("tab-handle-content-seperator");
     this.contentElement.classList.add("tab-content");
+    
+    
 };
 
 // constants
@@ -2248,7 +2254,7 @@ dockspawn.PanelContainer = function(elementContent, dockManager, title)
     this.dockManager = dockManager;
     this.title = title;
     this.containerType = "panel";
-    this.iconName = "icon-circle-arrow-right";
+    this.iconName = "fa fa-bars";
     this.minimumAllowedChildNodes = 0;
     this._floatingDialog = undefined;
     this._initialize();
@@ -2330,17 +2336,45 @@ dockspawn.popupFontSlider = function(e) {
         return;
     }
     
-    var slider = $('<input id="ex4" type="text" data-slider-min="-5" data-slider-max="20" data-slider-step="1" data-slider-value="-3" data-slider-orientation="vertical"/>');
-    element.append(slider);
-    var s = slider.slider({ reversed : true });    
-    s.parent().css('top', '2em');
-    s.parent().css('position', 'absolute');
+    var panel = element.parent().parent().find('.panel-content');
+    if (panel.length === 0)
+        panel = element.parent().parent().parent().find('.tab-content');
     
-    s.on('slideStop', function() {
+    var currentFontSize = panel.css('font-size') || '12px';
+    currentFontSize = parseInt(currentFontSize.substring(0, currentFontSize.length-2));
+    
+    var slider = $('<input type="text" data-slider-orientation="vertical"/>').appendTo(element);
+    slider.slider({ 
+        reversed : true, 
+        tooltip: 'hide',
+        min: 4,
+        max: 32,
+        step: 0.25,
+        value: currentFontSize
+    });    
+    
+    slider.panel = panel;
+
+    slider.parent().addClass('panel-font-slider');
+    
+    slider.on('slide', function() {
+        setTimeout(function() {
+            panel.css('font-size', slider.slider('getValue')+'px');            
+        },0);
+    });
+    slider.on('slideStop', function() {
         removeSlide();
     });
     
     return false;
+};
+
+dockspawn.newFontAdjustButton = function() {
+    var e = document.createElement('div');
+    e.innerHTML = '<i class="fa fa-barcode"></i>';
+    
+    $(e).click(dockspawn.popupFontSlider);     
+    return e;
 };
 
 dockspawn.PanelContainer.prototype._initialize = function()
@@ -2351,7 +2385,7 @@ dockspawn.PanelContainer.prototype._initialize = function()
     this.elementTitleText = document.createElement('div');
     this.elementContentHost = document.createElement('div');
     this.elementButtonClose = document.createElement('div');
-    this.elementButtonFont = document.createElement('div');
+    this.elementButtonFont = dockspawn.newFontAdjustButton();
 
     this.elementPanel.appendChild(this.elementTitle);
     this.elementTitle.appendChild(this.elementTitleText);
@@ -2360,12 +2394,10 @@ dockspawn.PanelContainer.prototype._initialize = function()
     this.elementButtonClose.innerHTML = '<i class="fa fa-times"></i>';
     this.elementButtonClose.classList.add("panel-titlebar-close-button");
     this.elementButtonClose.classList.add("titlebar-button");
-
-    this.elementTitle.appendChild(this.elementButtonFont);
-    this.elementButtonFont.innerHTML = '<i class="fa fa-font"></i>';
     this.elementButtonFont.classList.add("panel-titlebar-button");
     this.elementButtonFont.classList.add("titlebar-button");
-    $(this.elementButtonFont).click(dockspawn.popupFontSlider);
+
+    this.elementTitle.appendChild(this.elementButtonFont);
     
     this.elementPanel.appendChild(this.elementContentHost);
 
@@ -2500,7 +2532,8 @@ dockspawn.PanelContainer.prototype.setTitleIcon = function(iconName)
 
 dockspawn.PanelContainer.prototype._updateTitle = function()
 {
-    this.elementTitleText.innerHTML = '<i class="' + this.iconName + '"></i> ' + this.title;
+    this.elementTitleText.innerHTML = 
+            (this.iconName ? '<i class="' + this.iconName + '"></i> ' : '') + this.title;
 };
 
 dockspawn.PanelContainer.prototype.getRawTitle = function()

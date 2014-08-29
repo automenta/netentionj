@@ -47,7 +47,7 @@
                 <input type="text" name="message" value="Hello, World!"/><input type="button" value="Send Web Socket Data"
                                                                                 onclick="send(this.form.message.value)" />
                 <h3>Output</h3>
-                <textarea id="responseText" style="width:500px;height:300px;"></textarea>
+                <textarea id="responseText"></textarea>
             </form>
         </div>
         <div id="editor2_window" caption="Steering.cpp" class="editor2-window editor-host"></div>
@@ -89,12 +89,12 @@
                 //var content = dock.content;
                 var outlineNode = outline.dockLeft(0.15);
                 var solutionNode = solution.dockFill(outlineNode);
-                var propertiesNode = properties.dockDown(0.6, outlineNode);
-                var outputNode = output.dockDown(0.2);
-                var problemsNode = problems.dockRight(0.40, outputNode);
+                var propertiesNode = properties.dockDown(0.6, outlineNode);                
                 var toolboxNode = toolbox.dockRight(0.20);
-                var editor2Node = editor2.dockFill();
-                var editor1Node = editor1.dockFill();
+                var outputNode = output.dockFill();
+                var editor2Node = editor2.dockFill(outputNode);
+                var editor1Node = editor1.dockFill(outputNode);
+                var problemsNode = problems.dockDown(0.20);
             });
 
             $(document).ready(function() {
