@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.mycompany</groupId>
+    <artifactId>semantic.io</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.plugin.version>3.1</maven.compiler.plugin.version>
+        	
+		
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Specify a custom capsule version -->
+        <capsule.version>0.7.1</capsule.version>
+        <capsule.maven.plugin.version>${capsule.version}</capsule.maven.plugin.version>                
+    </properties>    
+    
+    <dependencies>
+        <!-- http://mvnrepository.com/artifact/io.netty/netty-example/5.0.0.Alpha1 -->
+        
+      
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-http</artifactId>
+            <version>5.0.0.Alpha1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler</artifactId>
+            <version>5.0.0.Alpha1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport</artifactId>
+            <version>5.0.0.Alpha1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.fastjson</groupId>
+            <artifactId>boon</artifactId>
+            <version>0.23</version>
+        </dependency>
+        
+
+    </dependencies>
+    <build>
+        <plugins>
+            <!-- COMPILER -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.plugin.version}</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                </executions>                
+            </plugin>
+
+            <plugin>
+                <groupId>org.dstovall</groupId>
+                <artifactId>onejar-maven-plugin</artifactId>
+                <version>1.4.4</version>
+                <executions>
+                    <execution>
+                        <configuration>
+                            <attachToBuild>true</attachToBuild>
+                            <classifier>onejar</classifier>
+                            
+                        </configuration>
+                        <goals>
+                            <goal>one-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin> 
+                  
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.3</version>
+        <configuration>
+                          <minimizeJar>true</minimizeJar>
+
+          <!-- put your configurations here -->
+        </configuration>
+        
+        <executions>
+          <execution>
+              <phase>deploy</phase>
+            <!--<phase>package</phase> -->
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+        </executions>
+        
+      </plugin>
+  
+                  <!--
+            <plugin>
+                <groupId>com.pyx4me</groupId>
+                <artifactId>proguard-maven-plugin</artifactId>
+                <version>2.0.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>proguard</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+
+                    <maxMemory>2G</maxMemory>
+                    <assembly>
+                        <inclusions>
+                        </inclusions>
+                    </assembly>
+                    <options>
+                        <option>-dontobfuscate</option>
+                        <option>-allowaccessmodification</option>
+                        <option>-ignorewarnings</option>
+                        <option>-dontskipnonpubliclibraryclasses</option>
+                        <option>-dontskipnonpubliclibraryclassmembers</option>
+                    </options>
+                    <outjar>${project.name}.min.jar</outjar>
+                    <libs>
+                        <lib>${java.home}/lib/rt.jar</lib>
+                    </libs>
+                </configuration>
+                 <dependencies>
+                    <dependency>
+	<groupId>net.sf.proguard</groupId>
+	<artifactId>proguard-base</artifactId>
+	<version>5.0</version>
+</dependency> 
+                </dependencies>
+            </plugin> -->
+        </plugins>
+    </build>
+    
+          <pluginRepositories>
+        <pluginRepository>
+            <id>onejar-maven-plugin.googlecode.com</id>
+            <url>http://onejar-maven-plugin.googlecode.com/svn/mavenrepo</url>
+        </pluginRepository>
+    </pluginRepositories>
+    <name>opennars.web</name>
+</project>
