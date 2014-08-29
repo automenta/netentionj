@@ -49,6 +49,8 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.CharsetUtil;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 import org.boon.json.JsonParserAndMapper;
 import org.boon.json.JsonParserFactory;
 import org.boon.json.JsonSerializer;
@@ -81,7 +83,7 @@ import org.boon.json.JsonSerializerFactory;
     private final JsonParserAndMapper jsonParser;
     
     static {
-        System.setProperty ( "java.version", "1.8" );        //HACK to allow boon 0.23 to recognize the java version because it is fucking retarded and doesnt parse early access version strings
+        System.setProperty ( "java.version", "1.8" );
     }
     private Channel ch;
     private final NioEventLoopGroup workerGroup;
@@ -131,10 +133,15 @@ import org.boon.json.JsonSerializerFactory;
         bossGroup = new NioEventLoopGroup(1);
         workerGroup = new NioEventLoopGroup();
         
+        SSLEngine ssl = SSLContext.getDefault().createSSLEngine();        
+        ssl.setUseClientMode(true);
+        
+        
         ServerBootstrap b = new ServerBootstrap();
         b.group(bossGroup, workerGroup)
          .channel(NioServerSocketChannel.class)
          .handler(new LoggingHandler(LogLevel.INFO))
+         //.handler(new SslHandler(ssl))
          .childHandler(new WebSocketServerInitializer(this));
 
         ch = b.bind(host, PORT).sync().channel();
@@ -227,7 +234,7 @@ import org.boon.json.JsonSerializerFactory;
         else  {
             // Handshake
             WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
-                    getWebSocketLocation(req), null, false);
+                    getWebSocketLocation(req), null, true);
             handshaker = wsFactory.newHandshaker(req);
             if (handshaker == null) {
                 WebSocketServerHandshakerFactory.sendUnsupportedWebSocketVersionResponse(ctx.channel());

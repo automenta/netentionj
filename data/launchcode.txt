@@ -1,0 +1,29 @@
+Message Follows
+
+AABTY872V9
+
+A: I have a valid launch message
+B: I concur.
+A: Remove Key.
+
+A: Unstable the missle.
+B: Check.
+A: Program in-flight switch enable.
+B: Check.
+B: Program online codes inserted.
+A: Roger.
+A: Enable Switch enabled.
+B: Roger.
+
+Final authorization call received
+
+Key turn on my mark
+
+5
+4
+3
+2
+1
+LAUNCH
+
+Relax and wait to die

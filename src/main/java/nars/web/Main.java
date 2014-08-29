@@ -61,7 +61,7 @@ public class Main implements Runnable {
  
     
     public static void main(String[] args) throws Exception {
-        Logger.getLogger("io.netty").setLevel(Level.SEVERE);
+        //Logger.getLogger("io.netty").setLevel(Level.SEVERE);
         
         new Main();
         
