@@ -6,6 +6,8 @@
 
 package nars.web.server;
 
+import nars.web.tag.AbstractTag;
+import nars.web.tag.WildcardTag;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
@@ -15,7 +17,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  *
@@ -23,30 +24,9 @@ import java.util.regex.Pattern;
  */
 abstract public class PubSubWebSocketServer extends WebSocketServer {
 
-    public static class Topic {
-        public final String selector;
-        public final Set<Channel> subscribers = new HashSet();
-        private final Pattern p;
-
-        //ArrayDeque<Object> history;
-        public Topic(final String selector) {
-            this.selector = selector;
-            p = new WildcardMatcher(selector).pattern;
-        }
-        
-        boolean matches(final String topic) {
-            return p.matcher(topic).matches();        
-        }
-        boolean matchesAny(final String... topics) {
-            for (final String t : topics)
-                if (p.matcher(t).matches())
-                    return true;
-            return false;
-        }
-                
-    }
     
-    public final Map<String, Topic> topics = new HashMap();
+    
+    public final Map<String, AbstractTag> tags = new HashMap();
     
     
     public PubSubWebSocketServer(String host, int port) throws Exception {
@@ -80,9 +60,9 @@ abstract public class PubSubWebSocketServer extends WebSocketServer {
     public synchronized int publish(final Object message, String... t) {
         //Topic t = topics.get(topic);        
         recipients.clear();
-        for (Topic x : this.topics.values()) {
+        for (AbstractTag x : this.tags.values()) {
             if (x.matchesAny(t)) {
-                recipients.addAll(x.subscribers);
+                recipients.addAll(x.getSubscribers());
             }        
         }
         if (recipients.size() == 0) return 0;
@@ -96,101 +76,29 @@ abstract public class PubSubWebSocketServer extends WebSocketServer {
         return recipients.size();
     }
     
-    public Topic addTopic(Topic t) {
-        topics.putIfAbsent(t.selector, t);
+    public WildcardTag addTopic(WildcardTag t) {
+        tags.putIfAbsent(t.selector, t);
         return t;
     }
     
     protected void subscribe(Channel c, String topic) {
-        Topic t = topics.get(topic);
+        AbstractTag t = tags.get(topic);
         if (t!=null)
             t.subscribers.add(c);
     }
     protected void unsubscribe(Channel c, String topic) {
-        Topic t = topics.get(topic);
+        AbstractTag t = tags.get(topic);
         if (t!=null)
-            t.subscribers.remove(c);        
+            t.removeSubscriber(c);        
     }
 
     @Override
     public void disconnect(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
         super.disconnect(ctx, promise);
         Channel c = ctx.channel();
-        for (Topic t : topics.values())
-            t.subscribers.remove(c);            
+        for (AbstractTag t : tags.values())
+            t.removeSubscriber(c);            
     }
     
-    
-    /*******************************************************************************
-     * Copyright (c) 2009, 2014 Mountainminds GmbH & Co. KG and Contributors
-     * All rights reserved. This program and the accompanying materials
-     * are made available under the terms of the Eclipse Public License v1.0
-     * which accompanies this distribution, and is available at
-     * http://www.eclipse.org/legal/epl-v10.html
-     *
-     * Contributors:
-     *    Marc R. Hoffmann - initial API and implementation
-     *    
-     *******************************************************************************/
-
-    /**
-     * Matches strings against <code>?</code>/<code>*</code> wildcard expressions.
-     * Multiple expressions can be separated with a colon (:). In this case the
-     * expression matches if at least one part matches.
-     */
-    public static class WildcardMatcher {
-
-        private final Pattern pattern;
-
-        /**
-         * Creates a new matcher with the given expression.
-         * 
-         * @param expression
-         *            wildcard expressions
-         */
-        public WildcardMatcher(final String expression) {
-            final String[] parts = expression.split("\\:");
-            final StringBuilder regex = new StringBuilder(expression.length() * 2);
-            boolean next = false;
-            for (final String part : parts) {
-                if (next) {
-                    regex.append('|');
-                }
-                regex.append('(').append(toRegex(part)).append(')');
-                next = true;
-            }
-            pattern = Pattern.compile(regex.toString());
-        }
-
-        private static CharSequence toRegex(final String expression) {
-            final StringBuilder regex = new StringBuilder(expression.length() * 2);
-            for (final char c : expression.toCharArray()) {
-                switch (c) {
-                case '?':
-                    regex.append(".?");
-                    break;
-                case '*':
-                    regex.append(".*");
-                    break;
-                default:
-                    regex.append(Pattern.quote(String.valueOf(c)));
-                    break;
-                }
-            }
-            return regex;
-        }
-
-        /**
-         * Matches the given string against the expressions of this matcher.
-         * 
-         * @param s
-         *            string to test
-         * @return <code>true</code>, if the expression matches
-         */
-        public boolean matches(final String s) {
-            return pattern.matcher(s).matches();
-        }
-
-    }
 
 }

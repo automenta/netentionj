@@ -10,6 +10,7 @@ import io.netty.channel.Channel;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import nars.web.server.PubSubWebSocketServer;
+import nars.web.tag.WildcardTag;
 
 
 /**
@@ -31,7 +32,7 @@ public class SimpleServer extends PubSubWebSocketServer {
     @Override
     public void run() {
         
-        addTopic(new PubSubWebSocketServer.Topic("a"));
+        addTopic(new WildcardTag("a"));
         
         while (true) {
             

@@ -26,16 +26,16 @@
         </div>
         <div id="dock" class="dock"></div>
 
-        <div id="solution_window" caption="Experiences" icon="icon-circle-arrow-right" class="solution-window">
+        <div id="tag_window" caption="Tags" icon="fa fa-tag" class="solution-window">
             <ul>
-                <li id="solution_window_1">
+                <li id="tag_window_1">
                     <a href="#">Test Project</a>
                     <ul>
                         <li id="phtml_2"><a href="#">Source File 1</a></li>
                         <li id="phtml_3"><a href="#">Header File 1</a></li>
                     </ul>
                 </li>
-                <li id="solution_window_2">
+                <li id="tag_window_2">
                     <a href="#">My Project 2</a>
                 </li>
             </ul>
@@ -64,7 +64,7 @@
                 // They can then be docked on to the dock manager
                 // Panels get a titlebar and a close button, and can also be
                 // converted to a floating dialog box which can be dragged / resized
-                var solution = dock.contain("solution_window");
+                var solution = dock.contain("tag_window");
                 var properties = dock.contain("properties_window");
                 var outline = dock.contain("outline_window");
                 var input = dock.contain("input_window");

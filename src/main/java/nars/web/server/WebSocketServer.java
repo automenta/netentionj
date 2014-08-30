@@ -149,17 +149,18 @@ import org.boon.json.JsonSerializerFactory;
 
         ch = b.bind(host, PORT).sync().channel();
 
-        System.err.println("Open your web browser and navigate to " +
-                (SSL? "https" : "http") + "://" + host + ':' + PORT + '/');
+        System.err.println("Web server: " + (SSL? "https" : "http") + "://" + host + ':' + PORT + '/');
 
     }
     
     public void start() {
         try {
             ChannelFuture cf = ch.closeFuture();
+            
             mainThread = new Thread(this);
             mainThread.start();
-            cf.sync();
+            
+            cf.sync(); //doesn't return from this, which is why we execute the mainThread before
         } catch (InterruptedException ex) {
             Logger.getLogger(WebSocketServer.class.getName()).log(Level.SEVERE, null, ex);
             ex.printStackTrace();;
