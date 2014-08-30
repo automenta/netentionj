@@ -47,6 +47,8 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.CharsetUtil;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLContext;
@@ -76,7 +78,7 @@ import org.boon.json.JsonSerializerFactory;
  * </ul>
  */
 
-@Sharable abstract public class WebSocketServer extends SimpleChannelInboundHandler<Object> {
+@Sharable abstract public class WebSocketServer extends SimpleChannelInboundHandler<Object> implements Runnable {
 
     static final boolean SSL = false; //System.getProperty("ssl") != null;
     private final JsonSerializer jsonSerializer;
@@ -88,6 +90,7 @@ import org.boon.json.JsonSerializerFactory;
     private Channel ch;
     private final NioEventLoopGroup workerGroup;
     private final NioEventLoopGroup bossGroup;
+    private Thread mainThread;
 
     public WebSocketServer(String host, int PORT) throws Exception {
         // Configure SSL.
@@ -153,7 +156,10 @@ import org.boon.json.JsonSerializerFactory;
     
     public void start() {
         try {
-            ch.closeFuture().sync();                    
+            ChannelFuture cf = ch.closeFuture();
+            mainThread = new Thread(this);
+            mainThread.start();
+            cf.sync();
         } catch (InterruptedException ex) {
             Logger.getLogger(WebSocketServer.class.getName()).log(Level.SEVERE, null, ex);
             ex.printStackTrace();;
@@ -167,7 +173,7 @@ import org.boon.json.JsonSerializerFactory;
     abstract public void receive(Channel channel, Object message);
 
             
-    public void publish(final Channel c, final Object message) {
+    public void send(final Channel c, final Object message) {
         String serialized = jsonSerializer.serialize(message).toString();
         c.writeAndFlush(new TextWebSocketFrame(serialized));
     }
@@ -239,7 +245,17 @@ import org.boon.json.JsonSerializerFactory;
             if (handshaker == null) {
                 WebSocketServerHandshakerFactory.sendUnsupportedWebSocketVersionResponse(ctx.channel());
             } else {
-                handshaker.handshake(ctx.channel(), req);
+                final Channel channel = ctx.channel();
+                final ChannelFuture hf = handshaker.handshake(channel, req);
+                hf.addListener(new GenericFutureListener<Future<? super Void>>() {
+
+                    @Override
+                    public void operationComplete(Future<? super Void> f) throws Exception {
+                        if (hf.isSuccess()) {
+                            connected(channel);
+                        }
+                    }                   
+                });
             }
         }
         
@@ -310,7 +326,10 @@ import org.boon.json.JsonSerializerFactory;
         }
     }
 
-    private void disconnected(Channel channel) {
+    protected void connected(Channel channel) {
+    }
+
+    protected void disconnected(Channel channel) {
     }
     
 }

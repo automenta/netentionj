@@ -107,7 +107,7 @@
                         ta.value = ta.value + '\n' + event.data
                     },
                     onConnect: function(event) {
-                        //socket.send([ 'sub', 'a' ]);
+                        socket.send([ 'sub', 'a' ]);
 
                         var ta = document.getElementById('responseText');
                         if (!ta)
