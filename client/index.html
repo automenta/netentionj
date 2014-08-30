@@ -26,7 +26,7 @@
         </div>
         <div id="dock" class="dock"></div>
 
-        <div id="solution_window" caption="Solution Explorer" icon="icon-circle-arrow-right" class="solution-window">
+        <div id="solution_window" caption="Experiences" icon="icon-circle-arrow-right" class="solution-window">
             <ul>
                 <li id="solution_window_1">
                     <a href="#">Test Project</a>
@@ -40,26 +40,14 @@
                 </li>
             </ul>
         </div>
-        <div id="properties_window" caption="Properties" class="properties-window"></div>
-        <div id="problems_window" caption="Problems" class="problems-window"></div>
-        <div id="editor1_window" caption="Steering.h" class="editor1-window editor-host">
-            <form onsubmit="return false;">
-                <input type="text" name="message" value="Hello, World!"/><input type="button" value="Send Web Socket Data"
+        <div id="properties_window" caption="Status" class="properties-window"></div>
+        <div id="input_window" caption="Input" class="input-window">
+                <input type="text" name="message" placeholder="Input" value=""/><input type="button" value="Send Web Socket Data"
                                                                                 onclick="send(this.form.message.value)" />
-                <h3>Output</h3>
-                <textarea id="responseText"></textarea>
-            </form>
         </div>
-        <div id="editor2_window" caption="Steering.cpp" class="editor2-window editor-host"></div>
-        <div id="output_window" caption="Output" class="output-window editor-host"></div>
-        <div id="toolbox_window" caption="Toolbox" class="toolbox-window">
-            <ul>
-                <li id="toolbox_window_1"><a href="#">Tool 1</a></li>
-                <li id="toolbox_window_2"><a href="#">Tool 2</a></li>
-                <li id="toolbox_window_3"><a href="#">Tool 3</a></li>
-                <li id="toolbox_window_4"><a href="#">Tool 4</a></li>
-                <li id="toolbox_window_5"><a href="#">Tool 5</a></li>
-            </ul>
+        <div id="output_window" caption="Output" class="output-window">
+                <div id="responseText" style="width: 100%; height: 100%; overflow: auto"></div>
+            
         </div>
         <div id="outline_window" caption="Outline" class="outline-window">
         </div>
@@ -78,33 +66,29 @@
                 // converted to a floating dialog box which can be dragged / resized
                 var solution = dock.contain("solution_window");
                 var properties = dock.contain("properties_window");
-                var toolbox = dock.contain("toolbox_window");
                 var outline = dock.contain("outline_window");
-                var problems = dock.contain("problems_window");
-                var output = dock.contain("output_window");
-                var editor1 = dock.contain("editor1_window");
-                var editor2 = dock.contain("editor2_window");
-
+                var input = dock.contain("input_window");
+                var output = dock.contain("output_window");                
+ 
                 // Dock the panels on the dock manager
                 //var content = dock.content;
+                var outputNode = output.dockFill();
+                
                 var outlineNode = outline.dockLeft(0.15);
                 var solutionNode = solution.dockFill(outlineNode);
                 var propertiesNode = properties.dockDown(0.6, outlineNode);                
-                var toolboxNode = toolbox.dockRight(0.20);
-                var outputNode = output.dockFill();
-                var editor2Node = editor2.dockFill(outputNode);
-                var editor1Node = editor1.dockFill(outputNode);
-                var problemsNode = problems.dockDown(0.20);
+
+                
+                var inputNode = input.dockDown(0.15);
+                
             });
 
             $(document).ready(function() {
                 var socket = websocket({
                     onMessage: function(event) {
-                        var ta = document.getElementById('responseText');
-                        if (!ta)
-                            return;
-
-                        ta.value = ta.value + '\n' + event.data
+                        var line = $("<pre></pre>");
+                        line.text((event.data).trim());
+                        $('#responseText').append(line);
                     },
                     onConnect: function(event) {
                         socket.send([ 'sub', 'a' ]);
@@ -120,11 +104,7 @@
                         socket.send({});
                     },
                     onDisconnect: function(event) {
-                        var ta = document.getElementById('responseText');
-                        if (!ta)
-                            return;
-
-                        ta.value = ta.value + "Web Socket closed";
+                        $('#responseText').append("Web Socket Closed");
                     }
                 });
 

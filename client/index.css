@@ -34,9 +34,8 @@ body {
 }
 
 .output-window {
-    width: 300px;
-    height: 200px;
-    background-color: #eee;
+    background-color: #000;
+    color: #ddd;
 }
 
 .properties-window {
@@ -73,7 +72,6 @@ body {
 
 .editor-host {
     height: auto; 
-    overflow: visible;
 }
 
 .tab-handle {
@@ -95,4 +93,12 @@ body {
 .panel-titlebar-text {
     font-weight: bold;
     color:#aaa;
+}
+
+pre {
+    font-size: inherit;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    border:none;
 }
