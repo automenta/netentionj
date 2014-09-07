@@ -1,0 +1,73 @@
+@import url('rainbow_menu.css');
+
+
+body {
+    color: white;
+	background-color: black;
+}
+.MetadataLine, .ui-widget-content {
+    color: #ddd;
+}
+
+.panel {
+	background-color: rgba(10,10,10, 0.5);
+}
+
+a, a:visited, .ui-state-active a, .ui-state-active a:link, .ui-state-active a:visited, .ui-state-focus a, .ui-state-focus a:link, .ui-state-focus a:visited {
+    color: #DDD !important;
+}
+a:hover {
+    color: #FFF !important;
+}
+.navbar-default .navbar-brand {
+	color: #FFF;
+}
+.navbar-default {
+	background-color: #222;
+	border: 0;
+	border-bottom: 1px solid gray;
+}
+.modal-content {
+	background-color: rgba(0,0,0,0.85);
+}
+
+.ui-mainmenu {
+    background-color: rgba(20,20,20,0.4);
+}
+#LoadingSplash2 { 
+    background-color: black; 
+}
+.tagSectionHovered {
+    background-color: rgba(255,255,255,0.2);
+}
+
+.ChatViewInput .nameInput {
+    color: white;
+    background-color: black;
+    border: 1px solid gray;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(225, 225, 225, 0.7) !important;
+}
+::-webkit-scrollbar-track {
+    background-color: rgba(0, 0, 0, 0.7) !important;
+}
+.ui-widget-content {
+    border: 1px solid gray;
+}
+.ObjectViewButtons button {
+    color: white !important;
+}
+
+
+.link {
+    fill: white !important;
+}
+.node text {
+    fill: white !important;
+}
+.graphArrowhead {
+    fill: white !important;
+    opacity: 0.65;
+}

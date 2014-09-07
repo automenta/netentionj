@@ -1,0 +1,37 @@
+/*@import url('rainbow_menu.css');*/
+
+h1 a {
+    color: black;
+}
+#View {
+    background: none !important;
+}
+a:hover {
+    color: blue !important;
+}
+
+.navbar-default .navbar-brand {
+	color: #FFF;
+}
+.navbar-default {
+	background-color: #84C9FF;
+}
+
+.ui-mainmenu {
+    /*background-color: #149bdf;*/
+    background-color: rgba(203, 223, 143, 0.97);
+}
+
+.ui-widget-content {
+    background-image: none;
+    border-bottom-left-radius: 0;    
+    border-bottom-right-radius: 0;
+    border-top-left-radius: 0;    
+    border-top-right-radius: 0;
+}
+::-webkit-scrollbar-thumb {
+       background-color: rgba(92, 146, 24, 0.59) !important;
+}
+
+.ui-state-active a, .ui-state-active a:link, .ui-state-active a:visited  { color: black !important; }
+.ui-state-focus a, .ui-state-focus a:link, .ui-state-focus a:visited { color: black !important; }

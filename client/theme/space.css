@@ -1,0 +1,22 @@
+@import url("/theme/dark.css");
+
+body {
+    background-image: url('/theme/space/orbit.jpg'); 
+    background-attachment: fixed;
+    background-size: stretch;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    margin: 0;
+    padding: 0;    
+}
+
+#ViewWrapper {
+    background-color: rgba(0,0,0,0.6);
+}
+
+a, a:visited, .ui-state-active a, .ui-state-active a:link, .ui-state-active a:visited, .ui-state-focus a, .ui-state-focus a:link, .ui-state-focus a:visited {
+    color: #FFB800 !important;
+}
+a:hover {
+    color: #bbf !important;
+}

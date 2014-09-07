@@ -6,6 +6,7 @@
     <artifactId>semantic.io</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
+    
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.plugin.version>3.1</maven.compiler.plugin.version>
@@ -24,34 +25,49 @@
         
         <!-- http://mvnrepository.com/artifact/io.netty/netty-example/5.0.0.Alpha1 -->
         
-      
         <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-codec-http</artifactId>
-            <version>5.0.0.Alpha1</version>
-        </dependency>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-handler</artifactId>
-            <version>5.0.0.Alpha1</version>
+	<groupId>io.vertx</groupId>
+	<artifactId>vertx-core</artifactId>
+	<version>2.1.2</version>
         </dependency>
 
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-transport</artifactId>
-            <version>5.0.0.Alpha1</version>
-        </dependency>
-        <dependency>
+<dependency>
+	<groupId>io.vertx</groupId>
+	<artifactId>vertx-platform</artifactId>
+	<version>2.1.2</version>
+</dependency>
+<dependency>
+	<groupId>io.vertx</groupId>
+	<artifactId>mod-web-server</artifactId>
+	<version>2.0.0-final</version>
+</dependency>
+
+            
+<dependency>
+	<groupId>org.mapdb</groupId>
+	<artifactId>mapdb</artifactId>
+	<version>1.0.6</version>
+</dependency>
+
+<dependency>
+	<groupId>com.github.spullara.mustache.java</groupId>
+	<artifactId>compiler</artifactId>
+	<version>0.8.16</version>
+</dependency>
+
+
+
+<dependency>
             <groupId>io.fastjson</groupId>
             <artifactId>boon</artifactId>
             <version>0.23</version>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>nars</groupId>
             <artifactId>nars-core</artifactId>
             <version>1.0</version>
-        </dependency>
-        
+        </dependency> -->
+
 <dependency>
 	<groupId>org.apache.jena</groupId>
 	<artifactId>jena-core</artifactId>
@@ -63,6 +79,7 @@
     <build>
 
         <plugins>
+            <!--
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-install-plugin</artifactId>
@@ -83,7 +100,8 @@
                     </execution>
                 </executions>
             </plugin>
-
+            -->
+            
 
             <!-- COMPILER -->
             

@@ -1,0 +1,21 @@
+
+@import url("/theme/dark.css");
+
+body {
+    background-image: url('/theme/rainforest/rainforest.jpg'); 
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    margin: 0;
+    padding: 0;    
+    
+}
+
+.ui-widget-content {
+    background: rgba(225,225,225,0.8);
+    border: 0;
+}
+.ui-mainmenu {
+    background-color: #b1d34d;
+}

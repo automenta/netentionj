@@ -1,0 +1,22 @@
+@import url("/theme/bright.css");
+
+body {
+    background-image: url('/theme/cybernetic/p2p_banner.jpg'); 
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    margin: 0;
+    padding: 0;    
+}
+#MainMenu {
+    background-color: #149bdf;
+	color: white;
+}
+#MainMenu a {
+	color: white;
+}
+.ui-widget-content {
+    background: rgba(225,225,225,0.8);
+}
+

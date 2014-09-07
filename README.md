@@ -1,12 +1,14 @@
 Web Server Features
 ------------------
  - Multi-client HTTP / Websocket server (via Java Netty 5.0)
+     - Websockets for bidirectional asynchronous interaction
+	 - HTTP streaming for high-speed unidirectional transfers 
  - Each client connection exclusively manages a set of NAR reasoners which provide high-level logic processing and goal-driven procedure activation.
  - High-efficiency message routing utilizing Tag streams that deliver messages to subscribers (ex: WebSocket clients) according to measured relevancy.
  - RDF/OWL input/output in multiple formats (via Apache Jena), including N3 and JSON-LD (LinkedData) backed by rule-based reasoners which can integrate bidirectionally with NARS
  - REST API URLs
  - Multi-user communication and collaboration, facilitated by seemingly-intelligent data processing that results from network agent activity.  This allows mere discussion to automatically evolve into actions and results.
- - Database persistence and network memory sharing
+ - Optional database persistence and network memory sharing / synchronization
 
 
 Web Client Features
