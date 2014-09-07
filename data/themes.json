@@ -1,0 +1,23 @@
+{
+    "_bright":"Bright",
+    "_dark":"Dark",
+
+    "_matrix-green":"Matrix (green)",
+    "_matrix-red":"Matrix (red)",
+    "_matrix-blue":"Matrix (blue)",
+    "_space": "Space",
+    "_cybernetic": "Cybernetic",
+    "_notebook": "Notebook",
+    "_rainforest": "Rainforest",
+    "_metamaps": "MetaMaps",
+    "_scroogle": "Google",
+    "_n$a": "N$A",
+
+
+	"_bootswatch_cerulean": "Cerulean",
+	"_bootswatch_darkly": "Darkly",
+	"_bootswatch_cyborg": "Cyborg",
+	"_bootswatch_readable": "Readable",
+	"_bootswatch_simplex": "Simplex",
+	"_bootswatch_spacelab": "SpaceLab"
+}

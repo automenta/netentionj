@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package nars.web;
 
 import com.github.mustachejava.DefaultMustacheFactory;
@@ -13,12 +7,16 @@ import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.Unpooled;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import nars.web.core.Core;
+import org.boon.json.JsonParserFactory;
+import org.boon.json.JsonSerializer;
+import org.boon.json.JsonSerializerFactory;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.VertxFactory;
@@ -26,6 +24,7 @@ import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpServer;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.RouteMatcher;
+import org.vertx.java.core.json.impl.Json;
 import org.vertx.mods.web.StaticFileHandler;
 
 
@@ -33,30 +32,24 @@ import org.vertx.mods.web.StaticFileHandler;
  *
  * @author me
  */
-public class WebServerTest {
+public class WebServer {
     
     final MustacheFactory mf = new DefaultMustacheFactory();
     final Vertx vertx;
-    private final HttpServer http;
-    
-    boolean compress = false;
-    boolean cache = false;
-    
-    public static class IndexPage {
-        public String title = "Netention";                
-        public boolean allowSearchEngineIndexing = false;        
-    }
+    private final HttpServer http;        
+    public static final JsonSerializer jsonSerializer;    
+    private final Options options;
+    private final Core core;
     
     
-    
-    public WebServerTest() throws Exception {
+    public WebServer(Core c, Options o) throws Exception {
         super();
 
-//        PlatformManager pm = PlatformLocator.factory.createPlatformManager();
-//        
-        vertx = VertxFactory.newVertx();
-        
-        http = vertx.createHttpServer();        
+        this.core = c;
+        this.options = o;
+
+        vertx = VertxFactory.newVertx();        
+        http = vertx.createHttpServer();
         
         /*http.websocketHandler(new Handler<ServerWebSocket>() {
 
@@ -69,46 +62,103 @@ public class WebServerTest {
         
         .get("/", new Handler<HttpServerRequest>() {            
             @Override public void handle(HttpServerRequest e) {                
-                
-                ByteBufOutputStream bos = new ByteBufOutputStream(Unpooled.buffer());
-                
-                
-                Writer writer = new OutputStreamWriter(bos);
-                Mustache mustache;
-                try {
-                    mustache = mf.compile(new InputStreamReader(new FileInputStream("client/index.html")),"index.html");
-                    mustache.execute(new OutputStreamWriter(bos), new IndexPage());
-                    writer.flush();
-
-                } catch (FileNotFoundException ex) {
-                    Logger.getLogger(WebServerTest.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (IOException ex) {
-                    Logger.getLogger(WebServerTest.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                e.response().end( new Buffer(bos.buffer()) );
-            }
-            
+                template(e, "client/index.html", options.getIndexPage());
+            }            
         })
                 
-        .get("/client_configuration.js", new Handler<HttpServerRequest>() {
-            @Override public void handle(HttpServerRequest e) {                
-                String x = "{\"autoLoginDefaultProfile\":true,\"initialView\":\"wall\",\"avatarMenuDisplayInitially\":true,\"focusEditDisplayStartup\":true,\"favicon\":null,\"loginLogo\":\"/theme/login-logo.png\",\"defaultAvatarIcon\":\"/theme/default-avatar.jpg\",\"wikiStartPage\":\"Life\",\"showPlanOnSelfPage\":true,\"defaultTheme\":\"_bootswatch.cerulean\",\"maxStartupObjects\":8192,\"defaultMapMode2D\":false,\"mapDefaultLocation\":[40.44,-80.0],\"ontologySearchIntervalMS\":1500,\"viewlockDefault\":false,\"viewUpdateTime\":[[150,50,250],[0,0,100]],\"views\":[\"us\",\"map\",\"browse\",\"wiki\",\"graph\",\"share\",\"forum\",\"main\",\"trends\",\"time\",\"notebook\",\"wall\",\"slides\"],\"newUserProperties\":[\"walletRipple\"],\"shareTags\":['Offer','Sell','Lend','Rent','Swap','GiveAway','Need'],\"shareCategories\":['Food','Service','Volunteer','Shelter','Tools','Health','Transport','Animal'],\"knowTags\":['Learn','Teach','Do'],\"defaultScope\":7    }";                
-                e.response().end("configuration =" + x /* to JSON */);
+        .get("/client_configuration.js", new Handler<HttpServerRequest>() {                        
+            @Override public void handle(HttpServerRequest e) { 
+                Map<String, Object> icons = options.getClientIcons();
+                Map<String, Object> themes = options.getClientThemes();
+                Map<String, Object> clientOptions = options.getClientOptions();
+                
+                e.response().end(
+                    "var configuration = " + Json.encode(clientOptions) + ";\n" +
+                    "var themes = " + Json.encode(themes) + ";\n" +
+                    "var icons = " + Json.encode(icons) + ";\n"
+                );
             }
             
         })
                 
         .get("/ontology.json", new Handler<HttpServerRequest>() {
             @Override public void handle(HttpServerRequest e) {                
-                String x = "{}";                
-                e.response().end(x /* to JSON */);
-            }
-            
-        })                
-                
-        .noMatch(new StaticFileHandler(vertx, "client/", "index.html", compress, cache));
+                e.response().end(core.getOntologyJSON());
+        }})
         
-        http.requestHandler(r);
+                
+        .noMatch(new StaticFileHandler(vertx, "client/", "index.html", options.compressHTTP, options.cacheStaticFiles));
+        
+        http.requestHandler(r);        
+        http.listen(8080);
+        
+        System.in.read();
+        
+    }
+
+    
+    
+    public static void main(String[] args) throws Exception {
+        String optionsPath = args.length > 0 ? args[0] : "options.json";        
+        new WebServer(new Core(), Options.load(optionsPath));
+    }
+
+    static {
+         //temporar yworkaround for boon
+         System.setProperty ( "java.version", "1.8" );
+         
+         JsonSerializerFactory jsonSerializerFactory = new JsonSerializerFactory()
+                .useFieldsFirst()//.useFieldsOnly().usePropertiesFirst().usePropertyOnly() //one of these
+                //.addPropertySerializer(  )  customize property output
+                //.addTypeSerializer(  )      customize type output
+                .useJsonFormatForDates() //use json dates
+                //.addFilter(  )   add a property filter to exclude properties
+                .includeEmpty().includeNulls().includeDefaultValues() //override defaults
+                //.handleComplexBackReference() //uses identity map to track complex back reference and avoid them
+                //.setHandleSimpleBackReference( true ) //looks for simple back reference for parent
+                .setCacheInstances( true ) //turns on caching for immutable objects
+                ;
+        jsonSerializer = jsonSerializerFactory.create();        
+        /*
+                .useFieldsFirst()//useFieldsOnly().usePropertiesFirst().usePropertyOnly() //one of these
+                //.plistStyle() //allow parsing of ASCII PList style files
+                .lax() //allow loose parsing of JSON like JSON Smart
+                //.strict() //opposite of lax
+                .setCharset( StandardCharsets.UTF_8 ) //Set the standard charset, defaults to UTF_8
+                //.setChop( true ) //chops up buffer overlay buffer (more discussion of this later)
+                //.setLazyChop( true ) //similar to chop but only does it after map.get               
+                ;
+        */
+    }
+    
+    public static <O> O jsonLoad(String filePath, Class<? extends O> c) throws FileNotFoundException {
+        return new JsonParserFactory().create().parse(c, new FileInputStream(filePath));
+    }
+    
+    public static Map<String,Object> jsonLoad(String filePath) throws FileNotFoundException {
+        return new JsonParserFactory().create().parseMap(new FileInputStream(filePath));
+    }
+
+    protected void template(final HttpServerRequest e, final String input, final Object param) {
+        ByteBufOutputStream bos = new ByteBufOutputStream(Unpooled.buffer());
+
+        Writer writer = new OutputStreamWriter(bos);        
+        try {
+            //TODO cache compiled mustache, if not already cached by Mustache itself
+            Mustache mustache = mf.compile(new InputStreamReader(new FileInputStream(input)),"index.html");
+            mustache.execute(new OutputStreamWriter(bos), param);
+            writer.flush();
+        } catch (Exception ex) {
+            Logger.getLogger(WebServer.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        e.response().end( new Buffer(bos.buffer()) );
+    }
+
+
+}
+
+
         
 //    rm.get("/details/:user/:id", new Handler<HttpServerRequest>() {
 //      public void handle(HttpServerRequest req) {
@@ -209,10 +259,6 @@ outboundPermitted.add(outboundPermitted2);
 //          }
 //        });        
         
-        
-        http.listen(8080);
-        
-        System.in.read();
 //
 //        // Create an echo server
 //        vertx.createNetServer().connectHandler(new Handler<NetSocket>() {
@@ -223,12 +269,3 @@ outboundPermitted.add(outboundPermitted2);
 //
 //        // Prevent the JVM from exiting
 //        System.in.read();
-        
-    }
-
-    
-    
-    public static void main(String[] args) throws Exception {
-        new WebServerTest();
-    }
-}
