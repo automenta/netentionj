@@ -3,16 +3,15 @@ package nars.web;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
-import io.netty.buffer.ByteBufOutputStream;
-import io.netty.buffer.Unpooled;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.StringWriter;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static java.util.stream.Collectors.toList;
 import nars.web.core.Core;
 import org.boon.json.JsonParserFactory;
 import org.boon.json.JsonSerializer;
@@ -20,7 +19,6 @@ import org.boon.json.JsonSerializerFactory;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.VertxFactory;
-import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpServer;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.RouteMatcher;
@@ -62,20 +60,20 @@ public class WebServer {
         
         .get("/", new Handler<HttpServerRequest>() {            
             @Override public void handle(HttpServerRequest e) {                
-                template(e, "client/index.html", options.getIndexPage());
+                template(e, "client/index.html", getIndexPage());
             }            
         })
                 
         .get("/client_configuration.js", new Handler<HttpServerRequest>() {                        
             @Override public void handle(HttpServerRequest e) { 
-                Map<String, Object> icons = options.getClientIcons();
-                Map<String, Object> themes = options.getClientThemes();
-                Map<String, Object> clientOptions = options.getClientOptions();
+                Map<String, Object> icons = getClientIcons();
+                Map<String, Object> themes = getClientThemes();
+                Map<String, Object> clientOptions = getClientOptions();
                 
                 e.response().end(
                     "var configuration = " + Json.encode(clientOptions) + ";\n" +
                     "var themes = " + Json.encode(themes) + ";\n" +
-                    "var icons = " + Json.encode(icons) + ";\n"
+                    "var defaultIcons = " + Json.encode(icons) + ";\n"                        
                 );
             }
             
@@ -85,7 +83,18 @@ public class WebServer {
             @Override public void handle(HttpServerRequest e) {                
                 e.response().end(core.getOntologyJSON());
         }})
+        .get("/object/tag/:tag/json", new Handler<HttpServerRequest>() {
+            @Override public void handle(HttpServerRequest req) {
+                String tag = req.params().get("tag");
+                
+                req.response().end( 
+                        Json.encode(
+                                core.objectStreamByTag(tag).collect(toList())
+                        ) 
+                );
+        }})
         
+
                 
         .noMatch(new StaticFileHandler(vertx, "client/", "index.html", options.compressHTTP, options.cacheStaticFiles));
         
@@ -102,6 +111,50 @@ public class WebServer {
         String optionsPath = args.length > 0 ? args[0] : "options.json";        
         new WebServer(new Core(), Options.load(optionsPath));
     }
+    
+    public static class IndexPage {
+        public final String title;
+        public final boolean allowSearchEngineIndexing;
+
+        public IndexPage(String title, boolean allowSearchEngineIndexing) {
+            this.title = title;
+            this.allowSearchEngineIndexing = allowSearchEngineIndexing;
+        }
+        
+    }
+    
+    public IndexPage getIndexPage() {
+        //TODO cache the instance
+        return new IndexPage(options.name, options.allowSearchEngines);
+    }
+    
+    public Map<String,Object> getClientOptions() {
+        try {        
+            Map<String, Object> co = new HashMap(WebServer.jsonLoad("data/client.json"));
+            co.put("connection", options.connection);
+            return co;
+        } catch (FileNotFoundException ex) {
+            return new HashMap();
+        }
+    }
+    
+    Map<String, Object> getClientIcons() {
+        try {        
+            return WebServer.jsonLoad("data/icons.json");
+        } catch (FileNotFoundException ex) {
+            return new HashMap();
+        }                
+    }
+    
+    Map<String, Object> getClientThemes() {
+        try {        
+            return WebServer.jsonLoad("data/themes.json");
+        } catch (FileNotFoundException ex) {
+            return new HashMap();
+        }                
+    }
+
+    
 
     static {
          //temporar yworkaround for boon
@@ -139,20 +192,33 @@ public class WebServer {
         return new JsonParserFactory().create().parseMap(new FileInputStream(filePath));
     }
 
+//    protected void template(final HttpServerRequest e, final String input, final Object param) {
+//        ByteBufOutputStream bos = new ByteBufOutputStream(Unpooled.buffer());
+//
+//        Writer writer = new OutputStreamWriter(bos);        
+//        try {
+//            //TODO cache compiled mustache, if not already cached by Mustache itself
+//            Mustache mustache = mf.compile(new InputStreamReader(new FileInputStream(input)),"index.html");
+//            mustache.execute(new OutputStreamWriter(bos), param);
+//            writer.flush();
+//        } catch (Exception ex) {
+//            Logger.getLogger(WebServer.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//        
+//        e.response().end( new Buffer(bos.buffer()) );
+//    }
     protected void template(final HttpServerRequest e, final String input, final Object param) {
-        ByteBufOutputStream bos = new ByteBufOutputStream(Unpooled.buffer());
-
-        Writer writer = new OutputStreamWriter(bos);        
         try {
             //TODO cache compiled mustache, if not already cached by Mustache itself
             Mustache mustache = mf.compile(new InputStreamReader(new FileInputStream(input)),"index.html");
-            mustache.execute(new OutputStreamWriter(bos), param);
-            writer.flush();
+            
+            StringWriter sw = new StringWriter(8192);            
+            mustache.execute(sw, param);
+            e.response().end( sw.toString() );
         } catch (Exception ex) {
             Logger.getLogger(WebServer.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        e.response().end( new Buffer(bos.buffer()) );
     }
 
 

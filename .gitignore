@@ -4,4 +4,6 @@ build/
 nb-configuration.xml
 nbactions.xml
 
+options.json
+
 

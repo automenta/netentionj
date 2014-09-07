@@ -2281,10 +2281,11 @@ exports.objExpandAll = objExpandAll;
 
 /** expands an object in-place, and returns it */
 function objExpand(o) {
-	if (o.id!==undefined && o.i===undefined) {
-		console.error(o, ' already expanded');
-		console.log(new Error().stack);
-	}
+    if (o.id!==undefined && o.i===undefined) {
+            //console.error(o, ' already expanded');
+            //console.log(new Error().stack);
+            return;
+    }
 
     renameObjectFields(o, true);
 

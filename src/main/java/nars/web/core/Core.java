@@ -5,9 +5,6 @@
  */
 package nars.web.core;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import java.io.File;
 import java.io.IOException;
 import java.net.SocketException;
@@ -16,6 +13,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javafx.application.Platform;
 import jnetention.p2p.Listener;
 import jnetention.p2p.Network;
@@ -80,7 +79,7 @@ public class Core extends EventEmitter {
         }
         
         //default tags
-        List<NObject> c = Lists.newArrayList(tagged(Tag.tag));
+        //List<NObject> c = objectStreamByTag(Tag.tag).collect(Collectors.)
         
         for (Tag sysTag : Tag.values())
             nclass.put(sysTag.name(), NClass.asNObject(sysTag));
@@ -175,43 +174,35 @@ public class Core extends EventEmitter {
 //        }), Predicates.notNull());        
     }
     
-    public Iterable<NObject> allValues() {
-        if (net!=null) {
-            return Iterables.concat(data.values(), netValues());
-        }
-        else {
-            return data.values();
-        }
+    public Stream<NObject> objectStream() {
+//        if (net!=null) {
+//            //return Stream.concat(data.values().stream(), netValues());
+//            return data.values().stream();
+//        }
+        
+        return data.values().stream();
     }
     
-    public Iterable<NObject> tagged(final String tagID) {
-        return Iterables.filter(allValues(), new Predicate<NObject>(){
-            @Override public boolean apply(final NObject o) {
-                return o.hasTag(tagID);
-            }            
-        });        
-    }    
-    public Iterable<NObject> tagged(final String tagID, final String author) {
-        return Iterables.filter(allValues(), new Predicate<NObject>(){
-            @Override public boolean apply(final NObject o) {
-                if (author!=null)
-                    if (!author.equals(o.author))
-                        return false;
-                return o.hasTag(tagID);
-            }            
-        });        
-    }
-    public Iterable<NObject> tagged(final Tag t) {
-        return tagged(t.name());
+    public Stream<NObject> objectStreamByTag(final String tagID) {
+        //TODO replace with index
+        return objectStream().filter(o -> o.hasTag(tagID));
+    } 
+    
+    public Stream<NObject> objectStreamByTagAndAuthor(final String tagID, final String author) {
+        return objectStream().filter(o -> (o.author == author && o.hasTag(tagID)));
     }
     
-    public List<NObject> getUsers() {        
-        return Lists.newArrayList(tagged(Tag.User));
+    public Stream<NObject> objectStreamByTag(final Tag t) {
+        return objectStreamByTag(t.name());
     }
     
-    public List<NObject> getSubjects() {        
-        //TODO list all possible subjects, not just users
-        return getUsers();
+    public Stream<NObject> userStream() {        
+        return objectStreamByTag(Tag.User);
+    }
+    
+    /** list all possible subjects, not just users*/
+    public List<NObject> getSubjects() {
+        return userStream().collect(Collectors.toList());
     }
     
     
@@ -337,7 +328,7 @@ public class Core extends EventEmitter {
                     if (superclass.equals("tag"))
                         continue;
                     
-                    if (getTag(superclass)==null) {
+                    if (nclass.get(superclass)==null) {
                         save(new NClass(superclass));
                     }
                     
@@ -374,24 +365,8 @@ public class Core extends EventEmitter {
         }    
     
 
-    public Object getTag(String tagID) {
-        NObject tag = data.get(tagID);
-        if (tag!=null && tag.isClass())
-            return tag;
-        return null;
-    }
-
-    public Iterable<NObject> getTagRoots() {
-        return Iterables.filter(allValues(), new Predicate<NObject>() {
-            @Override public boolean apply(NObject t) {
-                try {
-                    NClass tag = (NClass)t;
-                    return tag.getSuperTags().isEmpty();
-                }
-                catch (Exception e) { }
-                return false;
-            }            
-        });
+    public Stream<NClass> classStreamRoots() {
+        return nclass.values().stream().filter(n -> n.getSuperTags().isEmpty());        
     }
 
     public String getOntologyJSON() {

@@ -9,8 +9,6 @@ package nars.web;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
-import java.util.HashMap;
-import java.util.Map;
 import org.vertx.java.core.json.impl.Json;
 
 /**
@@ -29,16 +27,18 @@ public class Options {
         
     public boolean allowSearchEngines;
 
-    boolean compressHTTP;
+    public boolean compressHTTP;
     
-    boolean cacheStaticFiles;
+    public boolean cacheStaticFiles;
     
+    public String connection; //"static" or "websocket"
     
     public static Options newDefault() {
         Options s = new Options();
         s.name = "Netention";
         s.host = "localhost";
         s.port = 8080;
+        s.connection = "static";
         s.allowSearchEngines = false;
         s.compressHTTP = false;
         s.cacheStaticFiles = false;
@@ -65,45 +65,5 @@ public class Options {
     }
 
          
-    public static class IndexPage {
-        public final String title;
-        public final boolean allowSearchEngineIndexing;
-
-        public IndexPage(String title, boolean allowSearchEngineIndexing) {
-            this.title = title;
-            this.allowSearchEngineIndexing = allowSearchEngineIndexing;
-        }
-        
-    }
-    
-    public IndexPage getIndexPage() {
-        //TODO cache the instance
-        return new IndexPage(name, allowSearchEngines);
-    }
-    
-    public Map<String,Object> getClientOptions() {
-        try {        
-            return WebServer.jsonLoad("data/client.json");
-        } catch (FileNotFoundException ex) {
-            return new HashMap();
-        }
-    }
-    
-    Map<String, Object> getClientIcons() {
-        try {        
-            return WebServer.jsonLoad("data/icons.json");
-        } catch (FileNotFoundException ex) {
-            return new HashMap();
-        }                
-    }
-    
-    Map<String, Object> getClientThemes() {
-        try {        
-            return WebServer.jsonLoad("data/themes.json");
-        } catch (FileNotFoundException ex) {
-            return new HashMap();
-        }                
-    }
-
 
 }
