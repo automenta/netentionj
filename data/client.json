@@ -12,7 +12,7 @@
         "showPlanOnSelfPage": true,
         "defaultTheme": "_bootswatch.cerulean",
         "maxStartupObjects": 8192,
-        "defaultMapMode2D": false,
+        "defaultMapMode2D": true,
         "mapDefaultLocation": [40.44, -80.0],
         "ontologySearchIntervalMS": 1500,
         "viewlockDefault": false,

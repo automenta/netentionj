@@ -849,11 +849,12 @@ function netention(f) {
 
 			$N.db.getAll(function(err, objects) {
 				if (err) {
-					console.error('loadAll: ' , err);
-					return;
+                                    console.log('Database empty');                                    
 				}
-				console.log('Loaded ', objects.length, 'objects from local browser');
-				$N.notice(objects, false, true);
+                                else {
+                                    console.log('Loaded ', objects.length, 'objects from local browser');
+                                    $N.notice(objects, false, true);
+                                }
 
 				if (callback)
 					callback();
