@@ -812,7 +812,7 @@ function newSelfTagList(s, user, c) {
             if (own) {
                 addLink.click(function () {
                     //TODO make tag browser
-                    c.html(newWikiBrowser([], onWikiTagAdded));
+                    c.html(newWikiBrowser(onWikiTagAdded));
                 });
             } else {
                 addLink.click(function () {
@@ -924,7 +924,7 @@ function onWikiTagAdded(target) {
 function newWikiView(v) {
 
     var frame = newDiv().attr('class', 'SelfView');
-    frame.append(newWikiBrowser($N, onWikiTagAdded));
+    frame.append(newWikiBrowser(onWikiTagAdded));
 
     v.append(frame);
 
@@ -1008,7 +1008,7 @@ function newOperatorTagTable(keywords) {
                     height: 600,
                     modal: true
                 })
-                d.append(newWikiBrowser([], function (t) {
+                d.append(newWikiBrowser(function (t) {
                     d.dialog('close');
                     tagedit.val(t);
                 }, {

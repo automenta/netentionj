@@ -5,23 +5,34 @@
  */
 package nars.web.core;
 
-import java.io.File;
+import com.hp.hpl.jena.rdf.model.Literal;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
+import com.thinkaurelius.titan.core.Cardinality;
+import com.thinkaurelius.titan.core.PropertyKey;
+import com.thinkaurelius.titan.core.TitanGraph;
+import com.thinkaurelius.titan.core.TitanGraphQuery;
+import com.thinkaurelius.titan.core.schema.TitanGraphIndex;
+import com.thinkaurelius.titan.core.schema.TitanManagement;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
 import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import static java.util.stream.StreamSupport.stream;
 import javafx.application.Platform;
 import jnetention.p2p.Listener;
 import jnetention.p2p.Network;
 import org.apache.commons.math3.stat.Frequency;
-import org.mapdb.BTreeMap;
-import org.mapdb.DB;
-import org.mapdb.DBMaker;
 import org.vertx.java.core.json.impl.Json;
 
 /**
@@ -30,9 +41,11 @@ import org.vertx.java.core.json.impl.Json;
 public class Core extends EventEmitter {
     
     private final static String Session_MYSELF = "myself";
-    private final BTreeMap<Object, Object> session;
+    
     public Network net;
-
+    
+    //https://github.com/thinkaurelius/titan/blob/c958ad2a2bafd305a33655347fef17138ee75088/titan-test/src/main/java/com/thinkaurelius/titan/graphdb/TitanIndexTest.java
+    private final TitanGraph graph;
 
     public static class SaveEvent {
         public final NObject object;
@@ -43,48 +56,47 @@ public class Core extends EventEmitter {
     }
 
     
-    //DATABASE
-    public final BTreeMap<String, NObject> data;
-    public final DB db;
     
-    final Map<String,NProperty> property = new HashMap();
-    final Map<String,NClass> nclass = new HashMap();
+    @Deprecated final Map<String,NProperty> property = new HashMap();
+    @Deprecated final Map<String,NClass> nclass = new HashMap();
     
     private NObject myself;
-
-    /** in-memory Database */
-    public Core() {
-        this(DBMaker.newMemoryDirectDB().make());        
-    }
     
-    /** file Database */
-    public Core(String filePath) {
-        this(DBMaker.newFileDB(new File(filePath))
-                .closeOnJvmShutdown()
-                .transactionDisable()
-                //.encryptionEnable("password")
-                .make());
-    }
     
-    public Core(DB db) {
+    public Core(TitanGraph db) {
         
-        this.db = db;
-        // open existing an collection (or create new)
-        data = db.getTreeMap("objects");
-        session = db.getTreeMap("session");
+        this.graph = db;
 
-        if (session.get(Session_MYSELF)==null) {            
-            //first time user
-            become(newUser("Anonymous " + NObject.UUID().substring(0,4)));
+//        TitanTransaction tx = graph.newTransaction();
+//        tx.makePropertyKey("url").dataType(String.class).cardinality(Cardinality.SINGLE);
+//        tx.commit();
+        
+        TitanManagement mgmt = graph.getManagementSystem();
+        if (!mgmt.containsGraphIndex("uri")) {
+            PropertyKey name = mgmt.makePropertyKey("uri").dataType(String.class).cardinality(Cardinality.SINGLE).make();
+            TitanGraphIndex namei = mgmt.buildIndex("uri",Vertex.class).addKey(name).unique().buildCompositeIndex();
+            mgmt.commit();
         }
+        
+
+        //EdgeLabel knows = makeLabel("uri");
+        //mgmt.buildIndex("namev",Vertex.class).addKey(name).buildMixedIndex("root");
+        //mgmt.buildIndex("namee",Edge.class).addKey(name).buildMixedIndex("root");        
+        
+//        if (session.get(Session_MYSELF)==null) {            
+//            //first time user
+//            become(newUser("Anonymous " + NObject.UUID().substring(0,4)));
+//        }
         
         //default tags
         //List<NObject> c = objectStreamByTag(Tag.tag).collect(Collectors.)
         
-        for (Tag sysTag : Tag.values())
+        for (Tag sysTag : Tag.values()) {
             nclass.put(sysTag.name(), NClass.asNObject(sysTag));
+            addObject(NClass.asNObject(sysTag));
+        }
         
-        
+        printGraph();
         
         //    map.put(1, "one");
         //    map.put(2, "two");
@@ -100,6 +112,62 @@ public class Core extends EventEmitter {
         //    db.close();
     }
 
+    public void addRDF(Model rdf) {
+        
+        StmtIterator l = rdf.listStatements();
+        while (l.hasNext()) {
+            Statement s = l.next();
+            Resource subj = s.getSubject();
+            RDFNode obj = s.getObject();
+            Property p = s.getPredicate();
+            
+            Vertex sv = uriVertex(subj.getURI());
+            if (obj instanceof Resource) {
+                Vertex ov = uriVertex(((Resource)obj).getURI());
+                graph.addEdge(null, sv, ov, p.toString());                
+            }
+            else if (obj instanceof Literal) {
+                //TODO support other literal types
+                String str = ((Literal)obj).getString();
+                if (s!=null)
+                    sv.setProperty("rdf", str);
+            }
+            
+        }
+        printGraph();
+    }
+    
+    public void printGraph() {
+        for (Vertex v : graph.getVertices())
+            System.out.println(v.toString() + " " + v.getProperty("uri"));
+        for (Edge e : graph.getEdges())
+            System.out.println(e.toString() + " " + e.getLabel() + " " + e.getPropertyKeys());        
+    }
+    
+    public Vertex uriVertex(String uri) {        
+        //System.out.println("indexed keys: " + graph.getIndexedKeys(String.class));
+        //Iterable<Vertex> ee = graph.getVertices("uri",uri);
+        //TitanIndexQuery iq = graph.indexQuery("uri", uri).limit(1);        
+        TitanGraphQuery g = graph.query().has("uri", uri).limit(1);
+        for (Object v : g.vertices()) {
+            return (Vertex)v;
+        }
+        Vertex v = graph.addVertex(null);
+        v.setProperty("uri", uri);
+        
+        return v;            
+    }
+    
+    public void addObject(NObject n) {
+        Vertex v = uriVertex(n.id);
+        if (n instanceof NClass) {
+            NClass nc = (NClass)n;
+            for (String s : nc.getSuperTags()) {
+                Vertex p = uriVertex(s);
+                graph.addEdge(null, v, p, "-->");
+            }
+        }
+    }
     
     public Core online(int listenPort) throws IOException, UnknownHostException, SocketException, InterruptedException {
         net = new Network(listenPort);
@@ -174,36 +242,35 @@ public class Core extends EventEmitter {
 //        }), Predicates.notNull());        
     }
     
-    public Stream<NObject> objectStream() {
-//        if (net!=null) {
-//            //return Stream.concat(data.values().stream(), netValues());
-//            return data.values().stream();
-//        }
-        
-        return data.values().stream();
-    }
+//    public Stream<NObject> objectStream() {
+////        if (net!=null) {
+////            //return Stream.concat(data.values().stream(), netValues());
+////            return data.values().stream();
+////        }
+//        
+//        return data.values().stream();
+//    }
     
-    public Stream<NObject> objectStreamByTag(final String tagID) {
-        //TODO replace with index
-        return objectStream().filter(o -> o.hasTag(tagID));
+    public Stream<Vertex> objectStreamByTag(final String tagID) {
+        return stream( graph.getVertexLabel(tagID).getEdges(Direction.OUT , "class").spliterator(), false ).map( e -> e.getVertex(Direction.OUT) );
     } 
     
-    public Stream<NObject> objectStreamByTagAndAuthor(final String tagID, final String author) {
-        return objectStream().filter(o -> (o.author == author && o.hasTag(tagID)));
-    }
+//    public Stream<NObject> objectStreamByTagAndAuthor(final String tagID, final String author) {
+//        return objectStream().filter(o -> (o.author == author && o.hasTag(tagID)));
+//    }
+//    
+//    public Stream<NObject> objectStreamByTag(final Tag t) {
+//        return objectStreamByTag(t.name());
+//    }
     
-    public Stream<NObject> objectStreamByTag(final Tag t) {
-        return objectStreamByTag(t.name());
-    }
+//    public Stream<NObject> userStream() {        
+//        return objectStreamByTag(Tag.User);
+//    }
     
-    public Stream<NObject> userStream() {        
-        return objectStreamByTag(Tag.User);
-    }
-    
-    /** list all possible subjects, not just users*/
-    public List<NObject> getSubjects() {
-        return userStream().collect(Collectors.toList());
-    }
+//    /** list all possible subjects, not just users*/
+//    public List<NObject> getSubjects() {
+//        return userStream().collect(Collectors.toList());
+//    }
     
     
     public NObject newUser(String name) {
@@ -232,15 +299,15 @@ public class Core extends EventEmitter {
         return n;
     }
     
-    public void become(NObject user) {
-        //System.out.println("Become: " + user);
-        myself = user;
-        session.put(Session_MYSELF, user.id);
-    }
+//    public void become(NObject user) {
+//        //System.out.println("Become: " + user);
+//        myself = user;
+//        session.put(Session_MYSELF, user.id);
+//    }
 
     
     public void remove(String nobjectID) {
-        data.remove(nobjectID);
+//        data.remove(nobjectID);
     }
     
     public void remove(NObject x) {
@@ -254,19 +321,19 @@ public class Core extends EventEmitter {
     
     /** save nobject to database */
     public void save(NObject x) {
-        NObject removed = data.put(x.id, x);        
-        index(removed, x);
-        
-        //emit(SaveEvent.class, x);
+//        NObject removed = data.put(x.id, x);        
+//        index(removed, x);
+//        
+//        //emit(SaveEvent.class, x);
     }
     
     /** batch save nobject to database */    
     public void save(Iterable<NObject> y) {
-        for (NObject x : y) {
-            NObject removed = data.put(x.id, x);
-            index(removed, x);
-        }            
-        //emit(SaveEvent.class, null);
+//        for (NObject x : y) {
+//            NObject removed = data.put(x.id, x);
+//            index(removed, x);
+//        }            
+//        //emit(SaveEvent.class, null);
     }
 
     

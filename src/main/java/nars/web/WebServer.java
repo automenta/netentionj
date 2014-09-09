@@ -3,6 +3,8 @@ package nars.web;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
+import com.thinkaurelius.titan.core.TitanFactory;
+import com.thinkaurelius.titan.core.TitanGraph;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
@@ -13,6 +15,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import static java.util.stream.Collectors.toList;
 import nars.web.core.Core;
+import nars.web.util.DBPedia;
+import nars.web.util.RDF;
+import nars.web.util.Wikipedia;
 import org.boon.json.JsonParserFactory;
 import org.boon.json.JsonSerializer;
 import org.boon.json.JsonSerializerFactory;
@@ -41,6 +46,7 @@ public class WebServer {
     public static final JsonSerializer jsonSerializer;    
     private final Options options;
     private final Core core;
+    private final RDF rdf;
     
     
     public WebServer(Core c, Options o) throws Exception {
@@ -51,6 +57,7 @@ public class WebServer {
 
         vertx = VertxFactory.newVertx();        
         http = vertx.createHttpServer();
+        rdf = new RDF();
         
         /*http.websocketHandler(new Handler<ServerWebSocket>() {
 
@@ -97,13 +104,20 @@ public class WebServer {
         }})
         
 
-                
         .noMatch(new StaticFileHandler(vertx, "client/", "index.html", options.compressHTTP, options.cacheStaticFiles));
+        
+
+        new DBPedia(core, vertx.eventBus());
+        new Wikipedia(vertx.eventBus(), r);
+                
+        
         http.requestHandler(r);        
 
+        
         initWebSockets();
         
-        http.listen(8080);
+        
+        http.listen(options.port);
         
         
         //new IRC(vertx.eventBus());
@@ -116,8 +130,13 @@ public class WebServer {
     
     
     public static void main(String[] args) throws Exception {
+        TitanGraph graph = TitanFactory.build()
+                .set("storage.backend", "berkeleyje")
+                .set("storage.directory", "/tmp/graph")
+                .open();
+                
         String optionsPath = args.length > 0 ? args[0] : "options.json";        
-        new WebServer(new Core(), Options.load(optionsPath));
+        new WebServer(new Core(graph), Options.load(optionsPath));
     }
     
     public static class IndexPage {
