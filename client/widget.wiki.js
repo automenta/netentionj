@@ -8,7 +8,7 @@ function getENWikiURL(t) {
 }
 
 
-function newWikiBrowser(selected, onTagAdded, options) {
+function newWikiBrowser(onTagAdded, options) {
 	if (!options) options = { };
 
     var b = newDiv();
@@ -156,7 +156,7 @@ function newWikiBrowser(selected, onTagAdded, options) {
 function newWikiView(v) {
 
     var frame = newDiv().attr('class', 'SelfView');
-    frame.append(newWikiBrowser($N, onWikiTagAdded));
+    frame.append(newWikiBrowser(onWikiTagAdded));
 
     v.append(frame);
 

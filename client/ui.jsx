@@ -714,6 +714,10 @@ $(document).ready(function() {
 });
 
 function initUI() {
+
+    console.log('initUI()');
+
+
 	updateViewControls();
 
 	$('body.timeago').timeago();
@@ -845,9 +849,12 @@ function initUI() {
 	$('#NotificationList').click(function() {
 		$('#NotificationList i').removeClass('blink');
 	});
+
 }
 
 function initSessionUI() { 
+    console.log('initSessionUI()');
+
 	$N.saveAll();
 	updateBrand(); //TODO use backbone Model instead of global function
 

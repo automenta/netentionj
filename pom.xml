@@ -55,6 +55,16 @@
 	<version>0.8.16</version>
 </dependency>
 
+<!--
+<dependency>
+	<groupId>org.crashub</groupId>
+	<artifactId>vertx.shell</artifactId>
+	<version>2.1.0</version>
+</dependency>
+
+-->
+
+
 <dependency>
 	<groupId>org.apache.commons</groupId>
 	<artifactId>commons-math3</artifactId>

@@ -2509,3 +2509,18 @@ table.dataTable.row-border tbody th, table.dataTable.row-border tbody td, table.
 table.dataTable.stripe tbody tr.odd, table.dataTable.display tbody tr.odd {
 	background-color: rgba(225,225,225,0.15);
 }
+
+#AlertConsole {
+    font-size: 80%;
+    line-height: 100%;
+    max-height: 35%;
+    max-width: 35%;
+    overflow: hidden;
+    z-index: 100;
+    font-family: monospace;
+    position: fixed;
+    bottom: 1em;
+    left: 1em;
+    opacity: 0.5f;
+    pointer-events: none;
+}

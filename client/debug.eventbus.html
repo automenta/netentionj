@@ -1,0 +1,20 @@
+<script src="lib/sockjs/sockjs-0.3.4.min.js"></script>
+<script src='lib/sockjs/vertxbus.min.js'></script>
+
+<script>
+
+    var eb = new vertx.EventBus('http://localhost:8080/eventbus');
+
+    eb.onopen = function() {
+
+      eb.registerHandler('public', function(message) {
+
+        console.log('recv: ' + JSON.stringify(message));
+
+      });
+
+      eb.send('public', {name: 'abc', id: 587});
+
+    };
+
+</script>

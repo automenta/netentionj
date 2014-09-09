@@ -22,7 +22,10 @@ import org.vertx.java.core.VertxFactory;
 import org.vertx.java.core.http.HttpServer;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.RouteMatcher;
+import org.vertx.java.core.json.JsonArray;
+import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.json.impl.Json;
+import org.vertx.java.core.sockjs.SockJSServer;
 import org.vertx.mods.web.StaticFileHandler;
 
 
@@ -55,7 +58,6 @@ public class WebServer {
             public void handle(ServerWebSocket e) {
             }
         });*/
-                
         RouteMatcher r = new RouteMatcher()
         
         .get("/", new Handler<HttpServerRequest>() {            
@@ -97,9 +99,15 @@ public class WebServer {
 
                 
         .noMatch(new StaticFileHandler(vertx, "client/", "index.html", options.compressHTTP, options.cacheStaticFiles));
-        
         http.requestHandler(r);        
+
+        initWebSockets();
+        
         http.listen(8080);
+        
+        
+        //new IRC(vertx.eventBus());
+        
         
         System.in.read();
         
@@ -221,6 +229,44 @@ public class WebServer {
         
     }
 
+    public void initWebSockets() {
+        JsonObject config = new JsonObject().putString("prefix", "/eventbus");
+
+        JsonArray noPermitted = new JsonArray();
+        noPermitted.add(new JsonObject());
+
+        SockJSServer sockets = vertx.createSockJSServer(http);
+        sockets.bridge(config, noPermitted, noPermitted);        
+
+        
+//        JsonObject config2 = new JsonObject().putString("prefix", "/echo");
+//        socket.installApp(config2, new Handler<SockJSSocket>() {
+//            public void handle(SockJSSocket sock) {
+//                
+//                Pump.createPump(sock, sock).start();
+//            }
+//        });
+        /*sockets.installApp(new JsonObject().putString("prefix", "/test"), new Default
+        });*/
+
+//        http.requestHandler(new Handler<HttpServerRequest>() {
+//          public void handle(HttpServerRequest req) {
+//            if (req.path().equals("/")) req.response().sendFile("sockjs/index.html"); // Serve the html
+//          }
+//        });
+
+
+//        sockJSServer.installApp(new JsonObject().putString("prefix", "/testapp"), new Handler<SockJSSocket>() {
+//          public void handle(final SockJSSocket sock) {
+//            sock.dataHandler(new Handler<Buffer>() {
+//              public void handle(Buffer data) {
+//                sock.write(data); // Echo it back
+//              }
+//            });
+//          }
+//        });        
+        
+    }
 
 }
 

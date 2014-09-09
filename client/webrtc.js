@@ -125,6 +125,8 @@ function initWebRTC(w) {
     if (webrtc) {
         webrtc.destroy();
     }
+    
+    console.log('initWebRTC()');
 
     webrtc = new Peer({host: window.location.hostname, port: window.location.port, path: '/peer'});
     webrtc.connects = {};

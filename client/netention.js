@@ -11,6 +11,7 @@ var ID_ANONYMOUS = 1;
 var ID_AUTHENTICATED = 2;
 
 
+
 function setClientID(cid, otherSelves) {
     if (cid) {
         $N.set('clientID', cid);
@@ -41,11 +42,11 @@ function netention(f) {
 
     var $NClient = Backbone.Model.extend({
         reset: function() {
-            this.channels = { };
+            this.channels = {};
             this.clearTransients();
             this.set('clientID', 'undefined');
-			this.messages = [];
-			this.connections = { };
+            this.messages = [];
+            this.connections = {};
         },
         clearTransients: function() {
             this.set('layer', {
@@ -54,12 +55,12 @@ function netention(f) {
             });
             this.set('focus', new nobject());
 
-			if (configuration.connection == 'websocket') {
-				var mainChannel = $N.addChannel('main');
-				mainChannel.createdAt = 1382087985419;
-			}
+            if (configuration.connection == 'websocket') {
+                var mainChannel = $N.addChannel('main');
+                mainChannel.createdAt = 1382087985419;
+            }
 
-		},
+        },
         //deprecated
         tag: function(t) {
             return this.class[t];
@@ -87,7 +88,6 @@ function netention(f) {
         getProperty: function(p) {
             return this.property[p];
         },
-
         deleteSelf: function(clientID) {
             var os = this.get('otherSelves');
             if (os.length < 2) {
@@ -109,7 +109,6 @@ function netention(f) {
         getIncidentTags: function(userid, oneOfTags) {
             return objIncidentTags(this.instance, oneOfTags, userid);
         },
-
         layer: function() {
             return this.get('layer');
         },
@@ -129,7 +128,7 @@ function netention(f) {
             if (!target)
                 return;
 
-			//console.log('Becoming', target);
+            //console.log('Becoming', target);
 
             var previousID = $N.id();
 
@@ -145,9 +144,10 @@ function netention(f) {
 
                 $N.set('clientID', targetID);
                 $N.set('otherSelves', _.unique(os));
-				
 
-				$N.sessionStart();
+                
+                $N.sessionStart();
+                
             } else {
                 this.socket.emit('become', typeof target === 'string' ? target : objCompact(target), function(nextID) {
                     if (nextID) {
@@ -163,12 +163,12 @@ function netention(f) {
 
                         $N.clearTransients();
 
-						$N.indexOntology();
+                        $N.indexOntology();
 
                         $N.getUserObjects(function() {
-							$('#NotificationArea').html('Loading my objects...');
+                            $('#NotificationArea').html('Loading my objects...');
                             $N.getAuthorObjects(nextID, function() {
-								$('#NotificationArea').html('Loading new public objects...');
+                                $('#NotificationArea').html('Loading new public objects...');
                                 $N.getLatestObjects(1000, function() {
                                     $N.sessionStart();
                                 }, true);
@@ -186,9 +186,8 @@ function netention(f) {
                 });
             }
         },
-
         connect: function(targetID, whenConnected) {
-			console.log('Websocket start');
+            console.log('Websocket start');
 
             var originalTargetID = targetID;
             var suppliedObject = null;
@@ -278,12 +277,12 @@ function netention(f) {
                      });*/
 
                     socket.on('notice', function(n) {
-						try {
-							$N.notice(n);
-						}
-						catch (e) {
-							console.error(e);
-						}
+                        try {
+                            $N.notice(n);
+                        }
+                        catch (e) {
+                            console.error(e);
+                        }
                     });
 
                     socket.on('addTags', function(t, p) {
@@ -294,7 +293,7 @@ function netention(f) {
                     socket.on('roster', function(r) {
                         $N.set('roster', r);
                     });
-					socket.on('p2p', function(r) {
+                    socket.on('p2p', function(r) {
                         $N.set('p2p', r);
                     });
 
@@ -313,45 +312,44 @@ function netention(f) {
             return socket;
         },
         setWebRTC: function(id, enabled) {
-			if (this.socket)
-            	this.socket.emit('webRTC', id, enabled);
+            if (this.socket)
+                this.socket.emit('webRTC', id, enabled);
         },
         updateRoster: function() {
-			if (configuration.connection !== 'static') {
-				$.getJSON('/users/connected/json', function(r) {
-					$N.set('roster', r);
-					$N.trigger('change:roster');
-				});
-			}
+            if (configuration.connection !== 'static') {
+                $.getJSON('/users/connected/json', function(r) {
+                    $N.set('roster', r);
+                    $N.trigger('change:roster');
+                });
+            }
         },
-
-		addConnection: function(c) {
-			$N.connections[c.id()] = c;
-			var menuitem = $('<li><a href="#">' + c.name() + '</a></li>');
-			$('#ConnectionList').after(menuitem);
-			c.update();
-		},
-
+        addConnection: function(c) {
+            $N.connections[c.id()] = c;
+            var menuitem = $('<li><a href="#">' + c.name() + '</a></li>');
+            $('#ConnectionList').after(menuitem);
+            c.update();
+        },
         indexOntology: function() {
             var that = this;
             that.addAll(that.ontologyProperties);
             that.addAll(that.ontologyClasses);
 
-			later(function() {
-				for (var i = 0; i < that.ontologyClasses.length; i++) {
-					var c = that.ontologyClasses[i];
-					if (!c) return;
+            later(function() {
+                for (var i = 0; i < that.ontologyClasses.length; i++) {
+                    var c = that.ontologyClasses[i];
+                    if (!c)
+                        return;
 
-					that.ontoIndex.add({
-						id: c.id,
-						name: c.name,
-						description: c.description
-					});
+                    that.ontoIndex.add({
+                        id: c.id,
+                        name: c.name,
+                        description: c.description
+                    });
 
-					if (c.icon)
-						defaultIcons[c.id] = c.icon;
-				}
-			});
+                    if (c.icon)
+                        defaultIcons[c.id] = c.icon;
+                }
+            });
 
             //that.trigger('change:tags');
 
@@ -370,12 +368,12 @@ function netention(f) {
         searchOntology: function(query, ontocache) {
             query = query.toLowerCase();
 
-			var terms = this.ontoIndex.pipeline.run(lunr.tokenizer(query));
+            var terms = this.ontoIndex.pipeline.run(lunr.tokenizer(query));
             var results = {};
 
-			//HACK for 3-letter ontology words
-			if (query.indexOf('can') != -1)
-				results['Can'] = 1;
+            //HACK for 3-letter ontology words
+            if (query.indexOf('can') != -1)
+                results['Can'] = 1;
 
             for (var i = 0; i < terms.length; i++) {
                 var T = terms[i];
@@ -405,10 +403,9 @@ function netention(f) {
             });
             return results;
         },
-
         /*geolocate : function(ex) {
          objSetFirstValue(this.myself(), 'spacepoint', {lat: ex[0], lon: ex[1], planet: 'Earth'} );
-
+         
          var that = this;
          this.pub(this.myself(), function(err) {
          notify({
@@ -416,14 +413,14 @@ function netention(f) {
          text: err,
          type: 'Error'
          });
-
+         
          }, function() {
          notify({
          title: 'Geolocated.',
          text: that.myself().geolocation
          });
          that.saveLocal();
-
+         
          });
          },*/
 
@@ -457,11 +454,11 @@ function netention(f) {
 
                 //console.log(X.id, 'deleting replies:', X.reply);
                 /*
-                _.keys(X.reply).forEach(function(r) {
-                    //console.log('deleting reply:', X.reply[r], r, X.reply[r].author !== $N.id());
-                    $N.deleteObject(r, X.reply[r].author !== $N.id());
-                });
-                */
+                 _.keys(X.reply).forEach(function(r) {
+                 //console.log('deleting reply:', X.reply[r], r, X.reply[r].author !== $N.id());
+                 $N.deleteObject(r, X.reply[r].author !== $N.id());
+                 });
+                 */
 
                 that.remove(id);
 
@@ -506,27 +503,26 @@ function netention(f) {
             return true;
 
         },
-
         /*getPlugins: function(withPlugins) {
-            var that = this;
-            this.socket.emit('getPlugins', function(p) {
-                that.unset('plugins');
-                that.set('plugins', p);
-                if (withPlugins)
-                    withPlugins(p);
-            });
-        },
-        setPlugin: function(pid, enabled, callback) {
-            this.socket.emit('setPlugin', pid, enabled, callback);
-        },*/
+         var that = this;
+         this.socket.emit('getPlugins', function(p) {
+         that.unset('plugins');
+         that.set('plugins', p);
+         if (withPlugins)
+         withPlugins(p);
+         });
+         },
+         setPlugin: function(pid, enabled, callback) {
+         this.socket.emit('setPlugin', pid, enabled, callback);
+         },*/
 
         /*getGoals: function(from, to, mineOnly ) {
          var that = this;
-
+         
          if (from == null) {
          return _.where(_.map(this.objectsWithTag('Goal'), function(id) { return that.getObject(id); } ), { delay: 0 });
          }
-
+         
          return _.filter(_.map(this.objectsWithTag('Goal'), function(id) { return that.getObject(id); } ), function(x) {
          if (x.delay == 0) return false;
          var w = x.when || 0;
@@ -536,10 +532,10 @@ function netention(f) {
 
         //called after connection establishd
         sessionStart: function() {
-			initSessionUI();
+            console.log('Session start for identity: ', $N.id());
+            initSessionUI();
 
         },
-
         getObjects: function(query, onObject, onFinished) {
             var that = this;
             //TODO possible security hole, make sure query isnt destructive
@@ -618,17 +614,17 @@ function netention(f) {
 
             function n(y) {
                 if (!y) {
-					console.error('notice() null object');
+                    console.error('notice() null object');
                     return false;
-				}
+                }
 
-				if (!y.id)
-                	y = objExpand(y);
+                if (!y.id)
+                    y = objExpand(y);
 
-				if (!y.id) {
-					//console.error('notice() invalid object', y);
-					return false;
-				}
+                if (!y.id) {
+                    //console.error('notice() invalid object', y);
+                    return false;
+                }
 
                 if (y.removed) {
                     that.deleteObject(y, true);
@@ -681,33 +677,34 @@ function netention(f) {
                     that.add([objTagObjectToTag(y)]);
                 }
 
-				//add missing tags to ontology and index
-				//TODO guess type if it's property
-				if (y.value) {
-					for (var i = 0; i < y.value.length; i++) {
-						var c = y.value[i].id;
-						if (isPrimitive(c)) continue;
-						if ((!$N.class[c]) && (!$N.property[c]) && (!$N.instance[c])) {
-							that.addAll([{
-								id: c, name: c, extend: null
-							}]);
+                //add missing tags to ontology and index
+                //TODO guess type if it's property
+                if (y.value) {
+                    for (var i = 0; i < y.value.length; i++) {
+                        var c = y.value[i].id;
+                        if (isPrimitive(c))
+                            continue;
+                        if ((!$N.class[c]) && (!$N.property[c]) && (!$N.instance[c])) {
+                            that.addAll([{
+                                    id: c, name: c, extend: null
+                                }]);
 
-							that.ontoIndex.add({
-								id: c,
-								name: c
-							});
-						}
+                            that.ontoIndex.add({
+                                id: c,
+                                name: c
+                            });
+                        }
 
-					}
-				}
+                    }
+                }
 
-				if (y.scope == ObjScope.GlobalAdvertise) {
-					if (y.author !== $N.id()) {
-						later(function() {
-							$N.receive(y);
-						});
-					}
-				}
+                if (y.scope == ObjScope.GlobalAdvertise) {
+                    if (y.author !== $N.id()) {
+                        later(function() {
+                            $N.receive(y);
+                        });
+                    }
+                }
 
                 return true;
             }
@@ -726,8 +723,8 @@ function netention(f) {
             }
             if ((anythingChanged) && (!suppressChange)) {
                 if (anythingChangedFromOthers)
-					if (window.updateViewLock) //TEMPORARY, use an emit to decouple this
-                    	updateViewLock(viewUpdatesBuffered + 1);
+                    if (window.updateViewLock) //TEMPORARY, use an emit to decouple this
+                        updateViewLock(viewUpdatesBuffered + 1);
 
 
 
@@ -755,32 +752,32 @@ function netention(f) {
                 if (this.socket) {
                     this.socket.emit('pub', objCompact(object), function(err, objProcessed) {
                         if (err) {
-							if (onErr)
-                            	onErr(object);
+                            if (onErr)
+                                onErr(object);
 
-							notify({
-								title: 'Error saving:',
-								text: err,
-								type: 'error'
-							});
-						}
-						else {
-							if (objProcessed === null) {
-								//null means that the object was untransformed by the server,
-								//so server avoided sending it back
-								objProcessed = object;
-							}
+                            notify({
+                                title: 'Error saving:',
+                                text: err,
+                                type: 'error'
+                            });
+                        }
+                        else {
+                            if (objProcessed === null) {
+                                //null means that the object was untransformed by the server,
+                                //so server avoided sending it back
+                                objProcessed = object;
+                            }
 
-							$N.notice(objProcessed, suppressChange);
+                            $N.notice(objProcessed, suppressChange);
 
-							if (!suppressChange) {
-								if (!object.focus)
-									$N.add(objProcessed);
-								//$N.trigger('change:attention');
-							}
-							if (onSuccess)
-								onSuccess(objProcessed);
-						}
+                            if (!suppressChange) {
+                                if (!object.focus)
+                                    $N.add(objProcessed);
+                                //$N.trigger('change:attention');
+                            }
+                            if (onSuccess)
+                                onSuccess(objProcessed);
+                        }
                     });
                 } else {
                     if (onErr)
@@ -802,7 +799,8 @@ function netention(f) {
             if (!onlySelf) {
                 //fast count
                 _.each(this.tagged, function(v, k) {
-                    if ($N.property[k]) return;
+                    if ($N.property[k])
+                        return;
                     if (v)
                         tagCount[k] = _.keys(v).length;
                 });
@@ -836,36 +834,36 @@ function netention(f) {
             });
         },
         /*save: function(key, value) {
-            $N.set(key, value);
-            localStorage[key] = JSON.stringify(value);
-        },*/
+         $N.set(key, value);
+         localStorage[key] = JSON.stringify(value);
+         },*/
 
         loadAll: function(callback) {
 
-			try {
-				_.extend($N.attributes, JSON.parse(localStorage.$N || '{}'));
-			}
-			catch (e) { $N.attr = { }; }
+            try {
+                _.extend($N.attributes, JSON.parse(localStorage.$N || '{}'));
+            }
+            catch (e) {
+                $N.attr = {};
+            }
 
-			$N.db.getAll(function(err, objects) {
-				if (err) {
-                                    console.log('Database empty');                                    
-				}
-                                else {
-                                    console.log('Loaded ', objects.length, 'objects from local browser');
-                                    $N.notice(objects, false, true);
-                                }
+            $N.db.getAll(function(err, objects) {
+                if (err) {
+                    console.log('Database empty');
+                }
+                else {
+                    console.log('Loaded ', objects.length, 'objects from local browser');
+                    $N.notice(objects, false, true);
+                }
 
-				if (callback)
-					callback();
-			});
+                if (callback)
+                    callback();
+            });
 
         },
-
         saveAll: function() {
-			localStorage.$N = JSON.stringify($N.attributes);
+            localStorage.$N = JSON.stringify($N.attributes);
         },
-
         //TODO rename to 'load initial objects' or something
         getLatestObjects: function(num, onFinished) {
             if (configuration.connection == 'static') {
@@ -879,31 +877,31 @@ function netention(f) {
         },
         getUserObjects: function(onFinished) {
             if (configuration.connection == 'static') {
-					onFinished();
+                onFinished();
             }
-			else {
-				$.getJSON('/object/tag/User/json', function(objs) {
-					$N.notice(objs);
-					onFinished();
-				});
-			}
+            else {
+                $.getJSON('/object/tag/User/json', function(objs) {
+                    $N.notice(objs);
+                    onFinished();
+                });
+            }
         },
         getAuthorObjects: function(userID, onFinished) {
             if (configuration.connection == 'static') {
                 onFinished();
             }
-			else {
-				$.getJSON('/object/author/' + userID + '/json', function(j) {
-					$N.notice(j);
-					onFinished();
-				});
-			}
+            else {
+                $.getJSON('/object/author/' + userID + '/json', function(j) {
+                    $N.notice(j);
+                    onFinished();
+                });
+            }
         },
         startURLRouter: function() {
             if (!this.backboneStarted) {
 
                 this.backboneStarted = true;
-				Backbone.history.start();
+                Backbone.history.start();
 
                 $N.on('change:attention', updateView);
                 $N.on('change:currentView', updateView);
@@ -917,46 +915,42 @@ function netention(f) {
                 callback($N.channels[channel]);
             }
         },
-
-		addChannel: function(channel) {
-			var o = new $N.nobject('!' + channel);
-			o.add('chat', { channel: channel });
-			o.name = channel;
-			o.author = '!' + channel;
-			//o.hidden = true;
-			$N.notice(o);
-			return o;
-		},
-
+        addChannel: function(channel) {
+            var o = new $N.nobject('!' + channel);
+            o.add('chat', {channel: channel});
+            o.name = channel;
+            o.author = '!' + channel;
+            //o.hidden = true;
+            $N.notice(o);
+            return o;
+        },
         channelSend: function(channel, m) {
             $N.socket.emit('channelSend', channel, m);
         },
+        receive: function(message) {
+            var messageIDs = _.pluck($N.messages, 'id');
+            var existingIndex = messageIDs.indexOf(message.id);
+            if (existingIndex != -1) {
+                $N.messages.splice(existingIndex, 1);
+            }
 
-		receive: function(message) {
-			var messageIDs = _.pluck($N.messages, 'id');
-			var existingIndex = messageIDs.indexOf(message.id);
-			if (existingIndex != -1) {
-				$N.messages.splice(existingIndex, 1);
-			}
-
-			$N.messages.push(message);
-			$N.trigger('change:messages');
-			$('#NotificationList i').addClass('blink');
-		},
-		
-		newUser: function(name) {
-			var u = uuid();
-			var uo = u;
-			var o = new nobject(uo, name);
-			o.author = uo;
-			o.scope = ObjScope.Global;
-			o.addTag('Human');
-			o.addTag('User');
-			return o;			
-		}
+            $N.messages.push(message);
+            $N.trigger('change:messages');
+            $('#NotificationList i').addClass('blink');
+        },
+        newUser: function(name) {
+            var u = uuid();
+            var uo = u;
+            var o = new nobject(uo, name);
+            o.author = uo;
+            o.scope = ObjScope.Global;
+            o.addTag('Human');
+            o.addTag('User');
+            return o;
+        }
     });
 
-	var odb = DB('objects' /*{ adapter: 'memory' }*/);
+    var odb = DB('objects' /*{ adapter: 'memory' }*/);
     $N = new Ontology(odb, true, _.extend(new $NClient(), exports));
 
 
@@ -990,7 +984,7 @@ function netention(f) {
         window.addEventListener('beforeunload', function(e) {
             $N.saveAll();
             /*var confirmationMessage = "Saved everything";
-
+             
              (e || window.event).returnValue = confirmationMessage;     //Gecko + IE
              return confirmationMessage;                                //Webkit, Safari, Chrome etc.
              */
@@ -1004,15 +998,86 @@ function netention(f) {
 
 $(document).ready(function() {
 
+
+    window.console = (function(origConsole) {
+
+        if (!window.console)
+            console = {};
+        var isDebug = false,
+                logArray = {
+                    logs: [],
+                    errors: [],
+                    warns: [],
+                    infos: []
+                }
+
+        var ac = $('#AlertConsole');
+        function printConsole(x) {
+            for (var o in x)
+                ac.append(x[o]);
+            ac.append("<br>");
+        }
+        return {
+            log: function() {
+                //logArray.logs.push(arguments)
+                printConsole(arguments);
+                isDebug && origConsole.log && origConsole.log.apply(origConsole, arguments);
+            },
+            warn: function() {
+                //logArray.warns.push(arguments)
+                printConsole(arguments);
+                isDebug && origConsole.warn && origConsole.warn.apply(origConsole, arguments);
+            },
+            error: function() {
+                //logArray.errors.push(arguments)
+                printConsole(arguments);
+                isDebug && origConsole.error && origConsole.error.apply(origConsole, arguments);
+            },
+            info: function(v) {
+                //logArray.infos.push(arguments)
+                //printConsole(arguments);
+                isDebug && origConsole.info && origConsole.info.apply(origConsole, arguments);
+            },
+            debug: function(bool) {
+                //isDebug = bool;
+
+            },
+            logArray: function() {
+                //return logArray;
+            }
+        };
+
+    }(window.console));
+
+//    console.log = function(x) {
+//        
+//        $('#AlertConsole').append(x + "<br/>");
+//
+//        //originalConsoleLog(x);
+//        
+//    };
+//    console.error = console.warn = function(x) {
+//        $('#AlertConsole').append(x + "<br/>");
+//    };
+//    
+
+
+
+    console.log('netention()');
     netention(function(schemaURL, $N) {
+
         $('#NotificationArea').html('System loaded.');
 
+        console.log('loadOntology()');
         $N.loadOntology(schemaURL, function() {
             $('#NotificationArea').html('Ontology ready. Loading objects...');
 
+            console.log('getUserObjects()');
             $N.getUserObjects(function() {
 
+
                 //SETUP ROUTER
+                console.log('Router()');
                 var Workspace = Backbone.Router.extend({
                     routes: {
                         'new': 'new',
@@ -1027,7 +1092,7 @@ $(document).ready(function() {
                         'example': 'completeExample',
                         'user/:userid': 'user',
                         ':view': 'view',
-						':view/tag/:tag': 'viewTag',
+                        ':view/tag/:tag': 'viewTag',
                         'read/*url': 'read'
                                 //"search/:query/:page":  "query"   // #search/kiwis/p7
                     },
@@ -1044,9 +1109,9 @@ $(document).ready(function() {
                         }
                         else {
                             notify({
-                             	title: 'Unknown object',
-                             	text: id
-                             });
+                                title: 'Unknown object',
+                                text: id
+                            });
                         }
                     },
                     view: function(view) {
@@ -1055,21 +1120,21 @@ $(document).ready(function() {
                     viewTag: function(view, tag) {
                         $N.set('currentView', view);
 
-						var tf = new $N.nobject();
-						tf.addTag(tag);
-						$N.setFocus(tf);
+                        var tf = new $N.nobject();
+                        tf.addTag(tag);
+                        $N.setFocus(tf);
 
-						//show sidebar
-						if (!$('#FocusEditWrap').is(':visible'))
-							$('#FocusEditToggleButton').click();
+                        //show sidebar
+                        if (!$('#FocusEditWrap').is(':visible'))
+                            $('#FocusEditToggleButton').click();
                     },
                     user: function(userid) {
                         $N.set('currentView', {view: 'user', userid: userid});
                     },
                     tagNew: function(tag) {
-						var n = new $N.nobject();
-						n.addTag(tag);
-						newPopupObjectEdit(n);
+                        var n = new $N.nobject();
+                        n.addTag(tag);
+                        newPopupObjectEdit(n);
                     },
                     read: function(url) {
                         later(function() {
@@ -1082,104 +1147,111 @@ $(document).ready(function() {
 
 
 
-				initUI();
+                initUI();
 
 
-				var ii = identity();
+                var ii = identity();
 
-				if (ii === ID_AUTHENTICATED) {
-					$('#NotificationArea').html('Authorized.');
-				}
-				else if (ii === ID_ANONYMOUS) {
-					$('#NotificationArea').html('Anonymous.');
-				}
-				else {
-					$('#NotificationArea').html('Read-only public access.');
-					/*$('.loginlink').click(function() {
-					 $('#LoadingSplash').show();
-					 nn.hide();
-					 });*/
-				}
+                
+                if (ii === ID_AUTHENTICATED) {
+                    $('#NotificationArea').html('Authorized.');
+                }
+                else if (ii === ID_ANONYMOUS) {
+                    $('#NotificationArea').html('Anonymous.');
+                }
+                else {
+                    $('#NotificationArea').html('Read-only public access.');
+                    /*$('.loginlink').click(function() {
+                     $('#LoadingSplash').show();
+                     nn.hide();
+                     });*/
+                }
 
-				$('#View').show();
-				$('#LoadingSplash2').hide();
-
-
-
-
-
-				var w = new Workspace();
-				$N.router = w;
-
-				/*
-				if (($N.myself()===undefined) && (identity()!=ID_UNKNOWN)) {
-					openSelectProfileModal("Start a New Profile");
-				}*/
+                $('#View').show();
+                $('#LoadingSplash2').hide();
 
 
 
-				if (configuration.connection == 'static') {
-					$('.websocket').hide();
-
-					$N.loadAll(function() {
-						if ($N.myself() === undefined) {
-							if (!configuration.enableAnonymous) {
-								openSelectProfileModal('Start a New Profile');
-							}
-							else {
-								//start a default anonymous user
-								var x = $N.newUser('Anonymous');
-								$N.become(x);
-							}							
-						} else {
-							$N.indexOntology();
-
-							$N.sessionStart();
-						}
-					});
-				}
-				else if (configuration.connection == 'websocket') {
-					$('.websocket').show();
-
-					$('#NotificationArea').html('Connecting...');
-
-					if ((configuration.autoLoginDefaultProfile) || (configuration.connection == 'static')) {
-						var otherSelves = _.filter($N.get('otherSelves'), function(f) {
-							return $N.getObject(f);
-						});
-						if (otherSelves.length >= 1) {
-							$N.become(otherSelves[0]);
-							return;
-						}
-					}
-
-					if (isAnonymous()) {
-						//show profile chooser
-						openSelectProfileModal('Anonymous Profiles');
-					}
-					else if ($N.myself() === undefined) {
-						if (configuration.requireIdentity)
-							openSelectProfileModal('Start a New Profile');
-						else {
-							$N.sessionStart();
-						}
-					}
 
 
-				}
+                var w = new Workspace();
+                $N.router = w;
 
-
-				//initKeyboard();
+                /*
+                 if (($N.myself()===undefined) && (identity()!=ID_UNKNOWN)) {
+                 openSelectProfileModal("Start a New Profile");
+                 }*/
 
 
 
-				//USEFUL FOR DEBUGGING EVENTS:
-				/*
-				 $N.on('change:attention', function() { console.log('change:attention'); });
-				 $N.on('change:currentView', function() { console.log('change:currentView'); });
-				 $N.on('change:tags', function() { console.log('change:tags'); });
-				 $N.on('change:focus', function() { console.log('change:focus', $N.focus() ); });
-				 */
+                if (configuration.connection == 'static') {
+                    console.log('Connection: static');
+                    
+                    $('.websocket').hide();
+
+                    $N.loadAll(function() {
+                        console.log('Loaded objects from browser DB');
+                        
+                        if ($N.myself() === undefined) {
+                            if (!configuration.enableAnonymous) {
+                                openSelectProfileModal('Start a New Profile');
+                            }
+                            else {
+                                //start a default anonymous user
+                                var x = $N.newUser('Anonymous');
+                                $N.become(x);
+                            }
+                        } else {
+                            $N.indexOntology();
+
+                            $N.sessionStart();
+                        }
+                    });
+                }
+                else if (configuration.connection == 'websocket') {
+                    console.log('Connection: websocket');
+                    
+                    $('.websocket').show();
+
+                    $('#NotificationArea').html('Connecting...');
+
+                    if ((configuration.autoLoginDefaultProfile) || (configuration.connection == 'static')) {
+                        var otherSelves = _.filter($N.get('otherSelves'), function(f) {
+                            return $N.getObject(f);
+                        });
+                        if (otherSelves.length >= 1) {
+                            $N.become(otherSelves[0]);
+                            return;
+                        }
+                    }
+
+                    if (isAnonymous()) {
+                        //show profile chooser
+                        openSelectProfileModal('Anonymous Profiles');
+                    }
+                    else if ($N.myself() === undefined) {
+                        if (configuration.requireIdentity)
+                            openSelectProfileModal('Start a New Profile');
+                        else {
+                            $N.sessionStart();
+                        }
+                    }
+
+
+                }
+
+
+                //initKeyboard();
+
+
+
+                //USEFUL FOR DEBUGGING EVENTS:
+                /*
+                 $N.on('change:attention', function() { console.log('change:attention'); });
+                 $N.on('change:currentView', function() { console.log('change:currentView'); });
+                 $N.on('change:tags', function() { console.log('change:tags'); });
+                 $N.on('change:focus', function() { console.log('change:focus', $N.focus() ); });
+                 */
 
 
             });
@@ -1249,11 +1321,11 @@ function getAvatarURL(s, style) {
      retro: awesome generated, 8-bit arcade-style pixelated faces
      blank: a transparent PNG image (border added to HTML below for demonstration purposes)
      */
-	if (typeof s === 'string') {
-		var i = $N.instance[s];
-		if (i)
-			s = i;
-	}
+    if (typeof s === 'string') {
+        var i = $N.instance[s];
+        if (i)
+            s = i;
+    }
 
     if (s) {
         var e = objFirstValue(s, 'email');
@@ -1297,9 +1369,9 @@ function newPopup(title, p, isModal, existingDiv) {
         close: function() {
             d.remove();
         },
-		closeOnEscape: true,
-		minHeight: 110,
-		//these require jqueryui-events which are currently not included for efficiency reason
+        closeOnEscape: true,
+        minHeight: 110,
+        //these require jqueryui-events which are currently not included for efficiency reason
         show: 'fade',
         hide: 'fade' //'drop'
     }, p || {});
@@ -1337,17 +1409,17 @@ function newPopup(title, p, isModal, existingDiv) {
         d.parent().css('border', 0);
     }
 
-	//Bootstrap Adaptation
-	d.parent().addClass('modal-dialog modal-content');
-	d.prev().addClass('modal-title modal-header navbar navbar-default');
-	var titleSpan = d.prev().find('span').first();
-	titleSpan.css('height', '1.5em');
-	titleSpan.html('<a class="navbar-brand" style="padding: 0">' + titleSpan.text() + '</a>');
+    //Bootstrap Adaptation
+    d.parent().addClass('modal-dialog modal-content');
+    d.prev().addClass('modal-title modal-header navbar navbar-default');
+    var titleSpan = d.prev().find('span').first();
+    titleSpan.css('height', '1.5em');
+    titleSpan.html('<a class="navbar-brand" style="padding: 0">' + titleSpan.text() + '</a>');
 
 
-	var closeButton = d.prev().find('button').first();
-	closeButton.attr('class', 'close');
-	closeButton.html('<i class="fa fa-times"></i>');
+    var closeButton = d.prev().find('button').first();
+    closeButton.attr('class', 'close');
+    closeButton.html('<i class="fa fa-times"></i>');
 
 
     return d;
@@ -1375,21 +1447,21 @@ function setCookie(key, value) {
 }
 
 /*
-function replicate(host) {
-	PouchDB.replicate("objects", host)
-	  .on('change', function (info) {
-  	    console.log('change', info);
-	  }).on('complete', function (info) {
-		console.log('complete', info);
-	  }).on('uptodate', function (info) {
-		console.log('uptodate', info);
-	  }).on('error', function (err) {
-		console.log('err', err);
-	  });
-
-	//$N.db.replicate.from(host)
-}
-function dbreset() {
-	PouchDB.destroy('objects');
-}
-*/
+ function replicate(host) {
+ PouchDB.replicate("objects", host)
+ .on('change', function (info) {
+ console.log('change', info);
+ }).on('complete', function (info) {
+ console.log('complete', info);
+ }).on('uptodate', function (info) {
+ console.log('uptodate', info);
+ }).on('error', function (err) {
+ console.log('err', err);
+ });
+ 
+ //$N.db.replicate.from(host)
+ }
+ function dbreset() {
+ PouchDB.destroy('objects');
+ }
+ */
