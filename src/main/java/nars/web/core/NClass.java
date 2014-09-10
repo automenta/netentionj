@@ -16,7 +16,7 @@ import java.util.Set;
  */
 public class NClass extends NObject {
 
-    static NClass asNObject(final Tag sysTag) {
+    public static NClass asNObject(final Tag sysTag) {
         //TODO cache
         return new NClass(sysTag.name(), sysTag.name());
     }
@@ -48,10 +48,12 @@ public class NClass extends NObject {
     public NClass(String id, String name, List<String> extend) {
         this(id, name, (String)null);
         
-        for (String c : extend) {
-            c = c.trim();
-            if (c.length() == 0) continue;
-            add(c, 1.0);            
+        if (extend!=null) {
+            for (String c : extend) {
+                c = c.trim();
+                if (c.length() == 0) continue;
+                add(c, 1.0);            
+            }
         }
     }
     
@@ -59,7 +61,7 @@ public class NClass extends NObject {
         //TODO
     }
 
-    public Set<String> getSuperTags() {
+    public Set<String> getExtend() {
         return getTags(new Predicate<String>() {
             @Override public boolean apply(String t) {
                 return (!t.equals(Tag.tag.toString()));

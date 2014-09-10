@@ -6,6 +6,7 @@
 
 package nars.web.core;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,6 +17,11 @@ public class NProperty extends NClass {
     
     public final List<String> domain;
 
+    public NProperty(String id, String label, String extend) {
+        super(id, label, extend);
+        this.domain = new ArrayList();
+    }
+    
     public NProperty(String id, String label, List<String> domain, List<String> range) {
         super(id, label, range);
         this.domain = domain;

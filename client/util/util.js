@@ -787,6 +787,7 @@ exports.objUserRelations = objUserRelations;
 
 /** true if its first value is a reference to the Class tag */
 function objIsClass(x) {
+    
     if (x.extend !== undefined) {
 
         if (x.extend === null)
@@ -1078,12 +1079,15 @@ var Ontology = function(db, tagInclude, target) {
                     var vv = [];
                     for (var k in x.value) {
                         var v = x.value[k];
-                        if (v.id === undefined)
-                            v.id = k;
+                        
+                        /*if (v.id === undefined)
+                            v.id = k;*/
+                        
                         if (that.property[v.id] === undefined) {
                             that.add(v);
                         }
                         vv.push(k);
+                        
                     }
                     x.value = vv;
                 }
@@ -1112,7 +1116,10 @@ var Ontology = function(db, tagInclude, target) {
             if (typeof x.extend === "string")
                 x.extend = [x.extend];
 
-            if ((x.extend === null) || (x.extend.length === 0)) {
+            if (!x.extend)
+                x.extend = [];
+            
+            if (x.extend.length === 0) {
                 that.classRoot[x.id] = x;
             }
             else {
@@ -1125,10 +1132,12 @@ var Ontology = function(db, tagInclude, target) {
                         //create an empty class
                         c = {
                             id: v,
-                            extend: null
+                            extend: null,
+                            subclass: []
                         };
                         that.add(c);
                     }
+                    
                     x.class[v] = c;
                     c.subclass[x.id] = x;
                 }

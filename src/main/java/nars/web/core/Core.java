@@ -28,6 +28,7 @@ import com.tinkerpop.pipes.branch.LoopPipe;
 import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -61,8 +62,8 @@ public class Core extends EventEmitter {
 
     
     
-    @Deprecated final Map<String,NProperty> property = new HashMap();
-    @Deprecated final Map<String,NClass> nclass = new HashMap();
+    final Map<String,NProperty> property = new HashMap();
+    final Map<String,NClass> nclass = new HashMap();
     
     private NObject myself;
     
@@ -95,10 +96,7 @@ public class Core extends EventEmitter {
         //default tags
         //List<NObject> c = objectStreamByTag(Tag.tag).collect(Collectors.)
         
-        for (Tag sysTag : Tag.values()) {
-            nclass.put(sysTag.name(), NClass.asNObject(sysTag));
-            addObject(NClass.asNObject(sysTag));
-        }
+        
                 
         //    map.put(1, "one");
         //    map.put(2, "two");
@@ -177,17 +175,27 @@ public class Core extends EventEmitter {
         return null;
     }
     
-    public void addObject(NObject n) {
+    public void addObjects(Iterable<NObject> N) {
         TitanTransaction t = graph.newTransaction();
-        Vertex v = vertex(t, n.id, true);
-        if (n instanceof NClass) {
-            NClass nc = (NClass)n;
-            for (String s : nc.getSuperTags()) {
-                Vertex p = vertex(t, s, true);
-                t.addEdge(null, v, p, "-->");
+        for (NObject n : N) {
+            Vertex v = vertex(t, n.id, true);        
+            if (n instanceof NClass) {
+                NClass nc = (NClass)n;
+                nclass.put(nc.id, nc);
+                for (String s : nc.getExtend()) {
+                    Vertex p = vertex(t, s, true);
+                    t.addEdge(null, v, p, "-->");
+                }
+            }
+            else if (n instanceof NProperty) {
+                //..
             }
         }
         t.commit();
+    }
+    
+    public void addObject(NObject... N) {
+        addObjects(Arrays.asList(N));
     }
     
     /** eigenvector centrality */
@@ -478,7 +486,7 @@ public class Core extends EventEmitter {
     
 
     public Stream<NClass> classStreamRoots() {
-        return nclass.values().stream().filter(n -> n.getSuperTags().isEmpty());        
+        return nclass.values().stream().filter(n -> n.getExtend().isEmpty());        
     }
 
     public String getOntologyJSON() {

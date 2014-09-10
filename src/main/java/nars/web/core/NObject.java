@@ -6,11 +6,14 @@
 
 package nars.web.core;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterators;
-import static com.google.common.collect.Iterators.*;
+import static com.google.common.collect.Iterators.concat;
+import static com.google.common.collect.Iterators.filter;
+import static com.google.common.collect.Iterators.transform;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Longs;
@@ -125,7 +128,9 @@ public class NObject extends Value implements Serializable, Comparable {
 
     @Override
     public String toString() {
-        return name;
+        if ((name!=null) && (name.length() > 0))
+            return name;
+        return id;
     }
     
     public String toStringDetailed() {
@@ -149,9 +154,11 @@ public class NObject extends Value implements Serializable, Comparable {
         return null;        
     }
 
+    @JsonIgnore
     public boolean isClass() {
         return hasTag(Tag.tag);
     }
+    @JsonIgnore
     public boolean isProperty() {
         return hasTag(Tag.property);
     }    

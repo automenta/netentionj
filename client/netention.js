@@ -339,7 +339,9 @@ function netention(f) {
                     var c = that.ontologyClasses[i];
                     if (!c)
                         return;
-
+                    
+                    console.log('Ontology class: ' + c.id);
+                    
                     that.ontoIndex.add({
                         id: c.id,
                         name: c.name,
@@ -852,7 +854,7 @@ function netention(f) {
                     console.log('Database empty');
                 }
                 else {
-                    console.log('Loaded ', objects.length, 'objects from local browser');
+                    console.log('Loaded ', objects.length, ' objects from local browser');
                     $N.notice(objects, false, true);
                 }
 
@@ -1189,9 +1191,7 @@ $(document).ready(function() {
                     
                     $('.websocket').hide();
 
-                    $N.loadAll(function() {
-                        console.log('Loaded objects from browser DB');
-                        
+                    $N.loadAll(function() {                        
                         if ($N.myself() === undefined) {
                             if (!configuration.enableAnonymous) {
                                 openSelectProfileModal('Start a New Profile');

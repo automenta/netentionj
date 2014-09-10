@@ -17,6 +17,7 @@ import static java.util.stream.Collectors.toList;
 import nars.web.core.ContextualizeInterest;
 import nars.web.core.Core;
 import nars.web.util.DBPedia;
+import nars.web.util.NOntology;
 import nars.web.util.RDF;
 import nars.web.util.Wikipedia;
 import org.boon.json.JsonParserFactory;
@@ -137,7 +138,9 @@ public class WebServer {
                 .open();
                 
         String optionsPath = args.length > 0 ? args[0] : "options.json";        
-        new WebServer(new Core(graph), Options.load(optionsPath));
+        Core core = new Core(graph);
+        new NOntology(core);
+        new WebServer(core, Options.load(optionsPath));
     }
     
     public static class IndexPage {
