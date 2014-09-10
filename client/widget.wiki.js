@@ -18,13 +18,14 @@ function newWikiBrowser(onTagAdded, options) {
     var header = newDiv();
     header.addClass('WikiBrowserHeader');
 
-    var backButton = $('<button disabled>Back</button>');
-    var homeButton = $('<button disabled>Bookmarks</button>');
+    var backButton = $('<button disabled><i class="fa fa-arrow-left"></i></button>');
+    var homeButton = $('<button disabled><i class="fa fa-home"></i></button>');
     homeButton.click(function() {
         gotoTag(configuration.wikiStartPage);
     });
-    var searchInput = $('<input placeholder="Search Wikipedia"/>');
-    var searchInputButton = $('<button>&gt;&gt;&gt;</button>');
+    
+    var searchInput = $('<input _placeholder="Search Wikipedia"/>');
+    var searchInputButton = $('<button><i class="fa fa-play"></i></button>');
     searchInput.keyup(function(event) {
         if (event.keyCode == 13)
             searchInputButton.click();
@@ -34,7 +35,8 @@ function newWikiBrowser(onTagAdded, options) {
     });
     header.append(backButton);
     header.append(homeButton);
-    header.append('<button disabled title="Bookmark">*</button>');
+    header.append('<button disabled title="Bookmark"><i class="fa fa-star"></i></button>');
+    header.append('<button disabled><i class="fa fa-refresh"></i></button>');
     header.append(searchInput);
     header.append(searchInputButton);
 
@@ -154,6 +156,30 @@ function newWikiBrowser(onTagAdded, options) {
     return b;
 }
 
+function onWikiTagAdded(d, tag) {
+    d.empty();
+    
+    /*var d = newPopup(target, {
+        width: 650,
+        modal: true
+    });*/
+    
+    
+    var tagBar = newTagBar(self, d);
+    var saveButton = newTagBarSaveButton(self, d, tagBar, function () {
+        //d.dialog('close');
+        d.empty();
+    });
+    var cancelButton = $('<button>Cancel</button>').click(function () {
+        //d.dialog('close');
+        d.empty();
+    });
+
+    d.append( $('<div style="float: left"></div>').append(tag) );
+    d.append( $('<div style="float: left"></div>').append(tagBar) );
+    d.append( $('<div style="float: left"></div>').append(saveButton, cancelButton) );
+}
+
 function newWikiView(v) {
 
     var frame = newDiv().attr('class', 'SelfView');
@@ -161,7 +187,7 @@ function newWikiView(v) {
 
     v.append(frame);
 
-    frame.onChange = function() {
+    frame.onChange = function () {
         //update user summary?
     };
 
@@ -184,8 +210,8 @@ function newWikiView(v) {
      currentUser = x;
      content.empty();
      content.append(newSelfSummary(s, x, content));
-     content.append(contentTags);
-     content.append(contentTime);
+     content.append(contentTags);       
+     content.append(contentTime);       
      updateTags(x);
      }
      

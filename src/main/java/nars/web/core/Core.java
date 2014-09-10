@@ -130,6 +130,7 @@ public class Core extends EventEmitter {
             if (obj instanceof Resource) {
                 String ovu = ((Resource)obj).getURI();
                 Vertex ov = vertex(t, ovu, true);
+                System.out.println("  +: " + subj.getURI() + " " + p.toString() + " " + ovu );
                 t.addEdge(null, sv, ov, p.toString());                
             }
             else if (obj instanceof Literal) {
@@ -152,28 +153,21 @@ public class Core extends EventEmitter {
     }
     
     
-    /*public Vertex vertex(String uri, boolean createIfNonExist) {
-        //System.out.println("indexed keys: " + graph.getIndexedKeys(String.class));
-        //Iterable<Vertex> ee = graph.getVertices("uri",uri);
-        //TitanIndexQuery iq = graph.indexQuery("uri", uri).limit(1);        
-        TitanGraphQuery g = graph.query().has("uri", uri).limit(1);
-        for (Object v : g.vertices()) {
-            return (Vertex)v;
-        }
-        if (createIfNonExist)  {
-            Vertex v = graph.addVertex(null);
-            v.setProperty("uri", uri);
-            return v;            
-        }
-        return null;
-    }*/
+    public Vertex vertex(String uri, boolean createIfNonExist) {
+        TitanTransaction t = graph.newTransaction();
+        Vertex r = vertex(t, uri, createIfNonExist);
+        t.commit();
+        return r;
+    }
+    
     public Vertex vertex(TitanTransaction t, String uri, boolean createIfNonExist) {
         //System.out.println("indexed keys: " + graph.getIndexedKeys(String.class));
         //Iterable<Vertex> ee = graph.getVertices("uri",uri);
         //TitanIndexQuery iq = graph.indexQuery("uri", uri).limit(1);                
         TitanGraphQuery g = t.query().has("uri", uri).limit(1);
         for (Object v : g.vertices()) {
-            return (Vertex)v;
+            if (v!=null)
+                return (Vertex)v;
         }
         if (createIfNonExist)  {
             Vertex v = t.addVertex(null);

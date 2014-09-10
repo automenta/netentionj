@@ -32,7 +32,7 @@ import org.vertx.java.core.eventbus.Message;
  *
  * @author me
  */
-public class DBPedia {
+public class DBPedia implements Handler<Message> {
     private final Core core;
     
  
@@ -49,21 +49,30 @@ public class DBPedia {
     
     public DBPedia(Core c, EventBus b) {
         this.bus = b;
-        b.registerHandler("wikipedia", new Handler<Message>() {
-
-            @Override
-            public void handle(Message e) {
-                String id = e.body().toString();
-                learn(id);
-            }
-            
-        });
         this.core = c;
+        b.registerHandler("wikipedia", this);
     }
     
-    public void learn(String wikiID) {
+    public boolean learnedRecently(String wikiID) {
+        //TODO check actual date or use LRU cache
+        if (core.vertex(wikiID, false) == null) {            
+            return false;
+        }
+        System.out.println(wikiID + " cached");
+        return true;
+    }
+    
+    @Override
+    public void handle(Message e) {
+        String wikiURL = e.body().toString();
+        if (!learnedRecently(wikiURL))
+            learn(wikiURL);
+        bus.publish("interest", wikiURL);
+    }
+    
+    public void learn(String wikiURL) {
         try {
-            Query query = QueryFactory.create(getDBPediaQuery(wikiID)); //s2 = the query above
+            Query query = QueryFactory.create(getDBPediaQuery(wikiURL)); //s2 = the query above
             QueryExecution qExe = QueryExecutionFactory.sparqlService( "http://dbpedia.org/sparql", query );
 
             qExe.setTimeout(timeout);
@@ -73,21 +82,15 @@ public class DBPedia {
 
             core.addRDF(qmodel);
             
-            System.out.println("DBPedia finished learning " + wikiID + "; RDF model size: +" + qmodel.size());            
+            System.out.println("DBPedia finished learning " + wikiURL + "; RDF model size: +" + qmodel.size());            
         }
         catch (Exception e) {
-            System.out.println("DBPedia timed out " + wikiID);            
+            System.out.println("DBPedia timed out " + wikiURL);            
         }
-        finally {
-            bus.publish("interest", wikiID);
-        }
-        
-        
-        
 
     }
 
-    public static String getDBPediaQuery(String res) {
+    public static String getDBPediaQuery(String wikiURL) {
         //String q = "SELECT DISTINCT * WHERE {?object ?t <http://dbpedia.org/resource/" + res + "> ";
         /*String q = "DESCRIBE * WHERE { ";
         q += "<http://dbpedia.org/resource/" + res + "> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type ; ";
@@ -104,7 +107,7 @@ public class DBPedia {
         
         //http://dbpedia.org/resource/
         
-        String q = "CONSTRUCT WHERE { <" + res + "> ";
+        String q = "CONSTRUCT WHERE { <" + wikiURL + "> ";
         q += "a ?o";
         q += "; <http://www.w3.org/2000/01/rdf-schema#label> ?p";
         q += "; <http://purl.org/dc/terms/subject> ?s";

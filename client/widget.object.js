@@ -91,6 +91,176 @@ function newAvatarImage(s) {
 
 
 
+function newTagBarSaveButton(s, currentTag, tagBar, onSave) {
+    var saveButton = $('<button>Save</button>');
+    saveButton.addClass('WikiTagSave');
+    saveButton.click(function () {
+        if (currentTag == null) {
+            alert('Choose a wikitag.');
+            return;
+        }
+
+        var selTags = [];
+
+        tagBar.find('div input').each(function () {
+            var x = $(this);
+            var c = x[0].checked;
+            if (c) {
+                var i = x.attr('id');
+                var i = i.split('_')[1];
+                selTags.push(i);
+            }
+        });
+        if (selTags.length > 0) {
+            var id = $N.id() + '-' + currentTag;
+            var o = objNew(id, currentTag);
+            o.author = o.subject = $N.id();
+
+            for (var i = 0; i < selTags.length; i++) {
+                var T = selTags[i];
+                if (!$N.getTag('DoLearn')) {
+                    //apply 3-vector
+                    objRemoveTag(o, 'Do');
+                    objRemoveTag(o, 'Learn');
+                    objRemoveTag(o, 'Teach');
+
+                    if (T == 'Learn') {
+                        objAddTag(o, 'Learn');
+                    } else if (T == 'Teach') {
+                        objAddTag(o, 'Teach');
+                    } else if (T == 'Do') {
+                        objAddTag(o, 'Do');
+                    } else if (T == 'DoLearn') {
+                        objAddTag(o, 'Learn', 0.5);
+                        objAddTag(o, 'Do', 0.5);
+                    } else if (T == 'DoTeach') {
+                        objAddTag(o, 'Teach', 0.5);
+                        objAddTag(o, 'Do', 0.5);
+                    }
+
+                    continue;
+                }
+
+                objAddTag(o, T);
+            }
+            objAddTag(o, currentTag);
+
+            $N.pub(o, function (err) {
+                notify({
+                    title: 'Error saving:',
+                    text: err,
+                    type: 'error'
+                });
+            }, function () {
+                $N.notice(o);
+                notify({
+                    title: 'Saved',
+                    text: currentTag
+                });
+            });
+
+            if (onSave)
+                onSave();
+        } else {
+            alert('Choose 1 or more tags to combine with the wikitag.');
+        }
+
+
+    });
+    return saveButton;
+}
+
+function newTagBar(s, currentTag) {
+    var tagBar = $('<div/>');
+    tagBar.addClass('TagBar');
+
+    //http://jqueryui.com/button/#checkbox
+    var skillSet = $('<div/>');
+    var canNeedSet = $('<div/>');
+
+    function tbutton(tag, target) {
+        var b = $('<input/>');
+        var cid = uuid();// + 'skill_' + tag + '_' + currentTag;
+        b.attr('id', cid);
+        b.attr('type', 'checkbox');
+
+        b.html(tag);
+        b.click(function (event) {
+            var t = event.target;
+            if (t.checked) {
+                target.children('input').each(function () {
+                    var x = $(this);
+                    if (x.attr('id') != t.id) {
+                        x.attr('checked', false);
+                    }
+                });
+                target.buttonset('refresh');
+            }
+        });
+        target.append(b);
+
+        var tt = $N.tag(tag);
+
+        var tagname;
+        var tooltip;
+        
+//        if (tagAlias && (tagAlias[tag])) {
+//            tagname = tagAlias[tag];
+//            if (tt)
+//                tooltip = tt.name;
+//        } else
+            tagname = tt ? tt.name : tag;
+
+        var icon = getTagIcon(tag);
+        var iconString = '';
+        if (icon)
+            iconString = '<img src="' + icon + '" style="height: 1em"/>&nbsp;';
+
+        var l = $('<label for="' + cid + '">' + iconString + tagname + '</label>');
+        l.attr('title', tooltip);
+        target.append(l);
+        return b;
+    }
+
+
+    {
+        /*if (configuration.knowLevels == 6) {
+            //6 curiosume levels
+            tbutton('Learn', skillSet);
+            tbutton('LearnDo', skillSet);
+            tbutton('DoLearn', skillSet);
+            tbutton('DoTeach', skillSet);
+            tbutton('TeachDo', skillSet);
+            tbutton('Teach', skillSet);
+        } else if (configuration.knowLevels == 5) {
+            tbutton('Learn', skillSet);
+            tbutton('DoLearn', skillSet);
+            tbutton('Do', skillSet);
+            tbutton('DoTeach', skillSet);
+            tbutton('Teach', skillSet);
+        } else if (configuration.knowLevels == 3)*/ {
+            tbutton('Learn', skillSet);
+            tbutton('Do', skillSet);
+            tbutton('Teach', skillSet);
+        }
+    }
+    tagBar.append(skillSet);
+    skillSet.buttonset();
+
+    tagBar.append('<br/>');
+
+    tbutton('Can', canNeedSet);
+    tbutton('Need', canNeedSet);
+    tbutton('Not', canNeedSet);
+    tagBar.append(canNeedSet);
+    canNeedSet.buttonset();
+
+    tagBar.append('<br/>');
+
+    return tagBar;
+}
+
+
 
 //(function is globalalized for optimization purposes)
 function _onTagButtonClicked() {

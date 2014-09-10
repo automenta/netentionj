@@ -833,9 +833,6 @@ div.olControlZoom { top:auto !important; bottom:8px !important; }*/
 }
 
 
-.TagBar {
-    font-size: 85%;
-}
 .TagBar .ui-buttonset label span {
     padding-right: 0.5em;
     padding-left: 0.5em;

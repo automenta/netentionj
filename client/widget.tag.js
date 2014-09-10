@@ -3,7 +3,7 @@ function newTagger(options, onFinished, tagRestrictions, maxTags) {
     var selected, inDialog;
     var headerTarget;
     var addImmediately = false;
-	var cancelButton = true;
+    var cancelButton = true;
     if (!options) {
         options = {};
     }
@@ -14,8 +14,8 @@ function newTagger(options, onFinished, tagRestrictions, maxTags) {
         selected = options.selected;
         inDialog = options.inDialog;
         addImmediately = options.addImmediately;
-		cancelButton = options.cancelButton;
-		headerTarget = options.headerTarget;
+        cancelButton = options.cancelButton;
+        headerTarget = options.headerTarget;
     }
 
     if (!selected)
@@ -34,20 +34,20 @@ function newTagger(options, onFinished, tagRestrictions, maxTags) {
     var clearButton = $('<button title="Clear the selected tags">Clear</button>');
 
     var b = $('<button class="btn-primary"><b>OK</b></button>');
-	if (!cancelButton)
-		b.hide();
+    if (!cancelButton)
+        b.hide();
 
     var tagsCombo = $('<span></span>').attr('id', 'tagsCombo').addClass('well well-sm');
     tagsCombo.update = function() {
         tagsCombo.empty();
         if (tags.length === 0) {
-			tagsCombo.hide();
+            tagsCombo.hide();
             clearButton.hide();
             b.text('Cancel');
         }
         else {
-			tagsCombo.show();
-			clearButton.show();
+            tagsCombo.show();
+            clearButton.show();
             b.html('<b>Select</b>');
 
             for (var i = 0; i < tags.length; i++)
@@ -78,22 +78,22 @@ function newTagger(options, onFinished, tagRestrictions, maxTags) {
     }
 
     function loadBrowser(w) {
-		later(function() {
-			currentBrowser = w(selected, onTagAdded);
-			t.html(currentBrowser);
-		});
+        later(function() {
+            currentBrowser = w(onTagAdded, selected);
+            t.html(currentBrowser);
+        });
     }
 
     var selectBar = $('<div/>').attr('id', 'tagSelectHeader').addClass('taggerHeader');
 
-	var modeFunctions = [];
+    var modeFunctions = [];
     function addOption(label, browserFunction) {
         var b = $('<button type="button">' + label + '</button>')
-					.appendTo(selectBar)
-					.click(function() {
-						loadBrowser(browserFunction);
-					});
-		modeFunctions.push(browserFunction);
+                .appendTo(selectBar)
+                .click(function() {
+                    loadBrowser(browserFunction);
+                });
+        modeFunctions.push(browserFunction);
     }
     if (!tagRestrictions) {
         addOption('Index', newTreeBrowser);
@@ -122,28 +122,28 @@ function newTagger(options, onFinished, tagRestrictions, maxTags) {
         });
     }
 
-	if (!options.addImmediately) {
-		var saveBar = $('<span/>').css('float', 'right');
-		tagsCombo.update();
-		saveBar.append(tagsCombo);
+    if (!options.addImmediately) {
+        var saveBar = $('<span/>').css('float', 'right');
+        tagsCombo.update();
+        saveBar.append(tagsCombo);
 
-		clearButton.click(function() {
-			if (tags.length)
-				if (confirm('Clear selected tags?')) {
-					tags = [];
-					tagsCombo.update();
-				}
-		});
-		saveBar.append(clearButton);
+        clearButton.click(function() {
+            if (tags.length)
+                if (confirm('Clear selected tags?')) {
+                    tags = [];
+                    tagsCombo.update();
+                }
+        });
+        saveBar.append(clearButton);
 
-		if (maxTags !== 1) {
-			b.click(function() {
-				onFinished(tags);
-			}).appendTo(saveBar);
-		}
+        if (maxTags !== 1) {
+            b.click(function() {
+                onFinished(tags);
+            }).appendTo(saveBar);
+        }
 
-		selectBar.append(saveBar);
-	}
+        selectBar.append(saveBar);
+    }
 
 
 
@@ -160,7 +160,7 @@ function newTagger(options, onFinished, tagRestrictions, maxTags) {
     t.attr('style', 'clear: both');
     d.append(t);
 
-	selectBar.find('button').addClass('btn btn-default');
+    selectBar.find('button').addClass('btn btn-default');
 
     //default
     if (modeFunctions[0])
@@ -203,7 +203,7 @@ function newNeedsBrowser() {
 }
 
 
-function newTreeBrowser(selected, onTagAdded) {
+function newTreeBrowser(onTagAdded, selected) {
     var e = newDiv().addClass('SelfTimeTagTree');
 
     $('.TagChoice').remove();
@@ -214,25 +214,25 @@ function newTreeBrowser(selected, onTagAdded) {
         onTagAdded($(this).attr('id').substring(prefix.length));
     };
 
-	later(function() {
-		newTagTree({
-			target: e,
-			newTagDiv: function(id, content) {
-				var ti = getTagIcon(id) || defaultIcons.unknown;
+    later(function() {
+        newTagTree({
+            target: e,
+            newTagDiv: function(id, content) {
+                var ti = getTagIcon(id) || defaultIcons.unknown;
 
-				return {
-					label: '<button id="' + prefix + id + '" class="TagChoice" style="background-image: url(' + ti + ')">' +
-						   content + '</button>'
-				};
-			},
-			onCreated: function() {
-				e.find('.TagChoice').each(function(x) {
-					$(this).click(_onTagAddedFunc);
-				});
-			}
-		});
+                return {
+                    label: '<button id="' + prefix + id + '" class="TagChoice" style="background-image: url(' + ti + ')">' +
+                            content + '</button>'
+                };
+            },
+            onCreated: function() {
+                e.find('.TagChoice').each(function(x) {
+                    $(this).click(_onTagAddedFunc);
+                });
+            }
+        });
 
-	});
+    });
 
     return e;
 }
@@ -357,10 +357,10 @@ function newTagTree(param) {
         a.children('ul').children('li').children('div').children('.jqtree-toggler').click();
 
         if (param.onCreated)
-			param.onCreated(a);
+            param.onCreated(a);
 
 
-	});
+    });
 
 
     return tree;
@@ -374,16 +374,16 @@ function newObjectSelector(T) {
     var maxDisplayedObjects = 64;
     var updatePeriodMS = 300;
 
-    return function(selected, onTagAdded) {
+    return function(onTagAdded, selected) {
         var e = newDiv();
         var keywordFilter = null;
 
         var keywordInput = $('<input type="text" placeholder="Keywords"/>');
         keywordInput.bind('propertychange keyup input paste', function() {
-           keywordFilter = keywordInput.val().toLowerCase();
-           if (keywordFilter.length === 0)
-               keywordFilter = null;
-           update();
+            keywordFilter = keywordInput.val().toLowerCase();
+            if (keywordFilter.length === 0)
+                keywordFilter = null;
+            update();
         });
         e.append(keywordInput);
 
