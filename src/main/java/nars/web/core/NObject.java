@@ -93,6 +93,7 @@ public class NObject extends Value implements Serializable, Comparable {
         return Iterators.contains(iterateTags(true), t);
     }
 
+    @JsonIgnore
     public Set<String> getTags() {
         return Sets.newHashSet(iterateTags(true));
     }
@@ -115,6 +116,7 @@ public class NObject extends Value implements Serializable, Comparable {
         return i;
     }
     
+    @JsonIgnore
     public Set<String> getTags(final Predicate<String> p) {
         Set<String> s = new HashSet();
         for (Map.Entry<String, Object> v : value.entries()) {
@@ -163,6 +165,7 @@ public class NObject extends Value implements Serializable, Comparable {
         return hasTag(Tag.property);
     }    
 
+    @JsonIgnore
     public Map<String, Double> getTagStrengths() {
         Map<String,Double> s = new HashMap();
         for (Map.Entry<String, Object> e: value.entries()) {

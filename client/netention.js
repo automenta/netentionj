@@ -1012,12 +1012,25 @@ $(document).ready(function() {
                     warns: [],
                     infos: []
                 }
-
-        var ac = $('#AlertConsole');
-        function printConsole(x) {
-            for (var o in x)
-                ac.append(x[o]);
-            ac.append("<br>");
+        var maxAlerts = 8;
+        var linesShown = 0;
+        var ac = $('#AlertConsole');        
+        
+        function printConsole(x) {            
+            
+            var numChildren = ac.children().size();
+            
+            for (var o in x) {
+                ac.append('<div>' + x[o] + '<br/></div>');
+                linesShown++;
+            }
+            
+            var toRemove = linesShown - maxAlerts;            
+            if (toRemove > 0) {
+                ac.children().slice(0, toRemove).remove();
+                linesShown-=toRemove;
+            }
+            
         }
         return {
             log: function() {

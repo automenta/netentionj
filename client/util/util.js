@@ -282,7 +282,7 @@ function objName(x, newName) {
 }
 exports.objName = objName;
 
-var primitiveRegEx = /^(boolean|text|html|integer|real|url|object|spacepoint|timepoint|timerange|sketch|markdown|image|tagcloud|chat)$/;
+var primitiveRegEx = /^(class|property|boolean|text|html|integer|real|url|object|spacepoint|timepoint|timerange|sketch|markdown|image|tagcloud|chat)$/;
 
 function isPrimitive(t) {
     return primitiveRegEx.test(t);
@@ -793,12 +793,15 @@ function objIsClass(x) {
         if (x.extend === null)
             return true;
 
-        if ((typeof x.extend) === "string") {
+        else if ((typeof x.extend) === "string") {
             return (!isPrimitive(x.extend));
         }
 
-        if (Array.isArray(x.extend))
+        else if (Array.isArray(x.extend)) {
+            if ((x.extend.length === 1) && (isPrimitive(x.extend[0])))
+                return false;
             return true;
+        }
     }
     return false;
 }
@@ -1053,7 +1056,19 @@ var Ontology = function(db, tagInclude, target) {
 
         that.object[x.id] = x;
 
-        if (objIsClass(x)) {
+        if (objIsProperty(x)) {
+            that.property[x.id] = x;
+            x._property = true;
+            delete that.class[x.id];
+            delete x._class;
+            delete that.instance[x.id];
+            delete x._instance;
+            that.serializedPropreties = null;
+            that.serializedJSON = null;
+
+            //indexInstance(x, false); //index properties?
+        }
+        else if (objIsClass(x)) {
             var existing = that.class[x.id];
             var existingValues;
             if (!existing) {
@@ -1127,6 +1142,9 @@ var Ontology = function(db, tagInclude, target) {
 
                 for (var i = 0; i < x.extend.length; i++) {
                     var v = x.extend[i];
+                    
+                    if (isPrimitive(v)) continue;
+                    
                     var c = that.class[v];
                     if (!c) {
                         //create an empty class
@@ -1147,19 +1165,7 @@ var Ontology = function(db, tagInclude, target) {
             that.serializedJSON = null;
 
             //indexInstance(x, false); //index classes?
-        }
-        else if (objIsProperty(x)) {
-            that.property[x.id] = x;
-            x._property = true;
-            delete that.class[x.id];
-            delete x._class;
-            delete that.instance[x.id];
-            delete x._instance;
-            that.serializedPropreties = null;
-			that.serializedJSON = null;
-
-            //indexInstance(x, false); //index properties?
-        }
+        }        
         else {
 
             if (that.indexingInstance(x)) {

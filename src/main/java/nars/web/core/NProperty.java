@@ -28,7 +28,7 @@ public class NProperty extends NClass {
     }
 
     protected void addDefaultTags() {
-        add(Tag.property.toString(), 1.0);        
+        //add(Tag.property.toString(), 1.0);        
     }
     
     

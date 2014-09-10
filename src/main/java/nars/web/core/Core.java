@@ -179,16 +179,18 @@ public class Core extends EventEmitter {
         TitanTransaction t = graph.newTransaction();
         for (NObject n : N) {
             Vertex v = vertex(t, n.id, true);        
-            if (n instanceof NClass) {
+            if (n instanceof NProperty) {
+                NProperty np = (NProperty)n;
+                property.put(np.id, np);
+                //TODO add to graph?
+            }
+            else if (n instanceof NClass) {
                 NClass nc = (NClass)n;
                 nclass.put(nc.id, nc);
                 for (String s : nc.getExtend()) {
                     Vertex p = vertex(t, s, true);
                     t.addEdge(null, v, p, "-->");
                 }
-            }
-            else if (n instanceof NProperty) {
-                //..
             }
         }
         t.commit();
