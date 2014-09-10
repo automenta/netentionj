@@ -16,11 +16,15 @@ import com.thinkaurelius.titan.core.Cardinality;
 import com.thinkaurelius.titan.core.PropertyKey;
 import com.thinkaurelius.titan.core.TitanGraph;
 import com.thinkaurelius.titan.core.TitanGraphQuery;
+import com.thinkaurelius.titan.core.TitanTransaction;
 import com.thinkaurelius.titan.core.schema.TitanGraphIndex;
 import com.thinkaurelius.titan.core.schema.TitanManagement;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.gremlin.java.GremlinPipeline;
+import com.tinkerpop.pipes.PipeFunction;
+import com.tinkerpop.pipes.branch.LoopPipe;
 import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -45,7 +49,7 @@ public class Core extends EventEmitter {
     public Network net;
     
     //https://github.com/thinkaurelius/titan/blob/c958ad2a2bafd305a33655347fef17138ee75088/titan-test/src/main/java/com/thinkaurelius/titan/graphdb/TitanIndexTest.java
-    private final TitanGraph graph;
+    public final TitanGraph graph;
 
     public static class SaveEvent {
         public final NObject object;
@@ -95,9 +99,7 @@ public class Core extends EventEmitter {
             nclass.put(sysTag.name(), NClass.asNObject(sysTag));
             addObject(NClass.asNObject(sysTag));
         }
-        
-        printGraph();
-        
+                
         //    map.put(1, "one");
         //    map.put(2, "two");
         //    // map.keySet() is now [1,2]
@@ -110,9 +112,12 @@ public class Core extends EventEmitter {
         //    // map.keySet() is now [1,2]
         //
         //    db.close();
+        
     }
 
     public void addRDF(Model rdf) {
+        
+        TitanTransaction t = graph.newTransaction();
         
         StmtIterator l = rdf.listStatements();
         while (l.hasNext()) {
@@ -121,10 +126,11 @@ public class Core extends EventEmitter {
             RDFNode obj = s.getObject();
             Property p = s.getPredicate();
             
-            Vertex sv = uriVertex(subj.getURI());
+            Vertex sv = vertex(t, subj.getURI(), true);
             if (obj instanceof Resource) {
-                Vertex ov = uriVertex(((Resource)obj).getURI());
-                graph.addEdge(null, sv, ov, p.toString());                
+                String ovu = ((Resource)obj).getURI();
+                Vertex ov = vertex(t, ovu, true);
+                t.addEdge(null, sv, ov, p.toString());                
             }
             else if (obj instanceof Literal) {
                 //TODO support other literal types
@@ -134,7 +140,8 @@ public class Core extends EventEmitter {
             }
             
         }
-        printGraph();
+        t.commit();
+        
     }
     
     public void printGraph() {
@@ -144,7 +151,8 @@ public class Core extends EventEmitter {
             System.out.println(e.toString() + " " + e.getLabel() + " " + e.getPropertyKeys());        
     }
     
-    public Vertex uriVertex(String uri) {        
+    
+    /*public Vertex vertex(String uri, boolean createIfNonExist) {
         //System.out.println("indexed keys: " + graph.getIndexedKeys(String.class));
         //Iterable<Vertex> ee = graph.getVertices("uri",uri);
         //TitanIndexQuery iq = graph.indexQuery("uri", uri).limit(1);        
@@ -152,21 +160,64 @@ public class Core extends EventEmitter {
         for (Object v : g.vertices()) {
             return (Vertex)v;
         }
-        Vertex v = graph.addVertex(null);
-        v.setProperty("uri", uri);
-        
-        return v;            
+        if (createIfNonExist)  {
+            Vertex v = graph.addVertex(null);
+            v.setProperty("uri", uri);
+            return v;            
+        }
+        return null;
+    }*/
+    public Vertex vertex(TitanTransaction t, String uri, boolean createIfNonExist) {
+        //System.out.println("indexed keys: " + graph.getIndexedKeys(String.class));
+        //Iterable<Vertex> ee = graph.getVertices("uri",uri);
+        //TitanIndexQuery iq = graph.indexQuery("uri", uri).limit(1);                
+        TitanGraphQuery g = t.query().has("uri", uri).limit(1);
+        for (Object v : g.vertices()) {
+            return (Vertex)v;
+        }
+        if (createIfNonExist)  {
+            Vertex v = t.addVertex(null);
+            v.setProperty("uri", uri);
+            return v;            
+        }
+        return null;
     }
     
     public void addObject(NObject n) {
-        Vertex v = uriVertex(n.id);
+        TitanTransaction t = graph.newTransaction();
+        Vertex v = vertex(t, n.id, true);
         if (n instanceof NClass) {
             NClass nc = (NClass)n;
             for (String s : nc.getSuperTags()) {
-                Vertex p = uriVertex(s);
-                graph.addEdge(null, v, p, "-->");
+                Vertex p = vertex(t, s, true);
+                t.addEdge(null, v, p, "-->");
             }
         }
+        t.commit();
+    }
+    
+    /** eigenvector centrality */
+    public Map<Vertex, Number> centrality(final TitanTransaction t, final int iterations, Vertex start) {
+        Map<Vertex, Number> map = new HashMap();
+        
+        new GremlinPipeline<Vertex, Vertex>(t.getVertices()).start(start).as("x").both().groupCount(map).loop("x", 
+                new PipeFunction<LoopPipe.LoopBundle<Vertex>, Boolean>() {
+
+                    int c = 0;
+                    @Override
+                    public Boolean compute(LoopPipe.LoopBundle<Vertex> a) {                      
+                        return (c++ < iterations);
+                    }
+        }).iterate();
+        
+        return map;
+
+        //out(label);
+        /*
+        m = [:]; c = 0;
+        g.V.as('x').out.groupCount(m).loop('x'){c++ < 1000}
+            m.sort{-it.value}
+        */
     }
     
     public Core online(int listenPort) throws IOException, UnknownHostException, SocketException, InterruptedException {

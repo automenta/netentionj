@@ -59,17 +59,22 @@ public class Wikipedia {
             }
         }
                 
-        doc.getElementsByTag("head").remove();
-        doc.getElementsByTag("script").remove();
-        doc.getElementsByTag("link").remove();
-        doc.getElementById("top").remove();
-        doc.getElementById("siteSub").remove();
-        doc.getElementById("contentSub").remove();
-        doc.getElementById("jump-to-nav").remove();
-        doc.getElementsByClass("IPA").remove();
-        doc.getElementsByClass("search-types").remove();
-        doc.getElementsByClass("mw-specialpage-summary").remove();
-        doc.getElementsByClass("mw-search-top-table").remove();
+        try {
+            doc.getElementsByTag("head").remove();
+            doc.getElementsByTag("script").remove();
+            doc.getElementsByTag("link").remove();
+            doc.getElementById("top").remove();
+            doc.getElementById("siteSub").remove();
+            doc.getElementById("contentSub").remove();
+            doc.getElementById("jump-to-nav").remove();
+            doc.getElementsByClass("IPA").remove();
+            doc.getElementsByClass("search-types").remove();
+            doc.getElementsByClass("mw-specialpage-summary").remove();
+            doc.getElementsByClass("mw-search-top-table").remove();
+        }
+        catch (Exception e) {
+            System.out.println(e);
+        }
         
         Map<String,Object> m = new HashMap();
         m.put("url", location);
@@ -81,7 +86,10 @@ public class Wikipedia {
 
         req.response().end(content);        
         
-        return location;
+        if (location.contains("/"))
+            location = location.substring(location.lastIndexOf("/")+1, location.length());
+        
+        return "http://dbpedia.org/resource/" + location;
     }
     
     public class WikiPage implements Handler<HttpServerRequest> {      
@@ -94,7 +102,7 @@ public class Wikipedia {
 
                 Document doc = Jsoup.connect(u).get();
                                 
-                String wikipagae = returnPage(doc, req);
+                wikipage = returnPage(doc, req);
                 
                 bus.publish("wikipedia", wikipage);
                 

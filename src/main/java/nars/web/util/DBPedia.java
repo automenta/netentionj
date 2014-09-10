@@ -42,10 +42,13 @@ public class DBPedia {
     
     //String query = "SELECT DISTINCT *  WHERE  {{<http://dbpedia.org/resource/Vienna> ?property ?object. FILTER(!isLiteral(?object))} UNION 	 {<http://dbpedia.org/resource/Vienna> ?property 	 ?object.FILTER(isLiteral(?object)).FILTER(lang(?object) =\"it\")} UNION 	 {<http://dbpedia.org/resource/Vienna> ?property 	 ?object.FILTER(isLiteral(?object)).FILTER(lang(?object) =\"en\")}}  ORDER BY ?property";
     //SELECT DISTINCT * WHERE {?object ?t <http://dbpedia.org/resource/Wolfgang_Amadeus_Mozart> } LIMIT 100 
+    private final EventBus bus;
+    private long timeout = 5000;
     
     
     
     public DBPedia(Core c, EventBus b) {
+        this.bus = b;
         b.registerHandler("wikipedia", new Handler<Message>() {
 
             @Override
@@ -59,16 +62,29 @@ public class DBPedia {
     }
     
     public void learn(String wikiID) {
-        Query query = QueryFactory.create(getDBPediaQuery(wikiID)); //s2 = the query above
-        QueryExecution qExe = QueryExecutionFactory.sparqlService( "http://dbpedia.org/sparql", query );
+        try {
+            Query query = QueryFactory.create(getDBPediaQuery(wikiID)); //s2 = the query above
+            QueryExecution qExe = QueryExecutionFactory.sparqlService( "http://dbpedia.org/sparql", query );
+
+            qExe.setTimeout(timeout);
+
+            Model qmodel = qExe.execDescribe();
+            //qmodel.write(System.out, "N3");
+
+            core.addRDF(qmodel);
+            
+            System.out.println("DBPedia finished learning " + wikiID + "; RDF model size: +" + qmodel.size());            
+        }
+        catch (Exception e) {
+            System.out.println("DBPedia timed out " + wikiID);            
+        }
+        finally {
+            bus.publish("interest", wikiID);
+        }
         
-        Model qmodel = qExe.execDescribe();
-        //model.write(System.out, "N3");
         
-        core.addRDF(qmodel);
         
-        System.out.println("DBPedia finished learning " + wikiID + "; RDF model size: +" + qmodel.size());
-        
+
     }
 
     public static String getDBPediaQuery(String res) {
@@ -86,14 +102,16 @@ public class DBPedia {
         //String q = "DESCRIBE <http://dbpedia.org/resource/" + res + ">";
         //return q;
         
-        String q = "CONSTRUCT WHERE { <http://dbpedia.org/resource/" + res + "> ";
+        //http://dbpedia.org/resource/
+        
+        String q = "CONSTRUCT WHERE { <" + res + "> ";
         q += "a ?o";
         q += "; <http://www.w3.org/2000/01/rdf-schema#label> ?p";
         q += "; <http://purl.org/dc/terms/subject> ?s";
         //q += " .\n ";
         //q += "FILTER (langMatches(lang(?o),\"en\"))\n }";
         q += " }";
-        System.out.println(q);
+        System.out.println("dbpedia sparql: " + q);
         return q;
         
 /*        CONSTRUCT WHERE { 
