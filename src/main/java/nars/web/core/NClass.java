@@ -42,7 +42,7 @@ public class NClass extends NObject {
     }
     
     protected void addDefaultTags() {
-        add(Tag.tag.toString(), 1.0);        
+        //add(Tag.tag.toString(), 1.0);        
     }
         
     public NClass(String id, String name, List<String> extend) {

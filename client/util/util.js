@@ -793,10 +793,6 @@ function objIsClass(x) {
         if (x.extend === null)
             return true;
 
-        else if ((typeof x.extend) === "string") {
-            return (!isPrimitive(x.extend));
-        }
-
         else if (Array.isArray(x.extend)) {
             if ((x.extend.length === 1) && (isPrimitive(x.extend[0])))
                 return false;
@@ -809,6 +805,8 @@ exports.objIsClass = objIsClass;
 
 /** true if its value consists of only one primitive tag (with no datavalue) */
 function objIsProperty(x) {
+    if (x._property)
+        return true;
     if (x.extend)
         if (isPrimitive(x.extend))
             return true;
@@ -1040,7 +1038,10 @@ var Ontology = function(db, tagInclude, target) {
 
     that.addAll = function(a) {
         for (var i = 0; i < a.length; i++) {
-            that.add(a[i]);
+            try {
+                that.add(a[i]);
+            }
+            catch(e) { console.error(e); }
         }
     };
 

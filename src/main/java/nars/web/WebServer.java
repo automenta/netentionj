@@ -19,6 +19,7 @@ import nars.web.core.Core;
 import nars.web.util.DBPedia;
 import nars.web.util.NOntology;
 import nars.web.util.RDF;
+import nars.web.util.SchemaOrg;
 import nars.web.util.Wikipedia;
 import org.boon.json.JsonParserFactory;
 import org.boon.json.JsonSerializer;
@@ -140,6 +141,7 @@ public class WebServer {
         String optionsPath = args.length > 0 ? args[0] : "options.json";        
         Core core = new Core(graph);
         new NOntology(core);
+        new SchemaOrg(core);
         new WebServer(core, Options.load(optionsPath));
     }
     

@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import static java.util.stream.StreamSupport.stream;
 import javafx.application.Platform;
@@ -46,6 +47,13 @@ import org.vertx.java.core.json.impl.Json;
 public class Core extends EventEmitter {
     
     private final static String Session_MYSELF = "myself";
+
+    
+    static final Pattern primitiveRegEx = Pattern.compile("/^(class|property|boolean|text|html|integer|real|url|object|spacepoint|timepoint|timerange|sketch|markdown|image|tagcloud|chat)$/");
+
+    public static boolean isPrimitive(String s) {
+        return primitiveRegEx.matcher(s).matches();
+    }
     
     public Network net;
     

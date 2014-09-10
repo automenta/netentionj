@@ -360,7 +360,10 @@ function netention(f) {
             var that = this;
 
             $.getJSON(url, function(o) {
-                that.ontologyProperties = objExpandAll(o.property);
+                that.ontologyProperties = objExpandAll(o.property).map(function(x) {
+                    x._property = true;
+                    return x;
+                });
                 that.ontologyClasses = objExpandAll(o.class);
 
                 f();
