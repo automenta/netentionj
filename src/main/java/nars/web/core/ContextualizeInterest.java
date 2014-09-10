@@ -43,9 +43,9 @@ public class ContextualizeInterest implements Handler<Message> {
 
     public static class ContextGraph {
         public final String uri;
-        public final Map<String, Double> context;
+        public final Map<String, Integer> context;
 
-        public ContextGraph(String uri, Map<String, Double> context) {
+        public ContextGraph(String uri, Map<String, Integer> context) {
             this.uri = uri;
             this.context = context;
         }
@@ -65,7 +65,10 @@ public class ContextualizeInterest implements Handler<Message> {
             
             
             Map<Vertex, Number> m = core.centrality(t, 1000, v);
-            Map<String, Double> c = new HashMap();
+            
+            m.remove(v); //exclude own vertex
+            
+            Map<String, Integer> c = new HashMap();
             
             double total = 0;
             int count = 0;
@@ -81,9 +84,9 @@ public class ContextualizeInterest implements Handler<Message> {
                 for (Map.Entry<Vertex, Number> n : m.entrySet()) {
                     String u = n.getKey().getProperty("uri");
                     double vv = n.getValue().doubleValue();
-                    double pv = vv/max;
+                    double pv = vv/total;
                     if (pv >= threshold)
-                        c.put(u, pv);
+                        c.put(u, (int)(pv*100.0));
                 }
             }
             System.out.println(c);

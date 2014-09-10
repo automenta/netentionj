@@ -76,7 +76,7 @@ function newWikiBrowser(onTagAdded, options) {
             var p = $('<a href="#" title="Tag">+</a>');
             p.click(function() {
                 if (onTagAdded)
-                    onTagAdded(target);
+                    onTagAdded('http://dbpedia.org/resource/' + target);
             });
             return p;
         }
@@ -166,7 +166,7 @@ function onWikiTagAdded(d, tag) {
     
     
     var tagBar = newTagBar(self, d);
-    var saveButton = newTagBarSaveButton(self, d, tagBar, function () {
+    var saveButton = newTagBarSaveButton(self, tag, tagBar, function () {
         //d.dialog('close');
         d.empty();
     });

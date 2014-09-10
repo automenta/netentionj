@@ -121,7 +121,7 @@ public class Core extends EventEmitter {
         
     }
 
-    public void addRDF(Model rdf) {
+    public void addRDF(Model rdf, String topic) {
         
         TitanTransaction t = graph.newTransaction();
         
@@ -131,12 +131,35 @@ public class Core extends EventEmitter {
             Resource subj = s.getSubject();
             RDFNode obj = s.getObject();
             Property p = s.getPredicate();
+            String ps = p.toString();
+            
+            //certain properties
+            switch (ps) {
+                case "http://purl.org/dc/terms/subject":
+                case "http://www.w3.org/1999/02/22-rdf-syntax-ns#type":
+                case "http://www.w3.org/2000/01/rdf-schema#label":
+                    break;
+                /*case "http://www.w3.org/2002/07/owl#sameAs":
+                    if (!subj.getURI().equals(topic))
+                        continue;
+                    break;*/
+                /*case "http://dbpedia.org/ontology/division":
+                case "http://dbpedia.org/ontology/subdivision":
+                case "http://dbpedia.org/ontology/subdivisio":
+                    if (!subj.getURI().equals(topic))
+                        continue;
+                    break;*/
+                default:
+                    //System.out.println("  -: " + ps + " " + obj.toString() + " (ignored)");
+                    continue;
+            }
+            
             
             Vertex sv = vertex(t, subj.getURI(), true);
             if (obj instanceof Resource) {
                 String ovu = ((Resource)obj).getURI();
                 Vertex ov = vertex(t, ovu, true);
-                System.out.println("  +: " + subj.getURI() + " " + p.toString() + " " + ovu );
+                System.out.println("  +: " + subj.getURI() + " " + ps + " " + ovu );
                 t.addEdge(null, sv, ov, p.toString());                
             }
             else if (obj instanceof Literal) {

@@ -109,7 +109,6 @@ public class SchemaOrg {
             NClass p = new NClass(id, iduppercase, "Action");
             p.description = description;
             
-            System.out.println("as: " + p);
             toAdd.add(p);
         }
         reader.close();

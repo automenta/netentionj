@@ -17,12 +17,10 @@
 
 package nars.web.util;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QueryExecutionFactory;
-import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 import nars.web.core.Core;
+import org.apache.jena.riot.RDFDataMgr;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.eventbus.Message;
@@ -72,17 +70,23 @@ public class DBPedia implements Handler<Message> {
     
     public void learn(String wikiURL) {
         try {
-            Query query = QueryFactory.create(getDBPediaQuery(wikiURL)); //s2 = the query above
+            /*Query query = QueryFactory.create(getDBPediaQuery(wikiURL)); //s2 = the query above
             QueryExecution qExe = QueryExecutionFactory.sparqlService( "http://dbpedia.org/sparql", query );
 
             qExe.setTimeout(timeout);
 
-            Model qmodel = qExe.execDescribe();
-            //qmodel.write(System.out, "N3");
-
-            core.addRDF(qmodel);
             
-            System.out.println("DBPedia finished learning " + wikiURL + "; RDF model size: +" + qmodel.size());            
+            //qmodel.write(System.out, "N3");
+            core.addRDF(qmodel, wikiURL);*/
+            
+            String id = wikiURL.substring(wikiURL.lastIndexOf("/")+1, wikiURL.length());
+            String dataURL = "http://dbpedia.org/data/" + id + ".n3";
+            Model qmodel = ModelFactory.createDefaultModel();            
+            RDFDataMgr.read(qmodel, dataURL);
+            core.addRDF(qmodel, wikiURL);
+            
+            
+            System.out.println("DBPedia finished learning " + wikiURL + " via " + dataURL + " .. RDF model size: +" + qmodel.size());            
         }
         catch (Exception e) {
             System.out.println("DBPedia timed out " + wikiURL);            
@@ -102,11 +106,11 @@ public class DBPedia implements Handler<Message> {
         */
         //LIMIT 100";
         
-        //String q = "DESCRIBE <http://dbpedia.org/resource/" + res + ">";
-        //return q;
+        String q = "DESCRIBE <" + wikiURL + ">";
+        return q;
         
         //http://dbpedia.org/resource/
-        
+        /*
         String q = "CONSTRUCT WHERE { <" + wikiURL + "> ";
         q += "a ?o";
         q += "; <http://www.w3.org/2000/01/rdf-schema#label> ?p";
@@ -116,6 +120,7 @@ public class DBPedia implements Handler<Message> {
         q += " }";
         System.out.println("dbpedia sparql: " + q);
         return q;
+        */
         
 /*        CONSTRUCT WHERE { 
 <http://dbpedia.org/resource/Life> 

@@ -340,7 +340,7 @@ function netention(f) {
                     if (!c)
                         return;
                     
-                    console.log('Ontology class: ' + c.id);
+                    //console.log('Ontology class: ' + c.id);
                     
                     that.ontoIndex.add({
                         id: c.id,
@@ -1004,68 +1004,70 @@ function netention(f) {
 $(document).ready(function() {
 
 
-    window.console = (function(origConsole) {
+    if (false) {
+        window.console = (function(origConsole) {
 
-        if (!window.console)
-            console = {};
-        var isDebug = false,
-                logArray = {
-                    logs: [],
-                    errors: [],
-                    warns: [],
-                    infos: []
+            if (!window.console)
+                console = {};
+            var isDebug = false,
+                    logArray = {
+                        logs: [],
+                        errors: [],
+                        warns: [],
+                        infos: []
+                    }
+            var maxAlerts = 8;
+            var linesShown = 0;
+            var ac = $('#AlertConsole');        
+
+            function printConsole(x) {            
+
+                var numChildren = ac.children().size();
+
+                for (var o in x) {
+                    ac.append('<div>' + x[o] + '<br/></div>');
+                    linesShown++;
                 }
-        var maxAlerts = 8;
-        var linesShown = 0;
-        var ac = $('#AlertConsole');        
-        
-        function printConsole(x) {            
-            
-            var numChildren = ac.children().size();
-            
-            for (var o in x) {
-                ac.append('<div>' + x[o] + '<br/></div>');
-                linesShown++;
-            }
-            
-            var toRemove = linesShown - maxAlerts;            
-            if (toRemove > 0) {
-                ac.children().slice(0, toRemove).remove();
-                linesShown-=toRemove;
-            }
-            
-        }
-        return {
-            log: function() {
-                //logArray.logs.push(arguments)
-                printConsole(arguments);
-                isDebug && origConsole.log && origConsole.log.apply(origConsole, arguments);
-            },
-            warn: function() {
-                //logArray.warns.push(arguments)
-                printConsole(arguments);
-                isDebug && origConsole.warn && origConsole.warn.apply(origConsole, arguments);
-            },
-            error: function() {
-                //logArray.errors.push(arguments)
-                printConsole(arguments);
-                isDebug && origConsole.error && origConsole.error.apply(origConsole, arguments);
-            },
-            info: function(v) {
-                //logArray.infos.push(arguments)
-                //printConsole(arguments);
-                isDebug && origConsole.info && origConsole.info.apply(origConsole, arguments);
-            },
-            debug: function(bool) {
-                //isDebug = bool;
 
-            },
-            logArray: function() {
-                //return logArray;
-            }
-        };
+                var toRemove = linesShown - maxAlerts;            
+                if (toRemove > 0) {
+                    ac.children().slice(0, toRemove).remove();
+                    linesShown-=toRemove;
+                }
 
-    }(window.console));
+            }
+            return {
+                log: function() {
+                    //logArray.logs.push(arguments)
+                    printConsole(arguments);
+                    isDebug && origConsole.log && origConsole.log.apply(origConsole, arguments);
+                },
+                warn: function() {
+                    //logArray.warns.push(arguments)
+                    printConsole(arguments);
+                    isDebug && origConsole.warn && origConsole.warn.apply(origConsole, arguments);
+                },
+                error: function() {
+                    //logArray.errors.push(arguments)
+                    printConsole(arguments);
+                    isDebug && origConsole.error && origConsole.error.apply(origConsole, arguments);
+                },
+                info: function(v) {
+                    //logArray.infos.push(arguments)
+                    //printConsole(arguments);
+                    isDebug && origConsole.info && origConsole.info.apply(origConsole, arguments);
+                },
+                debug: function(bool) {
+                    //isDebug = bool;
+
+                },
+                logArray: function() {
+                    //return logArray;
+                }
+            };
+
+        }(window.console));
+    }
 
 //    console.log = function(x) {
 //        

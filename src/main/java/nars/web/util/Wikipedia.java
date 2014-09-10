@@ -120,7 +120,9 @@ public class Wikipedia {
                 String u = "http://en.wikipedia.org/w/index.php?search=" + q;
 
                 Document doc = Jsoup.connect(u).get();    
-                returnPage(doc, req);
+                String wikipage = returnPage(doc, req);
+                
+                bus.publish("wikipedia", wikipage);
                 
             } catch (IOException ex) {
                 req.response().end(ex.toString());

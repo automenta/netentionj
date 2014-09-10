@@ -16,7 +16,7 @@ import java.io.Serializable;
 public class Value implements Serializable {
     
     public String id;
-    public LinkedHashMultimap<String, Object> value;
+    protected LinkedHashMultimap<String, Object> value;
  
     public static class Ref implements Serializable {
         public final String object;
@@ -26,4 +26,9 @@ public class Value implements Serializable {
     public static Ref object(NObject n) {
         return new Ref(n.id);
     }
+
+    public LinkedHashMultimap<String, Object> getValue() {
+        return value;
+    }
+    
 }

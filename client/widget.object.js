@@ -106,8 +106,7 @@ function newTagBarSaveButton(s, currentTag, tagBar, onSave) {
             var x = $(this);
             var c = x[0].checked;
             if (c) {
-                var i = x.attr('id');
-                var i = i.split('_')[1];
+                var i = x.attr('id').split('_')[1];
                 selTags.push(i);
             }
         });
@@ -116,34 +115,36 @@ function newTagBarSaveButton(s, currentTag, tagBar, onSave) {
             var o = objNew(id, currentTag);
             o.author = o.subject = $N.id();
 
+            o.predicate = [];
             for (var i = 0; i < selTags.length; i++) {
                 var T = selTags[i];
-                if (!$N.getTag('DoLearn')) {
-                    //apply 3-vector
-                    objRemoveTag(o, 'Do');
-                    objRemoveTag(o, 'Learn');
-                    objRemoveTag(o, 'Teach');
-
-                    if (T == 'Learn') {
-                        objAddTag(o, 'Learn');
-                    } else if (T == 'Teach') {
-                        objAddTag(o, 'Teach');
-                    } else if (T == 'Do') {
-                        objAddTag(o, 'Do');
-                    } else if (T == 'DoLearn') {
-                        objAddTag(o, 'Learn', 0.5);
-                        objAddTag(o, 'Do', 0.5);
-                    } else if (T == 'DoTeach') {
-                        objAddTag(o, 'Teach', 0.5);
-                        objAddTag(o, 'Do', 0.5);
-                    }
-
-                    continue;
-                }
-
-                objAddTag(o, T);
+                o.predicate.push(T);
+//                if (!$N.getTag('DoLearn')) {
+//                    //apply 3-vector
+//                    objRemoveTag(o, 'Do');
+//                    objRemoveTag(o, 'Learn');
+//                    objRemoveTag(o, 'Teach');
+//
+//                    if (T == 'Learn') {
+//                        objAddTag(o, 'Learn');
+//                    } else if (T == 'Teach') {
+//                        objAddTag(o, 'Teach');
+//                    } else if (T == 'Do') {
+//                        objAddTag(o, 'Do');
+//                    } else if (T == 'DoLearn') {
+//                        objAddTag(o, 'Learn', 0.5);
+//                        objAddTag(o, 'Do', 0.5);
+//                    } else if (T == 'DoTeach') {
+//                        objAddTag(o, 'Teach', 0.5);
+//                        objAddTag(o, 'Do', 0.5);
+//                    }
+//
+//                    continue;
+//                }
+//
+//                objAddTag(o, T);
             }
-            objAddTag(o, currentTag);
+            o.object = currentTag;
 
             $N.pub(o, function (err) {
                 notify({
@@ -180,7 +181,7 @@ function newTagBar(s, currentTag) {
 
     function tbutton(tag, target) {
         var b = $('<input/>');
-        var cid = uuid();// + 'skill_' + tag + '_' + currentTag;
+        var cid = 'skill_' + tag + '_' + currentTag;
         b.attr('id', cid);
         b.attr('type', 'checkbox');
 

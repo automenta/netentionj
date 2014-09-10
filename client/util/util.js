@@ -1122,8 +1122,8 @@ var Ontology = function(db, tagInclude, target) {
 
                     if (existingProperty)
                         x.property[v] = existingProperty;
-                    else
-                        console.error('Class', x.id, 'missing property', v);
+                    /*else
+                        console.error('Class', x.id, 'missing property', v);*/
                     vv.push(v);
                 }
                 x.value = vv; //store a compact literal array of strings

@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 import static java.util.stream.Collectors.toList;
 import nars.web.core.ContextualizeInterest;
 import nars.web.core.Core;
+import nars.web.core.UserActivity;
 import nars.web.util.DBPedia;
 import nars.web.util.NOntology;
 import nars.web.util.RDF;
@@ -113,6 +114,7 @@ public class WebServer {
         new DBPedia(core, vertx.eventBus());
         new Wikipedia(vertx.eventBus(), r);
         new ContextualizeInterest(c, vertx.eventBus());
+        new UserActivity(c, vertx.eventBus());
         
         http.requestHandler(r);        
 
