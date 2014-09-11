@@ -1315,7 +1315,7 @@ div.objectView .metadataReplyButton {
     font-size: 150%;
 }
 #SelfMap {
-    width: 40%;
+    width: 100%;
     height: 250px;
 }
 .SelfCode {
@@ -1862,8 +1862,8 @@ div.olControlZoom {
 
 /* Container */
 
-.modal {
-    /* Overlay page content */
+/*.modal {
+     Overlay page content 
     position: fixed;
     top: 0;
     left: 0;
@@ -1871,32 +1871,32 @@ div.olControlZoom {
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
     z-index: 10000;
-    /* Transition opacity on open */
+     Transition opacity on open 
     -webkit-transition: opacity 500ms ease-in;
     -moz-transition: opacity 500ms ease-in;
     transition: opacity 500ms ease-in;
-    /* Hide for now */
+     Hide for now 
     opacity: 0;
     pointer-events: none;
 }
-/* Show modal */
+ Show modal 
 
 .modal:target {
     opacity: 1;
     pointer-events: auto;
-    /* at time of writing (Feb 2012), pointer-events not supported by Opera or IE */
+     at time of writing (Feb 2012), pointer-events not supported by Opera or IE 
 }
-/* Content */
+ Content 
 
 .modal > div {
     width: 500px;
     background: #fff;
     position: relative;
     margin: 10% auto;
-    /* Default minimise animation */
+     Default minimise animation 
     -webkit-animation: minimise 500ms linear;
     -moz-animation: minimise 500ms linear;
-    /* Prettify */
+     Prettify 
     padding: 30px;
     border-radius: 7px;
     box-shadow: 0 3px 20px rgba(0, 0, 0, 0.9);
@@ -1906,7 +1906,7 @@ div.olControlZoom {
     background: -o-linear-gradient(#fff, #ccc);
     text-shadow: 0 1px 0 #fff;
 }
-/* Override animation on modal open */
+ Override animation on modal open 
 
 .modal:target > div {
     -webkit-animation-name: bounce;
@@ -1967,7 +1967,7 @@ div.olControlZoom {
     100% {
         -moz-transform: scale3d(0.1, 0.1, 1);
     }
-}
+}*/
 /* Modal close link */
 
 /*

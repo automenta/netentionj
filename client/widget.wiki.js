@@ -16,7 +16,8 @@ function newWikiBrowser(onTagAdded, options) {
     var b = newDiv();
 
     var header = newDiv();
-    header.addClass('WikiBrowserHeader');
+    header.addClass('WikiBrowserHeader container-fluid navbar-default');
+    
 
     var backButton = $('<button disabled><i class="fa fa-arrow-left"></i></button>');
     var homeButton = $('<button disabled><i class="fa fa-home"></i></button>');
@@ -76,7 +77,7 @@ function newWikiBrowser(onTagAdded, options) {
             var p = $('<a href="#" title="Tag">+</a>');
             p.click(function() {
                 if (onTagAdded)
-                    onTagAdded('http://dbpedia.org/resource/' + target);
+                    onTagAdded('dbpedia.org/resource/' + target);
             });
             return p;
         }

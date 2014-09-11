@@ -20,6 +20,7 @@ package nars.web.util;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import nars.web.core.Core;
+import static nars.web.core.Core.u;
 import org.apache.jena.riot.RDFDataMgr;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.EventBus;
@@ -40,10 +41,7 @@ public class DBPedia implements Handler<Message> {
     
     //String query = "SELECT DISTINCT *  WHERE  {{<http://dbpedia.org/resource/Vienna> ?property ?object. FILTER(!isLiteral(?object))} UNION 	 {<http://dbpedia.org/resource/Vienna> ?property 	 ?object.FILTER(isLiteral(?object)).FILTER(lang(?object) =\"it\")} UNION 	 {<http://dbpedia.org/resource/Vienna> ?property 	 ?object.FILTER(isLiteral(?object)).FILTER(lang(?object) =\"en\")}}  ORDER BY ?property";
     //SELECT DISTINCT * WHERE {?object ?t <http://dbpedia.org/resource/Wolfgang_Amadeus_Mozart> } LIMIT 100 
-    private final EventBus bus;
-    private long timeout = 5000;
-    
-    
+    private final EventBus bus;    
     
     public DBPedia(Core c, EventBus b) {
         this.bus = b;
@@ -53,7 +51,7 @@ public class DBPedia implements Handler<Message> {
     
     public boolean learnedRecently(String wikiID) {
         //TODO check actual date or use LRU cache
-        if (core.vertex(wikiID, false) == null) {            
+        if (core.vertex(u(wikiID), false) == null) {            
             return false;
         }
         System.out.println(wikiID + " cached");
@@ -65,7 +63,7 @@ public class DBPedia implements Handler<Message> {
         String wikiURL = e.body().toString();
         if (!learnedRecently(wikiURL))
             learn(wikiURL);
-        bus.publish("interest", wikiURL);
+        bus.publish("interest", u(wikiURL));
     }
     
     public void learn(String wikiURL) {

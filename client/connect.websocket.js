@@ -23,25 +23,33 @@
 var bus = new vertx.EventBus('/eventbus');
 bus.on = bus.registerHandler;
 
-bus.onopen = function() {
+$(document).ready(function() {
 
-  bus.on('public', function(message) {
 
-    try {
-        console.dir(JSON.parse(message));
-    }
-    catch (e) {
-        console.error('Unable to parse: ' + message);
-    }
+        bus.onopen = function() {
 
-  });
-  
-  //HACK, wrap $N.pub for sharing it on the event bus
-  $N._pub = $N.pub;
-  $N.pub = function(x) {
-      $N._pub(x);
-      bus.send('publish', x );
-  };
-  
 
-};
+
+            //  
+            //  bus.on('public', function(message) {
+            //
+            //    try {
+            //        console.dir(JSON.parse(message));
+            //    }
+            //    catch (e) {
+            //        console.error('Unable to parse: ' + message);
+            //    }
+            //
+            //  });
+
+              //HACK, wrap $N.pub for sharing it on the event bus
+              $N._pub = $N.pub;
+              $N.pub = function(x) {
+                  $N._pub(x);
+                  bus.send('publish', x );
+              };
+              
+              $N.trigger('bus.start');
+
+        };
+});

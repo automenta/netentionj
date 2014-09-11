@@ -957,7 +957,8 @@ function netention(f) {
 
     var odb = DB('objects' /*{ adapter: 'memory' }*/);
     $N = new Ontology(odb, true, _.extend(new $NClient(), exports));
-
+        
+    $N.trigger('init');
 
 
     $N.ontoIndex = lunr(function() {
@@ -998,7 +999,7 @@ function netention(f) {
         f('ontology.json', $N);
     }
 
-
+ 
 }
 
 $(document).ready(function() {

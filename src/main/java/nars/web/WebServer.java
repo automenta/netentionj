@@ -20,7 +20,6 @@ import nars.web.core.UserActivity;
 import nars.web.util.DBPedia;
 import nars.web.util.NOntology;
 import nars.web.util.RDF;
-import nars.web.util.SchemaOrg;
 import nars.web.util.Wikipedia;
 import org.boon.json.JsonParserFactory;
 import org.boon.json.JsonSerializer;
@@ -106,6 +105,16 @@ public class WebServer {
                         ) 
                 );
         }})
+        .get("/object/:id/json", new Handler<HttpServerRequest>() {
+            @Override public void handle(HttpServerRequest req) {
+                String id = req.params().get("id");
+                
+                req.response().end( 
+                        Json.encode(
+                                core.getObject(id)
+                        ) 
+                );
+        }})
         
 
         .noMatch(new StaticFileHandler(vertx, "client/", "index.html", options.compressHTTP, options.cacheStaticFiles));
@@ -143,7 +152,7 @@ public class WebServer {
         String optionsPath = args.length > 0 ? args[0] : "options.json";        
         Core core = new Core(graph);
         new NOntology(core);
-        new SchemaOrg(core);
+        //new SchemaOrg(core);
         new WebServer(core, Options.load(optionsPath));
     }
     

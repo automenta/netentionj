@@ -28,9 +28,11 @@ import com.tinkerpop.pipes.branch.LoopPipe;
 import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -59,6 +61,40 @@ public class Core extends EventEmitter {
     
     //https://github.com/thinkaurelius/titan/blob/c958ad2a2bafd305a33655347fef17138ee75088/titan-test/src/main/java/com/thinkaurelius/titan/graphdb/TitanIndexTest.java
     public final TitanGraph graph;
+
+    public Map<String,Object> getObject(final String objId) {
+        Map<String,Object> r = new HashMap();
+        
+        TitanTransaction t = graph.newTransaction();
+        Vertex v = vertex(t, objId, false);
+        if (v == null) {
+            r.put("error", objId + " not found");            
+        }
+        else {
+            for (String s : v.getPropertyKeys())
+                r.put(s, v.getProperty(s));
+            
+            
+            Iterable<Edge> outs = v.getEdges(Direction.OUT);            
+            List<String[]> outMap = new ArrayList();
+            for (Edge e : outs) {
+                outMap.add(new String[] { e.getLabel(), e.getVertex(Direction.IN).getProperty("uri")} );
+            }
+            if (outMap.size() > 0) r.put("out", outMap);
+            
+            
+            
+            Iterable<Edge> ins = v.getEdges(Direction.IN);
+            List<String[]> inMap = new ArrayList();
+            for (Edge e : ins) {
+                inMap.add(new String[] { e.getLabel(), e.getVertex(Direction.OUT).getProperty("uri")} );
+            }
+            if (inMap.size() > 0) r.put("in", inMap);
+                        
+        }
+        t.commit();
+        return r;
+    }
 
     public static class SaveEvent {
         public final NObject object;
@@ -122,6 +158,7 @@ public class Core extends EventEmitter {
     }
 
     public void addRDF(Model rdf, String topic) {
+        topic = u(topic);
         
         TitanTransaction t = graph.newTransaction();
         
@@ -130,14 +167,15 @@ public class Core extends EventEmitter {
             Statement s = l.next();
             Resource subj = s.getSubject();
             RDFNode obj = s.getObject();
+            
             Property p = s.getPredicate();
-            String ps = p.toString();
+            String ps = u(p.toString());
             
             //certain properties
             switch (ps) {
-                case "http://purl.org/dc/terms/subject":
-                case "http://www.w3.org/1999/02/22-rdf-syntax-ns#type":
-                case "http://www.w3.org/2000/01/rdf-schema#label":
+                case "purl.org/dc/terms/subject":
+                case "www.w3.org/1999/02/22-rdf-syntax-ns#type":
+                case "www.w3.org/2000/01/rdf-schema#label":
                     break;
                 /*case "http://www.w3.org/2002/07/owl#sameAs":
                     if (!subj.getURI().equals(topic))
@@ -154,13 +192,12 @@ public class Core extends EventEmitter {
                     continue;
             }
             
-            
-            Vertex sv = vertex(t, subj.getURI(), true);
+            String usub = u(subj.getURI());
+            Vertex sv = vertex(t, usub, true);
             if (obj instanceof Resource) {
-                String ovu = ((Resource)obj).getURI();
+                String ovu = u(((Resource)obj).getURI());
                 Vertex ov = vertex(t, ovu, true);
-                System.out.println("  +: " + subj.getURI() + " " + ps + " " + ovu );
-                t.addEdge(null, sv, ov, p.toString());                
+                addEdge(t, sv, ov, p.toString());
             }
             else if (obj instanceof Literal) {
                 //TODO support other literal types
@@ -172,6 +209,18 @@ public class Core extends EventEmitter {
         }
         t.commit();
         
+    }
+    public Edge addEdge(TitanTransaction t, Vertex sv, Vertex ov, String predicate) {
+        System.out.println("  +: " + sv.toString() + " " + predicate + " " + ov.toString() );        
+        Edge e = t.addEdge(null, sv, ov, predicate);    
+        return e;
+    }
+
+    
+    public static String u(final String url) {
+        if (url.startsWith("http://"))
+            return url.substring(7);
+        return url;
     }
     
     public void printGraph() {

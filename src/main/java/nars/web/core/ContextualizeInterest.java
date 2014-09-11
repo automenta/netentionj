@@ -93,7 +93,10 @@ public class ContextualizeInterest implements Handler<Message> {
             bus.publish("public", Json.encode(new ContextGraph(id, c)));
             
         }
-
+        else {
+            System.err.println("unknown context: " + id);
+        }
+        
         t.commit();
         
     }

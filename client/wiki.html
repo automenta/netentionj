@@ -6,17 +6,42 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
-        <div id="ProfileSelect" style="display:none"></div>        
+        <div id="ProfileSelect"  class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                  <h4 class="modal-title">Profile</h4>
+                </div>
+                <div class="modal-body">
+                  
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-primary">Save changes</button>
+                </div>
+              </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div><!-- /.modal -->
+
+        
         <div id="wiki"></div>
-        <div id="tagbar">
+        <div id="tagbar" class="container-fluid navbar-default">
             
         </div>
+        <div id="mainmenu">
+            <div id="context">
+            </div>
+            <button id="EditSelf"><i class="fa fa-users"></i></button>
+        </div>
+        
     </body>
     
     <script src="lib/jquery/jquery.min.js" type="text/javascript"></script>
     <script src="lib/lodash/lodash.min.js" type="text/javascript"></script> 
     <script src="lib/underscore.string/2.3.3/underscore.string.min.js" type="text/javascript"></script> 
     <script src="lib/backbone.js/backbone-min.js" type="text/javascript"></script> 
+    <script src="lib/bootstrap/bootstrap.min.js"></script>
 
     <script src="/lib/sockjs/sockjs-0.3.4.min.js" type="text/javascript"></script> 
 
@@ -54,20 +79,163 @@
             $('#wiki').html(newWikiBrowser(function onSelected(e) {
                 onWikiTagAdded($('#tagbar'), e);
             }));
+            
+            $('#EditSelf').click(function() {
+                selfEdit(!($('#ProfileSelect').is(':visible')));
+            });
+            
+            $N.on('bus.start', function() {
+                
+                console.log('bus start');
+                
+                bus.on('public', function(message) {
+                  try {
+                      var c = JSON.parse(message);
+                      var m = '';
+                      var t = $('#context');
+                      t.empty();
+                      for (var k in c.context) {
+                          var count = parseInt(c.context[k]);
+                          
+                          var label = k;
+                          if (k.indexOf('/')!=-1)
+                            label = k.substring(k.lastIndexOf('/')+1, k.length);
+                          
+                          var l = $('<a href="#">' + label + '</a>');
+                          
+                          l.css('font-size', 50.0 * Math.log(1 + count) + '%');
+                          t.append(l, '&nbsp;');
+                      }
+                      
+                      
+                  }
+                  catch (e) {
+                      console.error('Unable to parse: ' + message);
+                  }
+
+                });
+                
+            });
         });
-        
+
+    
         function initUI() {
         }
         function initSessionUI() {
-              
+            
         }
         function notify(x) {
             console.log(x);
         }
+    
+        function selfEdit(enable) {
+            var ps = $('#ProfileSelect');
+            var modal = $('#ProfileSelect .modal-body');
+            if (enable) {
+                ps.modal('show');
+                if (modal.children().size() === 0) {
+                    ps.on('shown.bs.modal', function (e) {
+                        modal.html(newNewProfileWidget());                    
+                    });
+                }
+            }
+            else {
+                ps.modal('hide');
+            }
+        }
+        //originally from widget.profile.js
+        function newNewProfileWidget(whenFinished) {
+            var d = newDiv();
+
+            var nameField = $('<input type="text" placeholder="Name"></input>');
+            d.append(nameField).append('<br/>');
+
+
+            var emailField = $('<input type="text" placeholder="E-Mail (optional)"></input>');
+            d.append(emailField).append('<br/>');
+
+            var extraProperties = configuration.newUserProperties;
+            if (extraProperties) {
+                var extraPropertyInputs = [];
+                for (var i = 0; i < extraProperties.length; i++) {
+                    var e = extraProperties[i];
+                    var ep = $N.getProperty(e);
+                    var en = ep ? ep.name : e;
+                    var ei = $('<input type="text"/>');
+                    d.append(en, ei, '<br/>');
+                    extraPropertyInputs.push(ei);
+                }
+            }
+
+
+            var locationEnabled = true;
+            var locEnabled = $('<input type="checkbox" checked="true"/>');
+
+            d.append('<br/>').append(locEnabled).append('Location Enabled').append('<br/>');
+
+            var cm = $('<div id="SelfMap"/>').appendTo(d);
+
+            var createButton = $('<button>Create User</button>');
+            d.append('<br/>').append(createButton);
+
+            var location = configuration.mapDefaultLocation;
+
+            var lmap;
+            later(function() {
+                lmap = initLocationChooserMap('SelfMap', location, 7, true);
+            });
+
+            locEnabled.change(function() {
+                locationEnabled = locEnabled.is(':checked');
+                if (locationEnabled) {
+                    cm.show();
+                }
+                else {
+                    cm.hide();
+                }
+            });
+
+
+            createButton.click(function() {
+                var name = nameField.val();
+                if (name.length == 0) {
+                    alert('Enter a name');
+                    return;
+                }
+                var email = emailField.val();
+
+                        var o = $N.newUser(name);
+
+                if (extraProperties) {
+                    for (var i = 0; i < extraProperties.length; i++) {
+                        o.add(extraProperties[i], extraPropertyInputs[i].val());
+                    }
+                }
+
+                var location = lmap.location();
+                if (locationEnabled)
+                    objSetFirstValue(o, 'spacepoint', {lat: location.lat, lon: location.lon, planet: 'Earth'});
+
+                if (email.length > 0) {
+                    objSetFirstValue(o, 'email', email);
+                }
+
+                whenFinished(o);
+            });
+
+            return d;
+        }
+
     </script> 
     <style>
         @import url("netention.css");
+        @import url("lib/bootstrap/bootstrap.min.css");
+        @import url("theme/bootswatch.cerulean.css");
+        @import url('lib/jquery-ui/1.11.1/jquery-ui.css');
         @import url("lib/fontawesome/css/font-awesome.min.css");
+            @import url("lib/leaflet/leaflet.css");
+            @import url("lib/leaflet/Control.OSMGeocoder.css");
+            @import url("lib/leaflet/leaflet.draw.css");
         
         body {
             overflow: auto;
@@ -81,8 +249,7 @@
             overflow: visible;
         }
         
-        .WikiBrowserHeader, #tagbar {
-            background-color: rgba(167,167,167, 0.8);
+        .WikiBrowserHeader, #tagbar {            
             padding: 0.25em;
             width: 100%;           
         }
@@ -100,6 +267,11 @@
             position: fixed;
             bottom: 0;
             left: 0;
+        }
+        #mainmenu {
+            position: fixed;
+            top: 0;
+            right: 0;
         }
 
     </style>
