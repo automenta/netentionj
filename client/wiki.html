@@ -127,7 +127,11 @@
         }
 
         function notify(x) {
-            console.log(x);
+            if (typeof x === "string")
+                x = { title: x, text: '' };
+            
+            new PNotify(x);
+            console.log(JSON.stringify(x));
         }
 
         function selfEdit(enable) {
@@ -203,16 +207,17 @@
                 var m = $N.myself();
                 m.name = nameField.val();
                 m.email = emailField.val();
+                
+                //TODO remove geolocation if disabled
                 if (lmap.location)
                     m.geolocation = lmap.location();
-
-                console.log('Save profile:');
-                console.log(m);
+                                    
+                objTouch(m);
 
                 $N.pub(m, function (e) {
-                    alert('Error saving profile: ' + e);
+                    notify('Error saving profile: ' + e);
                 }, function () {
-                    //alert('Profile saved');
+                    notify('Saved profile');
                 });
                 
                 selfEdit(false);

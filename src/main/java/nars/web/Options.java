@@ -35,6 +35,8 @@ public class Options {
     
     public int threads;
     
+    public String databasePath;
+    
     public static Options newDefault() {
         Options s = new Options();
         s.name = "Netention";
@@ -45,6 +47,7 @@ public class Options {
         s.compressHTTP = false;
         s.cacheStaticFiles = false;
         s.threads = 8;
+        s.databasePath = "/tmp/graph";
         return s;
     }
 

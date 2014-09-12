@@ -62,36 +62,54 @@ public class Core extends EventEmitter {
     //https://github.com/thinkaurelius/titan/blob/c958ad2a2bafd305a33655347fef17138ee75088/titan-test/src/main/java/com/thinkaurelius/titan/graphdb/TitanIndexTest.java
     public final TitanGraph graph;
 
-    public Map<String,Object> getObject(final String objId) {
+    public Map<String,Object> getObject(final Vertex v) {
         Map<String,Object> r = new HashMap();
         
-        TitanTransaction t = graph.newTransaction();
+        for (String s : v.getPropertyKeys())
+            r.put(s, v.getProperty(s));
+
+        Iterable<Edge> outs = v.getEdges(Direction.OUT);            
+        Map<String, List<String>> outMap = new HashMap();
+        for (Edge e : outs) {
+            String edge = e.getLabel();
+            String uri = e.getVertex(Direction.IN).getProperty("uri");
+            List<String> uris = outMap.get(edge);
+            if (uris == null) {
+                uris = new ArrayList();
+                outMap.put(edge, uris);
+            }
+            uris.add(uri);                
+        }
+        if (outMap.size() > 0) r.put("out", outMap);
+
+        Iterable<Edge> ins = v.getEdges(Direction.IN);
+        Map<String, List<String>> inMap = new HashMap();
+        for (Edge e : ins) {
+            String edge = e.getLabel();
+            String uri = e.getVertex(Direction.OUT).getProperty("uri");
+            List<String> uris = inMap.get(edge);
+            if (uris == null) {
+                uris = new ArrayList();
+                inMap.put(edge, uris);
+            }
+            uris.add(uri);                
+        }
+        if (inMap.size() > 0) r.put("in", inMap);
+
+        return r;
+    }
+    
+    public Map<String,Object> getObject(final String objId) {
+        
+        TitanTransaction t = transaction();
         Vertex v = vertex(t, objId, false);
+        
         if (v == null) {
-            r.put("error", objId + " not found");            
+            Map<String,Object> h = new HashMap();
+            h.put("error", objId + " not found");            
+            return h;
         }
-        else {
-            for (String s : v.getPropertyKeys())
-                r.put(s, v.getProperty(s));
-            
-            
-            Iterable<Edge> outs = v.getEdges(Direction.OUT);            
-            List<String[]> outMap = new ArrayList();
-            for (Edge e : outs) {
-                outMap.add(new String[] { e.getLabel(), e.getVertex(Direction.IN).getProperty("uri")} );
-            }
-            if (outMap.size() > 0) r.put("out", outMap);
-            
-            
-            
-            Iterable<Edge> ins = v.getEdges(Direction.IN);
-            List<String[]> inMap = new ArrayList();
-            for (Edge e : ins) {
-                inMap.add(new String[] { e.getLabel(), e.getVertex(Direction.OUT).getProperty("uri")} );
-            }
-            if (inMap.size() > 0) r.put("in", inMap);
-                        
-        }
+        Map<String, Object> r = getObject(v);
         t.commit();
         return r;
     }
@@ -111,6 +129,14 @@ public class Core extends EventEmitter {
             return true;    
         }        
         return false;
+    }
+
+    public Map<String,Object> vertexProperties(Vertex v) {
+        Map<String,Object> m = new HashMap();
+        for (String s : v.getPropertyKeys()) {
+            m.put(s, v.getProperty(s));
+        }
+        return m;
     }
 
 
@@ -279,8 +305,8 @@ public class Core extends EventEmitter {
             if (v!=null)
                 return (Vertex)v;
         }
-        if (createIfNonExist)  {
-            Vertex v = t.addVertex(null);
+        if (createIfNonExist)  {            
+            Vertex v = t.addVertex();
             v.setProperty("uri", uri);
             return v;            
         }
@@ -301,7 +327,7 @@ public class Core extends EventEmitter {
                 nclass.put(nc.id, nc);
                 for (String s : nc.getExtend()) {
                     Vertex p = vertex(t, s, true);
-                    t.addEdge(null, v, p, "-->");
+                    uniqueEdge(t, v, p, "is");
                 }
             }
         }
@@ -418,10 +444,14 @@ public class Core extends EventEmitter {
 //        return data.values().stream();
 //    }
     
-    public Stream<Vertex> objectStreamByTag(final String tagID) {
-        return stream( graph.getVertexLabel(tagID).getEdges(Direction.OUT , "class").spliterator(), false ).map( e -> e.getVertex(Direction.OUT) );
+    public Stream<Vertex> objectStreamByTag(TitanTransaction t, final String tagID) {
+        Vertex v = vertex(t, tagID, false);
+        return stream( v.getEdges(Direction.IN , "is").spliterator(), false ).map( e -> e.getVertex(Direction.OUT) );
     } 
     
+    public TitanTransaction transaction() {
+        return graph.newTransaction();
+    }
 //    public Stream<NObject> objectStreamByTagAndAuthor(final String tagID, final String author) {
 //        return objectStream().filter(o -> (o.author == author && o.hasTag(tagID)));
 //    }

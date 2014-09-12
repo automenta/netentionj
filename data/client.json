@@ -8,7 +8,7 @@
         "favicon": null,
         "loginLogo": "/theme/login-logo.png",
         "defaultAvatarIcon": "/theme/default-avatar.jpg",
-        "wikiStartPage": "Life",
+        "wikiStartPage": "Portal:Current_events",
         "showPlanOnSelfPage": true,
         "defaultTheme": "_bootswatch.cerulean",
         "maxStartupObjects": 8192,

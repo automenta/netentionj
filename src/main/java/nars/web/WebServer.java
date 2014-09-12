@@ -5,6 +5,7 @@ import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import com.thinkaurelius.titan.core.TitanFactory;
 import com.thinkaurelius.titan.core.TitanGraph;
+import com.thinkaurelius.titan.core.TitanTransaction;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
@@ -65,6 +66,7 @@ public class WebServer {
         
         vertx = VertxFactory.newVertx();        
         http = vertx.createHttpServer();
+        
         rdf = new RDF();
         
         /*http.websocketHandler(new Handler<ServerWebSocket>() {
@@ -104,11 +106,15 @@ public class WebServer {
             @Override public void handle(HttpServerRequest req) {
                 String tag = req.params().get("tag");
                 
+                TitanTransaction t = core.transaction();
                 req.response().end( 
                         Json.encode(
-                                core.objectStreamByTag(tag).collect(toList())
+                            core.objectStreamByTag(t, tag).map(v -> core.getObject(v))
+                                    .collect(toList())
+                                
                         ) 
                 );
+                t.commit();
         }})
         .get("/object/:id/json", new Handler<HttpServerRequest>() {
             @Override public void handle(HttpServerRequest req) {
@@ -129,6 +135,7 @@ public class WebServer {
         new Wikipedia(executor, core, vertx.eventBus(), r);
         new ContextualizeInterest(c, vertx.eventBus());
         new UserActivity(c, vertx.eventBus());
+        //new IRC(vertx.eventBus());
         
         http.requestHandler(r);        
 
@@ -139,7 +146,7 @@ public class WebServer {
         http.listen(options.port);
         
         
-        //new IRC(vertx.eventBus());
+        System.out.println("listening on port " + options.port);
         
         
         System.in.read();
@@ -149,16 +156,23 @@ public class WebServer {
     
     
     public static void main(String[] args) throws Exception {
-        TitanGraph graph = TitanFactory.build()
-                .set("storage.backend", "berkeleyje")
-                .set("storage.directory", "/tmp/graph")
-                .open();
-                
         String optionsPath = args.length > 0 ? args[0] : "options.json";        
+        Options options = Options.load(optionsPath);
+
+        TitanGraph graph = TitanFactory.build()
+                
+                .set("storage.backend", "berkeleyje")
+                .set("storage.directory", options.databasePath)                
+                
+                //.set("storage.backend","cassandra")
+                //.set("storage.hostname","127.0.0.1")
+                               
+                .open();
+        
         Core core = new Core(graph);
         new NOntology(core);
         //new SchemaOrg(core);
-        new WebServer(core, Options.load(optionsPath));
+        new WebServer(core, options);
     }
     
     public static class IndexPage {

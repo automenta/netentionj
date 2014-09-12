@@ -118,12 +118,11 @@ public class UserActivity implements Handler<Message> {
 
                     if (tagID!=null) {
                         //create inherit edge                    
-                        core.uniqueEdge(t, sv, core.vertex(t, tagID.toString(), true), "-->");
+                        core.uniqueEdge(t, sv, core.vertex(t, tagID.toString(), true), "is");
                     }
                 }
             }
             
-            System.out.println("finished vertex set" + t);
             t.commit();
         }
         
