@@ -96,6 +96,24 @@ public class Core extends EventEmitter {
         return r;
     }
 
+    public void cache(Vertex v, String type) {
+        v.setProperty(type + ":modifiedAt", System.currentTimeMillis());
+    }
+    
+    public boolean cached(Vertex v, String type) {
+        long maxCachedTime = 7 * 24 * 60 * 60 * 1000; //1 week
+        long now = System.currentTimeMillis();
+        Object l = v.getProperty(type + ":modifiedAt");
+        if (l == null) return false;
+        
+        long then = (long)l;
+        if (now - then < maxCachedTime) {
+            return true;    
+        }        
+        return false;
+    }
+
+
     public static class SaveEvent {
         public final NObject object;
         public SaveEvent(NObject object) { this.object = object;        }
@@ -157,10 +175,8 @@ public class Core extends EventEmitter {
         
     }
 
-    public void addRDF(Model rdf, String topic) {
-        topic = u(topic);
-        
-        TitanTransaction t = graph.newTransaction();
+    public void addRDF(TitanTransaction t, Model rdf, String topic) {
+        topic = u(topic);                 
         
         StmtIterator l = rdf.listStatements();
         while (l.hasNext()) {
@@ -197,7 +213,7 @@ public class Core extends EventEmitter {
             if (obj instanceof Resource) {
                 String ovu = u(((Resource)obj).getURI());
                 Vertex ov = vertex(t, ovu, true);
-                addEdge(t, sv, ov, p.toString());
+                uniqueEdge(t, sv, ov, p.toString());
             }
             else if (obj instanceof Literal) {
                 //TODO support other literal types
@@ -210,6 +226,21 @@ public class Core extends EventEmitter {
         t.commit();
         
     }
+    
+    /** removes any existing edges between the two vertices, then adds it */
+    public Edge uniqueEdge(TitanTransaction t, Vertex from, Vertex to, String predicate) {
+        Iterable<Edge> existing = from.getEdges(Direction.OUT, predicate);
+        for (Edge e : existing) {            
+            if (e.getVertex(Direction.IN).equals(to)) {
+                //System.out.println(predicate + " existing edge: " + e + " " + e.getLabel() + " " + e.getProperty("uri"));
+                
+                //TODO set any updated properties
+                return e;
+            }
+        }
+        return addEdge(t, from, to, predicate);    
+    }
+    
     public Edge addEdge(TitanTransaction t, Vertex sv, Vertex ov, String predicate) {
         System.out.println("  +: " + sv.toString() + " " + predicate + " " + ov.toString() );        
         Edge e = t.addEdge(null, sv, ov, predicate);    
@@ -217,6 +248,7 @@ public class Core extends EventEmitter {
     }
 
     
+    /** normalize a URL by removing http:// */
     public static String u(final String url) {
         if (url.startsWith("http://"))
             return url.substring(7);

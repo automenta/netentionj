@@ -16,14 +16,21 @@
  */
 package nars.web.util;
 
+import com.thinkaurelius.titan.core.TitanTransaction;
+import com.tinkerpop.blueprints.Vertex;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import nars.web.core.Core;
+import static nars.web.core.Core.u;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
-import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.RouteMatcher;
@@ -36,66 +43,118 @@ import org.vertx.java.core.json.impl.Json;
  */
 public class Wikipedia {
     private final EventBus bus;
+    private final Core core;
 
-    public Wikipedia(EventBus b, RouteMatcher r) {
+    public Wikipedia(ExecutorService e, Core c, EventBus b, RouteMatcher r) {
         this.bus = b;
+        this.core = c;
         
-        
-        r.get("/wiki/:id/html", new WikiPage());
-        r.get("/wiki/search/:query", new WikiSearch());
+        r.get("/wiki/:id/html", new WikiPage(e));
+        r.get("/wiki/search/:query", new WikiSearch(e));
         
     }
 
     public String returnPage(Document doc, HttpServerRequest req) {
         String location = doc.location();
-        
-        
-        //<link rel="canonical" href="http://en.wikipedia.org/wiki/Lysergic_acid_diethylamide" />
-        Elements cs = doc.getElementsByTag("link");
-        if (cs!=null) {
-            for (Element e : cs) {
-                if (e.hasAttr("rel") && e.attr("rel").equals("canonical"))
-                    location = e.attr("href");
-            }
-        }
-                
-        try {
-            doc.getElementsByTag("head").remove();
-            doc.getElementsByTag("script").remove();
-            doc.getElementsByTag("link").remove();
-            doc.getElementById("top").remove();
-            doc.getElementById("siteSub").remove();
-            doc.getElementById("contentSub").remove();
-            doc.getElementById("jump-to-nav").remove();
-            doc.getElementsByClass("IPA").remove();
-            doc.getElementsByClass("search-types").remove();
-            doc.getElementsByClass("mw-specialpage-summary").remove();
-            doc.getElementsByClass("mw-search-top-table").remove();
-        }
-        catch (Exception e) {
-            System.out.println(e);
-        }
-        
-        Map<String,Object> m = new HashMap();
-        m.put("url", location);
-        
-        String metadata = Json.encode(m);
-        doc.getElementById("content").prepend("<div id='_meta'>" + metadata + "</div>");
-        
-        String content = doc.getElementById("content").toString();
-
-        req.response().end(content);        
-        
         if (location.contains("/"))
             location = location.substring(location.lastIndexOf("/")+1, location.length());
         
-        return "http://dbpedia.org/resource/" + location;
+        String uri = "http://dbpedia.org/resource/" + location;
+        
+        
+
+        TitanTransaction t = core.graph.newTransaction();
+        Vertex v = core.vertex(t, u(uri), true);
+
+        if ( !core.cached(v, "wikipedia") )  {
+            core.cache(v, "wikipedia");
+
+            //<link rel="canonical" href="http://en.wikipedia.org/wiki/Lysergic_acid_diethylamide" />
+            Elements cs = doc.getElementsByTag("link");
+            if (cs!=null) {
+                for (Element e : cs) {
+                    if (e.hasAttr("rel") && e.attr("rel").equals("canonical"))
+                        location = e.attr("href");
+                }
+            }
+
+            try {
+                doc.getElementsByTag("head").remove();
+                doc.getElementsByTag("script").remove();
+                doc.getElementsByTag("link").remove();
+                doc.getElementById("top").remove();
+                doc.getElementById("siteSub").remove();
+                doc.getElementById("contentSub").remove();
+                doc.getElementById("jump-to-nav").remove();
+                doc.getElementsByClass("IPA").remove();
+                doc.getElementsByClass("search-types").remove();
+                doc.getElementsByClass("mw-specialpage-summary").remove();
+                doc.getElementsByClass("mw-search-top-table").remove();
+            }
+            catch (Exception e) {
+                System.out.println(e);
+            }
+
+            removeComments(doc);
+            
+            //references and citations consume a lot of space
+            Elements refs = doc.getElementsByClass("references");
+            if (refs!=null)
+                refs.remove();
+            
+
+            Map<String,Object> m = new HashMap();
+            m.put("url", location);
+
+            String metadata = Json.encode(m);
+            doc.getElementById("content").prepend("<div id='_meta'>" + metadata + "</div>");
+
+            String content = doc.getElementById("content").toString();
+
+            Elements catlinks = doc.select(".mw-normal-catlinks li a");
+            List<String> categories = new ArrayList();
+            for (Element e : catlinks) {
+                if (e.tag().getName().equals("a")) {
+                    String c = e.attr("href");
+                    c = c.substring(c.lastIndexOf('/')+1, c.length());
+                    categories.add(c);
+                }
+            }
+            
+            v.setProperty("wikipedia:content", content);
+            for (String s : categories) {            
+                Vertex c = core.vertex(t, "dbpedia.org/resource/" + s, true);
+                core.uniqueEdge(t, v, c, "-->");
+            }
+            t.commit();
+
+            req.response().end(content);        
+        }
+        else {            
+            System.out.println("wikipedia cached " + uri);
+            String content = v.getProperty("wikipedia:content");
+            t.commit();
+            
+            if (content != null) {
+                req.response().end(content);            
+            }
+            else {
+                req.response().end("Cache fail: " + uri);
+            }
+        }
+        
+        return uri;
     }
     
-    public class WikiPage implements Handler<HttpServerRequest> {      
-    
+    public class WikiPage extends HandlerThread<HttpServerRequest> {      
+
+        public WikiPage(ExecutorService t) {
+            super(t);
+        }
+
+        
         @Override
-        public void handle(final HttpServerRequest req) {
+        public void run(HttpServerRequest req) {
             try {
                 String wikipage = req.params().get("id");
                 String u = "http://en.wikipedia.org/wiki/" + wikipage;
@@ -111,10 +170,15 @@ public class Wikipedia {
             }
           }
     }
-    public class WikiSearch implements Handler<HttpServerRequest> {      
     
+    public class WikiSearch extends HandlerThread<HttpServerRequest> {
+
+        public WikiSearch(ExecutorService t) {
+            super(t);
+        }
+            
         @Override
-        public void handle(final HttpServerRequest req) {
+        public void run(HttpServerRequest req) {
             try {
                 String q = req.params().get("query");                
                 String u = "http://en.wikipedia.org/w/index.php?search=" + q;
@@ -131,6 +195,21 @@ public class Wikipedia {
     }
     
 
+     public static void removeComments(Node node) {
+        // as we are removing child nodes while iterating, we cannot use a normal foreach over children,
+        // or will get a concurrent list modification error.
+        int i = 0;
+        while (i < node.childNodes().size()) {
+            Node child = node.childNode(i);
+            if (child.nodeName().equals("#comment"))
+                child.remove();
+            else {
+                removeComments(child);
+                i++;
+            }
+        }
+    }
+     
 //    public static String getPage(String u) {
 //        URL url;
 //        HttpURLConnection conn;

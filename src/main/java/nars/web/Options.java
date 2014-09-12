@@ -33,6 +33,8 @@ public class Options {
     
     public String connection; //"static" or "websocket"
     
+    public int threads;
+    
     public static Options newDefault() {
         Options s = new Options();
         s.name = "Netention";
@@ -42,6 +44,7 @@ public class Options {
         s.allowSearchEngines = false;
         s.compressHTTP = false;
         s.cacheStaticFiles = false;
+        s.threads = 8;
         return s;
     }
 

@@ -44,11 +44,14 @@ $(document).ready(function() {
 
               //HACK, wrap $N.pub for sharing it on the event bus
               $N._pub = $N.pub;
-              $N.pub = function(x) {
-                  $N._pub(x);
-                  bus.send('publish', x );
+              $N.pub = function(x, onError, onSuccess) {
+                  $N._pub(x, onError, function() {
+                      bus.send('publish', x );
+                      onSuccess();
+                  });                  
               };
               
+              console.log('Websocket Event Bus start');
               $N.trigger('bus.start');
 
         };

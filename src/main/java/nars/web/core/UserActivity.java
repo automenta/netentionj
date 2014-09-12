@@ -62,10 +62,14 @@ public class UserActivity implements Handler<Message> {
     public void publish(String nobjectJSON) {
         Map m = Json.decodeValue(nobjectJSON, Map.class);
         Object pred;
+        
+        String id = (String) m.get("id");
+        String author = (String) m.get("author");
+        
+        //Create Edge
         if ((pred = m.get("predicate"))!=null) {
             
-            long createdAt = (long) m.get("createdAt");
-            String author = (String) m.get("author");
+            long createdAt = (long) m.get("createdAt");            
             String subj = (String)m.get("subject");
             String obj = (String)m.get("object");
             if ((subj!=null) && (obj!=null)) {
@@ -79,7 +83,7 @@ public class UserActivity implements Handler<Message> {
                     Vertex ov = core.vertex(t, obj, true);                    
                     
                     for (String p : l) {                        
-                        Edge e = core.addEdge(t, sv, ov, p);
+                        Edge e = core.uniqueEdge(t, sv, ov, p);
                         e.setProperty("author", author);
                         e.setProperty("createdAt", createdAt);
                     }
@@ -88,6 +92,39 @@ public class UserActivity implements Handler<Message> {
 
                 }
             }
+        }
+        else {
+            //set vertex value
+            System.out.println("Setting vertex: " + m);
+            
+            TitanTransaction t = core.graph.newTransaction();
+            Vertex sv = core.vertex(t, id, true);
+            
+            final String[] rootFields =  { "name", "geolocation" };            
+            for (String r : rootFields) {
+                Object v = m.get(r);
+                if (v!=null)
+                    sv.setProperty(r, v.toString());
+            }
+            
+            //TODO remove existing non-specified edges
+            
+            Object value = m.get("value");
+            if ((value!=null) && (value instanceof List)) {
+                List valList = (List)value;
+                for (Map<String,Object> l : (List<Map<String,Object>>)valList) {
+                    
+                    Object tagID = l.get("id");
+
+                    if (tagID!=null) {
+                        //create inherit edge                    
+                        core.uniqueEdge(t, sv, core.vertex(t, tagID.toString(), true), "-->");
+                    }
+                }
+            }
+            
+            System.out.println("finished vertex set" + t);
+            t.commit();
         }
         
     }

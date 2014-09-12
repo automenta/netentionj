@@ -19,10 +19,13 @@ package nars.web.util;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.thinkaurelius.titan.core.TitanTransaction;
+import com.tinkerpop.blueprints.Vertex;
+import java.util.concurrent.ExecutorService;
 import nars.web.core.Core;
 import static nars.web.core.Core.u;
 import org.apache.jena.riot.RDFDataMgr;
-import org.vertx.java.core.Handler;
+import org.boon.HTTP;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.eventbus.Message;
 
@@ -31,7 +34,7 @@ import org.vertx.java.core.eventbus.Message;
  *
  * @author me
  */
-public class DBPedia implements Handler<Message> {
+public class DBPedia extends HandlerThread<Message> {
     private final Core core;
     
  
@@ -43,7 +46,8 @@ public class DBPedia implements Handler<Message> {
     //SELECT DISTINCT * WHERE {?object ?t <http://dbpedia.org/resource/Wolfgang_Amadeus_Mozart> } LIMIT 100 
     private final EventBus bus;    
     
-    public DBPedia(Core c, EventBus b) {
+    public DBPedia(ExecutorService e, Core c, EventBus b) {
+        super(e);
         this.bus = b;
         this.core = c;
         b.registerHandler("wikipedia", this);
@@ -51,22 +55,36 @@ public class DBPedia implements Handler<Message> {
     
     public boolean learnedRecently(String wikiID) {
         //TODO check actual date or use LRU cache
-        if (core.vertex(u(wikiID), false) == null) {            
+        TitanTransaction t = core.graph.newTransaction();
+        Vertex v = core.vertex(t, u(wikiID), false);
+        if (v == null) {            
             return false;
         }
-        System.out.println(wikiID + " cached");
-        return true;
+        
+        if ( !core.cached(v, "dbpedia") )  { 
+            core.cache(v, "dbpedia"); //cache even if dbpedia fails, because it has low availability
+            t.commit();
+            return false;
+        }
+        else {            
+            System.out.println("dbpedia cached " + wikiID);
+            t.commit();
+            return true;
+        }
     }
     
     @Override
-    public void handle(Message e) {
+    public void run(Message e) {
         String wikiURL = e.body().toString();
+
         if (!learnedRecently(wikiURL))
             learn(wikiURL);
         bus.publish("interest", u(wikiURL));
     }
     
     public void learn(String wikiURL) {
+        String id = wikiURL.substring(wikiURL.lastIndexOf("/")+1, wikiURL.length());
+        
         try {
             /*Query query = QueryFactory.create(getDBPediaQuery(wikiURL)); //s2 = the query above
             QueryExecution qExe = QueryExecutionFactory.sparqlService( "http://dbpedia.org/sparql", query );
@@ -77,21 +95,32 @@ public class DBPedia implements Handler<Message> {
             //qmodel.write(System.out, "N3");
             core.addRDF(qmodel, wikiURL);*/
             
-            String id = wikiURL.substring(wikiURL.lastIndexOf("/")+1, wikiURL.length());
             String dataURL = "http://dbpedia.org/data/" + id + ".n3";
             Model qmodel = ModelFactory.createDefaultModel();            
             RDFDataMgr.read(qmodel, dataURL);
-            core.addRDF(qmodel, wikiURL);
+            
+            TitanTransaction t = core.graph.newTransaction();
+            core.addRDF(t, qmodel, wikiURL);
+            t.commit();
             
             
             System.out.println("DBPedia finished learning " + wikiURL + " via " + dataURL + " .. RDF model size: +" + qmodel.size());            
         }
         catch (Exception e) {
-            System.out.println("DBPedia timed out " + wikiURL);            
+            System.out.println("DBPedia timed out " + wikiURL);          
+            learnWikipediaCategories(id);
         }
 
     }
 
+    //TODO implement this
+    public void learnWikipediaCategories(String id) {
+        int max = 32;
+        //http://en.wikipedia.org/w/api.php?action=query&prop=categories|info&format=json&cllimit=10&titles=id
+        String url = "http://en.wikipedia.org/w/api.php?action=query&prop=categories|info&format=json&cllimit=" + max + "&titles=" + id;
+        HTTP.get(url);
+    }
+    
     public static String getDBPediaQuery(String wikiURL) {
         //String q = "SELECT DISTINCT * WHERE {?object ?t <http://dbpedia.org/resource/" + res + "> ";
         /*String q = "DESCRIBE * WHERE { ";

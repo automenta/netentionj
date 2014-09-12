@@ -11,6 +11,8 @@ import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import static java.util.stream.Collectors.toList;
@@ -51,6 +53,7 @@ public class WebServer {
     private final Core core;
     private final RDF rdf;
     
+    ExecutorService executor;
     
     public WebServer(Core c, Options o) throws Exception {
         super();
@@ -58,6 +61,8 @@ public class WebServer {
         this.core = c;
         this.options = o;
 
+        this.executor = Executors.newFixedThreadPool(o.threads);
+        
         vertx = VertxFactory.newVertx();        
         http = vertx.createHttpServer();
         rdf = new RDF();
@@ -120,8 +125,8 @@ public class WebServer {
         .noMatch(new StaticFileHandler(vertx, "client/", "index.html", options.compressHTTP, options.cacheStaticFiles));
         
 
-        new DBPedia(core, vertx.eventBus());
-        new Wikipedia(vertx.eventBus(), r);
+        new DBPedia(executor, core, vertx.eventBus());
+        new Wikipedia(executor, core, vertx.eventBus(), r);
         new ContextualizeInterest(c, vertx.eventBus());
         new UserActivity(c, vertx.eventBus());
         

@@ -36,7 +36,7 @@
 			"wall",
 			"slides"
         ],
-        "newUserProperties": ["walletRipple"],
+        "newUserProperties": [],
         "shareTags": ["Offer", "Sell", "Lend", "Rent", "Swap", "GiveAway", "Need"],
         "shareCategories": ["Food", "Service", "Volunteer", "Shelter", "Tools", "Health", "Transport", "Animal"],
 		"knowTags": ["Learn", "Teach", "Do"],

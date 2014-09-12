@@ -538,7 +538,8 @@ function netention(f) {
         //called after connection establishd
         sessionStart: function() {
             console.log('Session start for identity: ', $N.id());
-            initSessionUI();
+            
+            $N.trigger('session.start');
 
         },
         getObjects: function(query, onObject, onFinished) {

@@ -1,0 +1,69 @@
+
+@import url("netention.css");
+@import url("lib/bootstrap/bootstrap.min.css");
+@import url("theme/bootswatch.cerulean.css");
+
+@import url("lib/fontawesome/css/font-awesome.min.css");
+    @import url("lib/leaflet/leaflet.css");
+    @import url("lib/leaflet/Control.OSMGeocoder.css");
+    @import url("lib/leaflet/leaflet.draw.css");
+
+body {
+    overflow: auto;
+    margin: 0;            
+}
+#wiki {
+    margin: 1em;
+    margin-top:1.8em;
+}
+.WikiBrowser {
+    overflow: visible;
+}
+
+#tagbar {            
+    padding: 0.25em;
+    width: 100%;           
+}
+#mainmenu button, #mainmenu input {
+    font-size: 130%;
+}
+#tagbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+}
+#mainmenu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 0.25em;
+}
+#wikimenu {
+    width: 50%;
+    float: left;
+}
+#context {
+    width: 50%;
+    float: right;
+}
+#tagbar .label {
+    float: left;
+}
+#tagbar .quicktag {
+    padding-left: 1em;
+    padding-right: 1em;
+    float: left;
+}
+#tagbar .save {
+    float: left;
+    font-size: 150%;
+}
+#tagbar .save .cancelButton {
+    float: right;
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: none;
+    border: 0;
+}

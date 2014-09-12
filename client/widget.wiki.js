@@ -16,7 +16,7 @@ function newWikiBrowser(onTagAdded, options) {
     var b = newDiv();
 
     var header = newDiv();
-    header.addClass('WikiBrowserHeader container-fluid navbar-default');
+    header.addClass('WikiBrowserHeader');
     
 
     var backButton = $('<button disabled><i class="fa fa-arrow-left"></i></button>');
@@ -171,14 +171,14 @@ function onWikiTagAdded(d, tag) {
         //d.dialog('close');
         d.empty();
     });
-    var cancelButton = $('<button>Cancel</button>').click(function () {
+    var cancelButton = $('<button title="Cancel" class="cancelButton"><i class="fa fa-times"></i></button>').click(function () {
         //d.dialog('close');
         d.empty();
     });
 
-    d.append( $('<div style="float: left"></div>').append(tag) );
-    d.append( $('<div style="float: left"></div>').append(tagBar) );
-    d.append( $('<div style="float: left"></div>').append(saveButton, cancelButton) );
+    d.append( $('<div class="label"></div>').append('<h4><span class="label label-success">' + tag + '</span></h4>') );
+    d.append( $('<div class="quicktag"></div>').append(tagBar) );
+    d.append( $('<div class="save"></div>').append(saveButton, cancelButton) );
 }
 
 function newWikiView(v) {

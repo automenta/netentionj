@@ -852,8 +852,7 @@ function initUI() {
 
 }
 
-function initSessionUI() { 
-    console.log('initSessionUI()');
+$N.once('session.start', function initSessionUI() { 
 
 	$N.saveAll();
 	updateBrand(); //TODO use backbone Model instead of global function
@@ -891,7 +890,7 @@ function initSessionUI() {
 
 	updateView();
 
-}
+});
 
 function updateIndent(viewmenushown) {
     if (viewmenushown) {

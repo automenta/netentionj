@@ -92,9 +92,7 @@ function newAvatarImage(s) {
 
 
 function newTagBarSaveButton(s, currentTag, tagBar, onSave) {
-    var saveButton = $('<button>Save</button>');
-    saveButton.addClass('WikiTagSave');
-    saveButton.click(function () {
+    var saveButton = $('<button title="Save"><i class="fa fa-floppy-o"></i></button>').click(function () {
         if (currentTag == null) {
             alert('Choose a wikitag.');
             return;
@@ -165,8 +163,6 @@ function newTagBarSaveButton(s, currentTag, tagBar, onSave) {
         } else {
             alert('Choose 1 or more tags to combine with the wikitag.');
         }
-
-
     });
     return saveButton;
 }
@@ -176,14 +172,13 @@ function newTagBar(s, currentTag) {
     tagBar.addClass('TagBar');
 
     //http://jqueryui.com/button/#checkbox
-    var skillSet = $('<div/>');
-    var canNeedSet = $('<div/>');
-
+    var skillSet = $('<div class="btn-group" data-toggle="buttons"/>');
+    var canNeedSet = $('<div class="btn-group" data-toggle="buttons"/>');
+    
     function tbutton(tag, target) {
         var b = $('<input/>');
-        var cid = 'skill_' + tag + '_' + currentTag;
-        b.attr('id', cid);
-        b.attr('type', 'checkbox');
+        var cid = 'skill_' + tag + '_' + currentTag;                
+        b.attr('id', cid).attr('type', 'checkbox');
 
         b.html(tag);
         b.click(function (event) {
@@ -195,7 +190,7 @@ function newTagBar(s, currentTag) {
                         x.attr('checked', false);
                     }
                 });
-                target.buttonset('refresh');
+                //target.buttonset('refresh');
             }
         });
         target.append(b);
@@ -216,47 +211,24 @@ function newTagBar(s, currentTag) {
         var iconString = '';
         if (icon)
             iconString = '<img src="' + icon + '" style="height: 1em"/>&nbsp;';
-
-        var l = $('<label for="' + cid + '">' + iconString + tagname + '</label>');
-        l.attr('title', tooltip);
+        
+        var l = $('<label class="btn btn-primary"></label>');        
+        l.append(iconString, tag, b);
         target.append(l);
         return b;
     }
 
-
-    {
-        /*if (configuration.knowLevels == 6) {
-            //6 curiosume levels
-            tbutton('Learn', skillSet);
-            tbutton('LearnDo', skillSet);
-            tbutton('DoLearn', skillSet);
-            tbutton('DoTeach', skillSet);
-            tbutton('TeachDo', skillSet);
-            tbutton('Teach', skillSet);
-        } else if (configuration.knowLevels == 5) {
-            tbutton('Learn', skillSet);
-            tbutton('DoLearn', skillSet);
-            tbutton('Do', skillSet);
-            tbutton('DoTeach', skillSet);
-            tbutton('Teach', skillSet);
-        } else if (configuration.knowLevels == 3)*/ {
-            tbutton('Learn', skillSet);
-            tbutton('Do', skillSet);
-            tbutton('Teach', skillSet);
-        }
-    }
+    tbutton('Learn', skillSet);
+    tbutton('Do', skillSet);
+    tbutton('Teach', skillSet);
     tagBar.append(skillSet);
-    skillSet.buttonset();
-
-    tagBar.append('<br/>');
+    //skillSet.buttonset();   
 
     tbutton('Can', canNeedSet);
     tbutton('Need', canNeedSet);
     tbutton('Not', canNeedSet);
     tagBar.append(canNeedSet);
-    canNeedSet.buttonset();
-
-    tagBar.append('<br/>');
+    //canNeedSet.buttonset();  
 
     return tagBar;
 }
