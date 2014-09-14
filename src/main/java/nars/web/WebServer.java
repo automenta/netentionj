@@ -3,9 +3,8 @@ package nars.web;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
-import com.thinkaurelius.titan.core.TitanFactory;
-import com.thinkaurelius.titan.core.TitanGraph;
-import com.thinkaurelius.titan.core.TitanTransaction;
+import com.tinkerpop.blueprints.TransactionalGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
@@ -106,15 +105,14 @@ public class WebServer {
             @Override public void handle(HttpServerRequest req) {
                 String tag = req.params().get("tag");
                 
-                TitanTransaction t = core.transaction();
                 req.response().end( 
                         Json.encode(
-                            core.objectStreamByTag(t, tag).map(v -> core.getObject(v))
+                            core.objectStreamByTag(tag).map(v -> core.getObject(v))
                                     .collect(toList())
                                 
                         ) 
                 );
-                t.commit();
+                core.commit();
         }})
         .get("/object/:id/json", new Handler<HttpServerRequest>() {
             @Override public void handle(HttpServerRequest req) {
@@ -159,17 +157,9 @@ public class WebServer {
         String optionsPath = args.length > 0 ? args[0] : "options.json";        
         Options options = Options.load(optionsPath);
 
-        TitanGraph graph = TitanFactory.build()
+        OrientGraph g = new OrientGraph("plocal:" + options.databasePath);
                 
-                .set("storage.backend", "berkeleyje")
-                .set("storage.directory", options.databasePath)                
-                
-                //.set("storage.backend","cassandra")
-                //.set("storage.hostname","127.0.0.1")
-                               
-                .open();
-        
-        Core core = new Core(graph);
+        Core core = new Core((TransactionalGraph)g);
         new NOntology(core);
         //new SchemaOrg(core);
         new WebServer(core, options);

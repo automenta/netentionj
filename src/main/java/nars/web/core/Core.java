@@ -12,15 +12,11 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.thinkaurelius.titan.core.Cardinality;
-import com.thinkaurelius.titan.core.PropertyKey;
-import com.thinkaurelius.titan.core.TitanGraph;
-import com.thinkaurelius.titan.core.TitanGraphQuery;
-import com.thinkaurelius.titan.core.TitanTransaction;
-import com.thinkaurelius.titan.core.schema.TitanGraphIndex;
-import com.thinkaurelius.titan.core.schema.TitanManagement;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.KeyIndexableGraph;
+import com.tinkerpop.blueprints.Parameter;
+import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.gremlin.java.GremlinPipeline;
 import com.tinkerpop.pipes.PipeFunction;
@@ -60,9 +56,13 @@ public class Core extends EventEmitter {
     public Network net;
     
     //https://github.com/thinkaurelius/titan/blob/c958ad2a2bafd305a33655347fef17138ee75088/titan-test/src/main/java/com/thinkaurelius/titan/graphdb/TitanIndexTest.java
-    public final TitanGraph graph;
+    //public final TitanGraph graph;
+    
+    TransactionalGraph graph;
 
     public Map<String,Object> getObject(final Vertex v) {
+        
+        
         Map<String,Object> r = new HashMap();
         
         for (String s : v.getPropertyKeys())
@@ -100,9 +100,8 @@ public class Core extends EventEmitter {
     }
     
     public Map<String,Object> getObject(final String objId) {
-        
-        TitanTransaction t = transaction();
-        Vertex v = vertex(t, objId, false);
+                
+        Vertex v = vertex(objId, false);
         
         if (v == null) {
             Map<String,Object> h = new HashMap();
@@ -110,18 +109,19 @@ public class Core extends EventEmitter {
             return h;
         }
         Map<String, Object> r = getObject(v);
-        t.commit();
+        graph.commit();
+        
         return r;
     }
 
     public void cache(Vertex v, String type) {
-        v.setProperty(type + ":modifiedAt", System.currentTimeMillis());
+        v.setProperty(type + "_modifiedAt", System.currentTimeMillis());
     }
     
     public boolean cached(Vertex v, String type) {
         long maxCachedTime = 7 * 24 * 60 * 60 * 1000; //1 week
         long now = System.currentTimeMillis();
-        Object l = v.getProperty(type + ":modifiedAt");
+        Object l = v.getProperty(type + "_modifiedAt");
         if (l == null) return false;
         
         long then = (long)l;
@@ -137,6 +137,10 @@ public class Core extends EventEmitter {
             m.put(s, v.getProperty(s));
         }
         return m;
+    }
+
+    public void commit() {
+        graph.commit();
     }
 
 
@@ -156,52 +160,24 @@ public class Core extends EventEmitter {
     private NObject myself;
     
     
-    public Core(TitanGraph db) {
+    public Core(TransactionalGraph db) {
         
         this.graph = db;
-
-//        TitanTransaction tx = graph.newTransaction();
-//        tx.makePropertyKey("url").dataType(String.class).cardinality(Cardinality.SINGLE);
-//        tx.commit();
         
-        TitanManagement mgmt = graph.getManagementSystem();
-        if (!mgmt.containsGraphIndex("uri")) {
-            PropertyKey name = mgmt.makePropertyKey("uri").dataType(String.class).cardinality(Cardinality.SINGLE).make();
-            TitanGraphIndex namei = mgmt.buildIndex("uri",Vertex.class).addKey(name).unique().buildCompositeIndex();
-            mgmt.commit();
+        if (!((KeyIndexableGraph)graph).getIndexedKeys(Vertex.class).contains("uri")) {
+            ((KeyIndexableGraph)graph).createKeyIndex("uri", Vertex.class, new Parameter("type", "UNIQUE"));
         }
         
-
-        //EdgeLabel knows = makeLabel("uri");
-        //mgmt.buildIndex("namev",Vertex.class).addKey(name).buildMixedIndex("root");
-        //mgmt.buildIndex("namee",Edge.class).addKey(name).buildMixedIndex("root");        
-        
-//        if (session.get(Session_MYSELF)==null) {            
-//            //first time user
-//            become(newUser("Anonymous " + NObject.UUID().substring(0,4)));
-//        }
-        
-        //default tags
-        //List<NObject> c = objectStreamByTag(Tag.tag).collect(Collectors.)
-        
-        
-                
-        //    map.put(1, "one");
-        //    map.put(2, "two");
-        //    // map.keySet() is now [1,2]
-        //
-        //    db.commit();  //persist changes into disk
-        //
-        //    map.put(3, "three");
-        //    // map.keySet() is now [1,2,3]
-        //    db.rollback(); //revert recent changes
-        //    // map.keySet() is now [1,2]
-        //
-        //    db.close();
-        
+//                
+//                TitanManagement mgmt = graph.getManagementSystem();
+//        if (!mgmt.containsGraphIndex("uri")) {
+//            PropertyKey name = mgmt.makePropertyKey("uri").dataType(String.class).cardinality(Cardinality.SINGLE).make();
+//            TitanGraphIndex namei = mgmt.buildIndex("uri",Vertex.class).addKey(name).unique().buildCompositeIndex();
+//            mgmt.commit();
+//        }        
     }
 
-    public void addRDF(TitanTransaction t, Model rdf, String topic) {
+    public void addRDF(Model rdf, String topic) {
         topic = u(topic);                 
         
         StmtIterator l = rdf.listStatements();
@@ -235,26 +211,25 @@ public class Core extends EventEmitter {
             }
             
             String usub = u(subj.getURI());
-            Vertex sv = vertex(t, usub, true);
+            Vertex sv = vertex(usub, true);
             if (obj instanceof Resource) {
                 String ovu = u(((Resource)obj).getURI());
-                Vertex ov = vertex(t, ovu, true);
-                uniqueEdge(t, sv, ov, p.toString());
+                Vertex ov = vertex(ovu, true);
+                uniqueEdge(sv, ov, p.toString());
             }
             else if (obj instanceof Literal) {
                 //TODO support other literal types
                 String str = ((Literal)obj).getString();
-                if (s!=null)
-                    sv.setProperty("rdf", str);
+                sv.setProperty("rdf", str);
             }
             
         }
-        t.commit();
+        graph.commit();
         
     }
     
     /** removes any existing edges between the two vertices, then adds it */
-    public Edge uniqueEdge(TitanTransaction t, Vertex from, Vertex to, String predicate) {
+    public Edge uniqueEdge(Vertex from, Vertex to, String predicate) {
         Iterable<Edge> existing = from.getEdges(Direction.OUT, predicate);
         for (Edge e : existing) {            
             if (e.getVertex(Direction.IN).equals(to)) {
@@ -264,12 +239,12 @@ public class Core extends EventEmitter {
                 return e;
             }
         }
-        return addEdge(t, from, to, predicate);    
+        return addEdge(from, to, predicate);    
     }
     
-    public Edge addEdge(TitanTransaction t, Vertex sv, Vertex ov, String predicate) {
+    public Edge addEdge( Vertex sv, Vertex ov, String predicate) {
         System.out.println("  +: " + sv.toString() + " " + predicate + " " + ov.toString() );        
-        Edge e = t.addEdge(null, sv, ov, predicate);    
+        Edge e = graph.addEdge(null, sv, ov, predicate);    
         return e;
     }
 
@@ -282,31 +257,20 @@ public class Core extends EventEmitter {
     }
     
     public void printGraph() {
-        for (Vertex v : graph.getVertices())
+        for (Vertex v : (Iterable<Vertex>)graph.getVertices())
             System.out.println(v.toString() + " " + v.getProperty("uri"));
-        for (Edge e : graph.getEdges())
+        for (Edge e : (Iterable<Edge>)graph.getEdges())
             System.out.println(e.toString() + " " + e.getLabel() + " " + e.getPropertyKeys());        
     }
     
     
-    public Vertex vertex(String uri, boolean createIfNonExist) {
-        TitanTransaction t = graph.newTransaction();
-        Vertex r = vertex(t, uri, createIfNonExist);
-        t.commit();
-        return r;
-    }
-    
-    public Vertex vertex(TitanTransaction t, String uri, boolean createIfNonExist) {
-        //System.out.println("indexed keys: " + graph.getIndexedKeys(String.class));
-        //Iterable<Vertex> ee = graph.getVertices("uri",uri);
-        //TitanIndexQuery iq = graph.indexQuery("uri", uri).limit(1);                
-        TitanGraphQuery g = t.query().has("uri", uri).limit(1);
-        for (Object v : g.vertices()) {
+    public Vertex vertex( String uri, boolean createIfNonExist) {
+        for (Object v : graph.getVertices("uri", uri)) {
             if (v!=null)
                 return (Vertex)v;
         }
         if (createIfNonExist)  {            
-            Vertex v = t.addVertex();
+            Vertex v = graph.addVertex(uri);
             v.setProperty("uri", uri);
             return v;            
         }
@@ -314,9 +278,8 @@ public class Core extends EventEmitter {
     }
     
     public void addObjects(Iterable<NObject> N) {
-        TitanTransaction t = graph.newTransaction();
         for (NObject n : N) {
-            Vertex v = vertex(t, n.id, true);        
+            Vertex v = vertex(n.id, true);        
             if (n instanceof NProperty) {
                 NProperty np = (NProperty)n;
                 property.put(np.id, np);
@@ -326,12 +289,12 @@ public class Core extends EventEmitter {
                 NClass nc = (NClass)n;
                 nclass.put(nc.id, nc);
                 for (String s : nc.getExtend()) {
-                    Vertex p = vertex(t, s, true);
-                    uniqueEdge(t, v, p, "is");
+                    Vertex p = vertex(s, true);
+                    uniqueEdge(v, p, "is");
                 }
             }
         }
-        t.commit();
+        graph.commit();
     }
     
     public void addObject(NObject... N) {
@@ -339,10 +302,10 @@ public class Core extends EventEmitter {
     }
     
     /** eigenvector centrality */
-    public Map<Vertex, Number> centrality(final TitanTransaction t, final int iterations, Vertex start) {
+    public Map<Vertex, Number> centrality(final int iterations, Vertex start) {
         Map<Vertex, Number> map = new HashMap();
         
-        new GremlinPipeline<Vertex, Vertex>(t.getVertices()).start(start).as("x").both().groupCount(map).loop("x", 
+        new GremlinPipeline<Vertex, Vertex>(graph.getVertices()).start(start).as("x").both().groupCount(map).loop("x", 
                 new PipeFunction<LoopPipe.LoopBundle<Vertex>, Boolean>() {
 
                     int c = 0;
@@ -444,14 +407,11 @@ public class Core extends EventEmitter {
 //        return data.values().stream();
 //    }
     
-    public Stream<Vertex> objectStreamByTag(TitanTransaction t, final String tagID) {
-        Vertex v = vertex(t, tagID, false);
+    public Stream<Vertex> objectStreamByTag(final String tagID) {
+        Vertex v = vertex(tagID, false);
         return stream( v.getEdges(Direction.IN , "is").spliterator(), false ).map( e -> e.getVertex(Direction.OUT) );
     } 
     
-    public TitanTransaction transaction() {
-        return graph.newTransaction();
-    }
 //    public Stream<NObject> objectStreamByTagAndAuthor(final String tagID, final String author) {
 //        return objectStream().filter(o -> (o.author == author && o.hasTag(tagID)));
 //    }

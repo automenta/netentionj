@@ -16,7 +16,6 @@
  */
 package nars.web.util;
 
-import com.thinkaurelius.titan.core.TitanTransaction;
 import com.tinkerpop.blueprints.Vertex;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -63,8 +62,7 @@ public class Wikipedia {
         
         
 
-        TitanTransaction t = core.graph.newTransaction();
-        Vertex v = core.vertex(t, u(uri), true);
+        Vertex v = core.vertex( u(uri), true);
 
         if ( !core.cached(v, "wikipedia") )  {
             core.cache(v, "wikipedia");
@@ -121,19 +119,19 @@ public class Wikipedia {
                 }
             }
             
-            v.setProperty("wikipedia:content", content);
+            v.setProperty("wikipedia_content", content);
             for (String s : categories) {            
-                Vertex c = core.vertex(t, "dbpedia.org/resource/" + s, true);
-                core.uniqueEdge(t, v, c, "-->");
+                Vertex c = core.vertex("dbpedia.org/resource/" + s, true);
+                core.uniqueEdge(v, c, "is");
             }
-            t.commit();
+            core.commit();
 
             req.response().end(content);        
         }
         else {            
             System.out.println("wikipedia cached " + uri);
-            String content = v.getProperty("wikipedia:content");
-            t.commit();
+            String content = v.getProperty("wikipedia_content");
+            core.commit();
             
             if (content != null) {
                 req.response().end(content);            

@@ -17,7 +17,6 @@
 
 package nars.web.core;
 
-import com.thinkaurelius.titan.core.TitanTransaction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import java.util.List;
@@ -75,20 +74,19 @@ public class UserActivity implements Handler<Message> {
             if ((subj!=null) && (obj!=null)) {
                 if (pred instanceof List) {
                     List<String> l = (List)pred;
-                    TitanTransaction t = core.graph.newTransaction();
                     
-                    Vertex sv = core.vertex(t, subj, true);
+                    Vertex sv = core.vertex(subj, true);
                     sv.setProperty("type", "user");
                     
-                    Vertex ov = core.vertex(t, obj, true);                    
+                    Vertex ov = core.vertex(obj, true);                    
                     
                     for (String p : l) {                        
-                        Edge e = core.uniqueEdge(t, sv, ov, p);
+                        Edge e = core.uniqueEdge(sv, ov, p);
                         e.setProperty("author", author);
                         e.setProperty("createdAt", createdAt);
                     }
                     
-                    t.commit();
+                    core.commit();
 
                 }
             }
@@ -97,8 +95,8 @@ public class UserActivity implements Handler<Message> {
             //set vertex value
             System.out.println("Setting vertex: " + m);
             
-            TitanTransaction t = core.graph.newTransaction();
-            Vertex sv = core.vertex(t, id, true);
+            
+            Vertex sv = core.vertex(id, true);
             
             final String[] rootFields =  { "name", "geolocation" };            
             for (String r : rootFields) {
@@ -118,12 +116,12 @@ public class UserActivity implements Handler<Message> {
 
                     if (tagID!=null) {
                         //create inherit edge                    
-                        core.uniqueEdge(t, sv, core.vertex(t, tagID.toString(), true), "is");
+                        core.uniqueEdge(sv, core.vertex(tagID.toString(), true), "is");
                     }
                 }
             }
             
-            t.commit();
+            core.commit();
         }
         
     }

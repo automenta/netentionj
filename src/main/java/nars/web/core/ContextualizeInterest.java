@@ -17,7 +17,6 @@
 
 package nars.web.core;
 
-import com.thinkaurelius.titan.core.TitanTransaction;
 import com.tinkerpop.blueprints.Vertex;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,14 +56,13 @@ public class ContextualizeInterest implements Handler<Message> {
         String id = e.body().toString();
         
         
-        TitanTransaction t = core.graph.newTransaction();
-        Vertex v = core.vertex(t, id, false);
+        Vertex v = core.vertex(id, false);
         
         if (v!=null) {       
             final double threshold = 0.01;
             
             
-            Map<Vertex, Number> m = core.centrality(t, 1000, v);
+            Map<Vertex, Number> m = core.centrality(1000, v);
             
             m.remove(v); //exclude own vertex
             
@@ -97,7 +95,7 @@ public class ContextualizeInterest implements Handler<Message> {
             System.err.println("unknown context: " + id);
         }
         
-        t.commit();
+        core.commit();
         
     }
     

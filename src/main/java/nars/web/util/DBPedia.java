@@ -19,7 +19,6 @@ package nars.web.util;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.thinkaurelius.titan.core.TitanTransaction;
 import com.tinkerpop.blueprints.Vertex;
 import java.util.concurrent.ExecutorService;
 import nars.web.core.Core;
@@ -55,20 +54,19 @@ public class DBPedia extends HandlerThread<Message> {
     
     public boolean learnedRecently(String wikiID) {
         //TODO check actual date or use LRU cache
-        TitanTransaction t = core.graph.newTransaction();
-        Vertex v = core.vertex(t, u(wikiID), false);
+        Vertex v = core.vertex(u(wikiID), false);
         if (v == null) {            
             return false;
         }
         
         if ( !core.cached(v, "dbpedia") )  { 
             core.cache(v, "dbpedia"); //cache even if dbpedia fails, because it has low availability
-            t.commit();
+            core.commit();
             return false;
         }
         else {            
             System.out.println("dbpedia cached " + wikiID);
-            t.commit();
+            core.commit();
             return true;
         }
     }
@@ -99,9 +97,9 @@ public class DBPedia extends HandlerThread<Message> {
             Model qmodel = ModelFactory.createDefaultModel();            
             RDFDataMgr.read(qmodel, dataURL);
             
-            TitanTransaction t = core.graph.newTransaction();
-            core.addRDF(t, qmodel, wikiURL);
-            t.commit();
+            
+            core.addRDF(qmodel, wikiURL);
+            core.commit();
             
             
             System.out.println("DBPedia finished learning " + wikiURL + " via " + dataURL + " .. RDF model size: +" + qmodel.size());            
