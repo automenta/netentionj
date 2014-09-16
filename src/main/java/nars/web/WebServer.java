@@ -7,7 +7,6 @@ import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.util.HashMap;
@@ -181,9 +180,8 @@ public class WebServer {
             @Override public void run() {
                 while (true) {
                     try {
-                        System.in.read();
-                    } catch (IOException ex) {
-                        Logger.getLogger(WebServer.class.getName()).log(Level.SEVERE, null, ex);
+                        Thread.sleep(10000);
+                    } catch (InterruptedException ex) {
                     }
                 }
             }            
