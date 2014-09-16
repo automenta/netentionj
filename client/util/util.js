@@ -858,8 +858,10 @@ var Ontology = function(db, tagInclude, target) {
 			x = _.clone(x);
 		}
 		
-
-		x._id = x.id;
+                //HACK fix useless error message until this is fixed
+                try {
+                    x._id = x.id;
+                }catch (e) { }
 
 
 		if (callback)
@@ -1241,7 +1243,10 @@ var Ontology = function(db, tagInclude, target) {
                 that.tagged[t][x.id] = x;
             }
 
-            x.reply = {};
+            //HACK prevent useless error message until we fix .reply behavior
+            try {
+                x.reply = {};
+            } catch (e) { }
 
             //replies to this object: search known objects with replyTo
             for (var k in that.reply) {

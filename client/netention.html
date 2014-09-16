@@ -310,8 +310,6 @@
         <script>
             $LAB.setGlobalDefaults({AllowDuplicates: false});
         </script>
-
-
         <style type="text/css">
             @import url("lib/bootstrap/bootstrap.min.css");
             @import url("lib/fontawesome/css/font-awesome.min.css");
@@ -343,4 +341,193 @@
         <style id="customcss"></style>
 
     </body>
+<script>
+    $(document).ready(function() {
+
+        debugLog();
+        
+        $N.once('ui.start', function (){        
+
+            console.log('initUI()');
+
+            updateViewControls();
+
+            $('body.timeago').timeago();
+
+            var viewUpdateMS = configuration.viewUpdateTime[configuration.device][0];
+            var viewDebounceMS = configuration.viewUpdateTime[configuration.device][1];
+            var firstViewDebounceMS = configuration.viewUpdateTime[configuration.device][2];
+            var firstView = true;
+
+            var throttledUpdateView = _.throttle(function() {
+
+                    $('#AvatarButton').addClass('ViewBusy');
+                    later(function() {
+                            _updateView();
+                            if (firstView) {
+                                    updateView = _.debounce(throttledUpdateView, viewDebounceMS);
+                                    firstView = false;
+                            }
+                            $('#AvatarButton').removeClass('ViewBusy');
+                    });
+            }, viewUpdateMS);
+
+            updateView = _.debounce(throttledUpdateView, firstViewDebounceMS);
+
+
+            /*var msgs = ['I think', 'I feel', 'I wonder', 'I know', 'I want'];
+            //var msgs = ['Revolutionary', 'Extraordinary', 'Bodacious', 'Scrumptious', 'Delicious'];
+            function updatePrompt() {
+                    var l = msgs[parseInt(Math.random() * msgs.length)];
+                    $('.nameInput').attr('placeholder', l + '...');
+            }
+            setInterval(updatePrompt, 7000);
+            updatePrompt();
+            */
+
+            later(function() {
+                setTheme($N.get('theme'));        
+            });
+
+            /*
+            $('#MainMenu input').click(function(x) {
+                    var b = $(this);
+                    var v = b.attr('id');
+                    if ((b.attr('type') === 'text') || (b.attr('type') === 'checkbox'))
+                            return;
+                    $('#ViewControls').buttonset('refresh');
+                    $N.save('currentView', v);
+                    showAvatarMenu(false);
+            });
+            */
+
+            $('#AvatarButtonMini').click(function() {
+                    var vm = $('#MainMenu');
+                    var shown = vm.is(':visible');
+                    showAvatarMenu(!shown);
+            });
+            $('#close-menu').click(function() {
+                    var vm = $('#MainMenu');
+                    var shown = vm.is(':visible');
+                    showAvatarMenu(!shown);
+            });
+            $('#avatar-img').click(function() {
+                    showAvatarMenu(false);
+            });
+
+
+            $('#AddContentButton').click(function() {
+                    var o = objNew();
+                    var focus = $N.focus();
+                    if (focus)
+                            if (focus.value)
+                                    o.value = focus.value;
+                    newPopupObjectEdit(o, {title: 'New...', width: '50%'});
+            });
+            $('#SelectProfileButton').click(function() {
+                    openSelectProfileModal();
+                    return false;
+            });
+            $('#EditProfileButton').click(function() {
+                    newPopup("Profile", true, true).append(newObjectEdit($N.myself(), true));    
+                    return false;
+            });
+
+            var _mainChatWindow = null;
+            $('#ToggleChatButton').click(function() {
+                    if (!_mainChatWindow) {
+                            _mainChatWindow = newChannelPopup('!main');
+                            _mainChatWindow.bind('dialogclose', function(event) {
+                                    _mainChatWindow.dialog('close');        
+                                    _mainChatWindow.remove();
+                                    _mainChatWindow = null;
+                            });
+                    }
+                    else {
+                            _mainChatWindow.dialog('close');   
+                    }
+
+                    return false;
+            })
+
+
+            $('#AvatarButton').hover(function() {
+                    $('#IdentityPopout').fadeIn();
+            }, function() {
+                    $('#IdentityPopout').fadeOut();    
+            });
+
+            initFocusButtons();
+
+            setViewLock(configuration.viewlockDefault);
+
+            //$('#Roster').append(newRosterWidget());
+
+
+            later(function() {
+                    //Setup Notification Menu
+                    (function () {
+                            React.renderComponent(
+                                    NotificationMenu(),
+                                    $('#NotificationList')[0]
+                            );
+
+                            //for testing messsages
+                            /*setInterval(function() {
+                                    $N.receive({id:('a'+Date.now()), name: uuid(), type:"urgent"});
+                            }, 1000);*/
+                    })();
+            });
+            $('#NotificationList').click(function() {
+                    $('#NotificationList i').removeClass('blink');
+            });
+
+
+        });
+
+
+        $N.once('session.start', function() { 
+            console.log('Session start for: ', $N.id());
+                        
+            $N.saveAll();
+            updateBrand(); //TODO use backbone Model instead of global function
+
+            updateViewLock(0);
+
+            $N.startURLRouter();
+
+            $('#NotificationArea').remove();
+
+            if (configuration.avatarMenuDisplayInitially)
+                    showAvatarMenu(true);
+            else
+                    showAvatarMenu(false);
+
+            later(function() {
+                    notify({
+                            title: 'Connected.',
+                            type: 'success',
+                            delay: 2000
+                    });                        
+            });
+
+            $N.updateRoster();
+
+
+            if (configuration.webrtc) {
+                $LAB
+                        .script("/lib/peerjs/peer.min.js")
+                        .script("/webrtc.js")
+                        .wait(function() {
+                                initWebRTC(configuration.webrtc); 
+                        });
+            }
+
+            updateView();
+        });
+
+    });
+
+</script>
+        
 </html>

@@ -4,7 +4,7 @@
         "initialView": "wall",
 
 		"avatarMenuDisplayInitially": true,
-		"focusEditDisplayStartup": true,
+		"focusEditDisplayStartup": false,
         "favicon": null,
         "loginLogo": "/theme/login-logo.png",
         "defaultAvatarIcon": "/theme/default-avatar.jpg",
@@ -33,8 +33,8 @@
             "trends",
             "time",
             "notebook",
-			"wall",
-			"slides"
+            "wall",
+            "slides"
         ],
         "newUserProperties": [],
         "shareTags": ["Offer", "Sell", "Lend", "Rent", "Swap", "GiveAway", "Need"],

@@ -146,7 +146,7 @@ function netention(f) {
                 $N.set('otherSelves', _.unique(os));
 
                 
-                $N.sessionStart();
+                $N.trigger('session.start');
                 
             } else {
                 this.socket.emit('become', typeof target === 'string' ? target : objCompact(target), function(nextID) {
@@ -170,7 +170,7 @@ function netention(f) {
                             $N.getAuthorObjects(nextID, function() {
                                 $('#NotificationArea').html('Loading new public objects...');
                                 $N.getLatestObjects(1000, function() {
-                                    $N.sessionStart();
+                                    $N.trigger('session.start');
                                 }, true);
                             });
                         });
@@ -535,13 +535,6 @@ function netention(f) {
          } );
          },*/
 
-        //called after connection establishd
-        sessionStart: function() {
-            console.log('Session start for identity: ', $N.id());
-            
-            $N.trigger('session.start');
-
-        },
         getObjects: function(query, onObject, onFinished) {
             var that = this;
             //TODO possible security hole, make sure query isnt destructive
@@ -1005,86 +998,6 @@ function netention(f) {
 
 $(document).ready(function() {
 
-
-    if (false) {
-        window.console = (function(origConsole) {
-
-            if (!window.console)
-                console = {};
-            var isDebug = false,
-                    logArray = {
-                        logs: [],
-                        errors: [],
-                        warns: [],
-                        infos: []
-                    }
-            var maxAlerts = 8;
-            var linesShown = 0;
-            var ac = $('#AlertConsole');        
-
-            function printConsole(x) {            
-
-                var numChildren = ac.children().size();
-
-                for (var o in x) {
-                    ac.append('<div>' + x[o] + '<br/></div>');
-                    linesShown++;
-                }
-
-                var toRemove = linesShown - maxAlerts;            
-                if (toRemove > 0) {
-                    ac.children().slice(0, toRemove).remove();
-                    linesShown-=toRemove;
-                }
-
-            }
-            return {
-                log: function() {
-                    //logArray.logs.push(arguments)
-                    printConsole(arguments);
-                    isDebug && origConsole.log && origConsole.log.apply(origConsole, arguments);
-                },
-                warn: function() {
-                    //logArray.warns.push(arguments)
-                    printConsole(arguments);
-                    isDebug && origConsole.warn && origConsole.warn.apply(origConsole, arguments);
-                },
-                error: function() {
-                    //logArray.errors.push(arguments)
-                    printConsole(arguments);
-                    isDebug && origConsole.error && origConsole.error.apply(origConsole, arguments);
-                },
-                info: function(v) {
-                    //logArray.infos.push(arguments)
-                    //printConsole(arguments);
-                    isDebug && origConsole.info && origConsole.info.apply(origConsole, arguments);
-                },
-                debug: function(bool) {
-                    //isDebug = bool;
-
-                },
-                logArray: function() {
-                    //return logArray;
-                }
-            };
-
-        }(window.console));
-    }
-
-//    console.log = function(x) {
-//        
-//        $('#AlertConsole').append(x + "<br/>");
-//
-//        //originalConsoleLog(x);
-//        
-//    };
-//    console.error = console.warn = function(x) {
-//        $('#AlertConsole').append(x + "<br/>");
-//    };
-//    
-
-
-
     console.log('netention()');
     netention(function(schemaURL, $N) {
 
@@ -1168,9 +1081,7 @@ $(document).ready(function() {
 
 
 
-
-                initUI();
-
+                $N.trigger('ui.start');
 
                 var ii = identity();
 
@@ -1224,7 +1135,7 @@ $(document).ready(function() {
                         } else {
                             $N.indexOntology();
 
-                            $N.sessionStart();
+                            $N.trigger('session.start');
                         }
                     });
                 }
@@ -1253,7 +1164,7 @@ $(document).ready(function() {
                         if (configuration.requireIdentity)
                             openSelectProfileModal('Start a New Profile');
                         else {
-                            $N.sessionStart();
+                            $N.trigger('session.start');
                         }
                     }
 
@@ -1485,3 +1396,69 @@ function setCookie(key, value) {
  PouchDB.destroy('objects');
  }
  */
+
+function debugLog() {
+    window.console = (function(origConsole) {
+
+        if (!window.console)
+            console = {};
+        var isDebug = false,
+                logArray = {
+                    logs: [],
+                    errors: [],
+                    warns: [],
+                    infos: []
+                }
+        var maxAlerts = 24;
+        var linesShown = 0;
+        var ac = $('#AlertConsole');        
+
+        function printConsole(x) {            
+
+            var numChildren = ac.children().size();
+
+            for (var o in x) {
+                ac.append('<div>' + x[o] + '<br/></div>');
+                linesShown++;
+            }
+
+            var toRemove = linesShown - maxAlerts;            
+            if (toRemove > 0) {
+                ac.children().slice(0, toRemove).remove();
+                linesShown-=toRemove;
+            }
+
+        }
+        return {
+            log: function() {
+                //logArray.logs.push(arguments)
+                printConsole(arguments);
+                isDebug && origConsole.log && origConsole.log.apply(origConsole, arguments);
+            },
+            warn: function() {
+                //logArray.warns.push(arguments)
+                printConsole(arguments);
+                isDebug && origConsole.warn && origConsole.warn.apply(origConsole, arguments);
+            },
+            error: function() {
+                //logArray.errors.push(arguments)
+                printConsole(arguments);
+                isDebug && origConsole.error && origConsole.error.apply(origConsole, arguments);
+            },
+            info: function(v) {
+                //logArray.infos.push(arguments)
+                //printConsole(arguments);
+                isDebug && origConsole.info && origConsole.info.apply(origConsole, arguments);
+            },
+            debug: function(bool) {
+                //isDebug = bool;
+
+            },
+            logArray: function() {
+                //return logArray;
+            }
+        };
+
+    }(window.console));
+    
+}

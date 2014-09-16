@@ -6,6 +6,7 @@
         <script src="lib/sockjs/sockjs-0.3.4.min.js"></script>
         <script src='lib/sockjs/vertxbus.min.js'></script>
         <style>
+            @import url("lib/fontawesome/css/font-awesome.min.css");
             body {
                 background-color: black;
                 color: gray;
@@ -13,6 +14,7 @@
                 font-size: 130%;
                 margin: 1em;
             }
+            a { color: white; }
             pre, h3 {
                 margin-top: 0.5em;
                 margin-bottom: 0.5em;
@@ -34,7 +36,21 @@
             .section {
                 margin-left: 4em;
             }
-
+            #menu {
+                position: fixed;
+                right: 0;
+                top: 0;
+                z-index: 10;                
+            }
+            #menu a {
+                font-size: 80px;
+                opacity: 0.5;
+                padding: 12px;
+            }
+            #menu a:hover {
+                opacity: 0.9;
+            }
+            
         </style>
         <script>
 
@@ -60,7 +76,7 @@
 
                 d.append($('<time>').append($.timeago(new Date())));
 
-                $('body').prepend(d);
+                $('#log').prepend(d);
                 return d;
             }
 
@@ -93,7 +109,13 @@
         </script>        
     </head>
     <body>
-
+        <div id="menu">
+            <a href="/wiki.html"><i class="fa fa-fighter-jet"></i></a><br/>
+            <a href="/netention.html"><i class="fa fa-bomb"></i></a>
+        </div>
+        <div id="log">
+        </div>
+        
     </body>
 
 

@@ -13,11 +13,10 @@
     "_scroogle": "Google",
     "_n$a": "N$A",
 
-
-	"_bootswatch_cerulean": "Cerulean",
-	"_bootswatch_darkly": "Darkly",
-	"_bootswatch_cyborg": "Cyborg",
-	"_bootswatch_readable": "Readable",
-	"_bootswatch_simplex": "Simplex",
-	"_bootswatch_spacelab": "SpaceLab"
+    "_bootswatch_cerulean": "Cerulean",
+    "_bootswatch_darkly": "Darkly",
+    "_bootswatch_cyborg": "Cyborg",
+    "_bootswatch_readable": "Readable",
+    "_bootswatch_simplex": "Simplex",
+    "_bootswatch_spacelab": "SpaceLab"
 }

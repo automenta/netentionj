@@ -2518,6 +2518,6 @@ table.dataTable.stripe tbody tr.odd, table.dataTable.display tbody tr.odd {
     position: fixed;
     bottom: 1em;
     left: 1em;
-    opacity: 0.5f;
+    opacity: 0.5;
     pointer-events: none;
 }

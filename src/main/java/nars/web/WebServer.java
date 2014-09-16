@@ -64,9 +64,9 @@ public class WebServer {
         this.executor = Executors.newFixedThreadPool(o.threads);
         
         vertx = VertxFactory.newVertx();        
-        http = vertx.createHttpServer();
-        
+        http = vertx.createHttpServer();        
         rdf = new RDF();
+                
         
         /*http.websocketHandler(new Handler<ServerWebSocket>() {
 
@@ -78,7 +78,12 @@ public class WebServer {
         
         .get("/", new Handler<HttpServerRequest>() {            
             @Override public void handle(HttpServerRequest e) {                
-                template(e, "client/index.html", getIndexPage());
+                template(e, "client/debug.eventbus.html", getIndexPage());
+            }            
+        })
+        .get("/netention.html", new Handler<HttpServerRequest>() {            
+            @Override public void handle(HttpServerRequest e) {                
+                template(e, "client/netention.html", getIndexPage());
             }            
         })
                 
@@ -125,7 +130,6 @@ public class WebServer {
                 );
         }})
         
-
         .noMatch(new StaticFileHandler(vertx, "client/", "index.html", options.compressHTTP, options.cacheStaticFiles));
         
 
@@ -142,6 +146,8 @@ public class WebServer {
         
         
         http.listen(options.port);
+        
+        
         
         
         System.out.println("listening on port " + options.port);
