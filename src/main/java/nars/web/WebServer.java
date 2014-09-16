@@ -7,6 +7,7 @@ import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.util.HashMap;
@@ -62,6 +63,7 @@ public class WebServer {
         this.options = o;
 
         this.executor = Executors.newFixedThreadPool(o.threads);
+        
         
         vertx = VertxFactory.newVertx();        
         http = vertx.createHttpServer();        
@@ -147,13 +149,16 @@ public class WebServer {
         
         http.listen(options.port);
         
-        
-        
-        
         System.out.println("listening on port " + options.port);
         
-        
-        System.in.read();
+//                
+//        vertx.setPeriodic(5000, new Handler<Long>() {
+//
+//            @Override
+//            public void handle(Long e) {
+//                
+//            }
+//        });
         
     }
 
@@ -169,6 +174,20 @@ public class WebServer {
         new NOntology(core);
         //new SchemaOrg(core);
         new WebServer(core, options);
+        
+        
+        //keep everything running in non-daemon
+        new Thread(new Runnable() {
+            @Override public void run() {
+                while (true) {
+                    try {
+                        System.in.read();
+                    } catch (IOException ex) {
+                        Logger.getLogger(WebServer.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }            
+        }).start();
     }
     
     public static class IndexPage {
