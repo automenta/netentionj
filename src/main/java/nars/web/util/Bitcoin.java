@@ -25,26 +25,20 @@ import com.google.bitcoin.core.InventoryMessage;
 import com.google.bitcoin.core.Message;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Peer;
-import com.google.bitcoin.core.PeerAddress;
 import com.google.bitcoin.core.PeerEventListener;
 import com.google.bitcoin.core.PeerGroup;
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.Transaction;
-import com.google.bitcoin.net.NioServer;
-import com.google.bitcoin.net.StreamParser;
-import com.google.bitcoin.net.StreamParserFactory;
+import com.google.bitcoin.net.discovery.DnsDiscovery;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.Nullable;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.json.impl.Json;
 
@@ -52,7 +46,7 @@ import org.vertx.java.core.json.impl.Json;
  *
  * @author me
  */
-public class Bitcoin extends PeerGroup implements Runnable, PeerEventListener {
+public class Bitcoin extends PeerGroup implements PeerEventListener {
     
 
     private final HashMap<Peer, String> reverseDnsLookups = new HashMap<>();
@@ -62,7 +56,7 @@ public class Bitcoin extends PeerGroup implements Runnable, PeerEventListener {
     static {
         BriefLogFormatter.init();
     }
-    private final NioServer server;
+    //private final NioServer server;
     private final NetworkParameters param;
     
 //    public static void main(String[] args) throws Exception {
@@ -79,7 +73,7 @@ public class Bitcoin extends PeerGroup implements Runnable, PeerEventListener {
 //    }
 
     public Bitcoin(NetworkParameters params, BlockChain bc, EventBus b) throws Exception {
-        super(params, bc);
+        super(params,null);
         
         this.bus = b;
         this.param = params;
@@ -87,37 +81,30 @@ public class Bitcoin extends PeerGroup implements Runnable, PeerEventListener {
         //peerGroup.setUserAgent("NetentionJ", "0.1");
         setUserAgent("Satoshi", "0.9.1");
         setMaxConnections(4);
-        //peerGroup.addPeerDiscovery(new DnsDiscovery(params));        
+        addPeerDiscovery(new DnsDiscovery(new String[] { "wtf.netention.org" }, params));
+        //addPeerDiscovery(new DnsDiscovery(params));
+        
         
 
         
-        //start server:        
-        server = new NioServer(new StreamParserFactory() {
-            @Nullable
-            @Override
-            public StreamParser getNewParser(InetAddress inetAddress, int port) {                
-                Peer p = new Peer(params, bc, new PeerAddress(inetAddress, port), "NetentionJ", "0.1");
-                try {
-                    handleNewPeer(p);
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
-                return p;
-            }
-        }, new InetSocketAddress(8333));
-        server.startAsync();
+//        //start server:        
+//        server = new NioServer(new StreamParserFactory() {
+//            @Nullable
+//            @Override
+//            public StreamParser getNewParser(InetAddress inetAddress, int port) {                
+//                Peer p = new Peer(params, bc, new PeerAddress(inetAddress, port), "NetentionJ", "0.1");
+//                try {
+//                    handleNewPeer(p);
+//                }
+//                catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//                return p;
+//            }
+//        }, new InetSocketAddress(8333));
+//        server.startAsync();
         
             
-            
-//        try {
-//            addAddress(new PeerAddress(InetAddress.getByName("54.84.209.171"), 8333));
-//            //handleNewPeer(connectTo(new InetSocketAddress("54.84.209.171", 8333)));
-//            
-//        } catch (Exception ex) {
-//            Logger.getLogger(Bitcoin.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//        
             
         
         //peerGroup.addWallet(wallet);
@@ -129,13 +116,27 @@ public class Bitcoin extends PeerGroup implements Runnable, PeerEventListener {
         
         startAsync();
         
-        new Thread(this).start();
+        new Thread(new Runnable() {   @Override
+    public void run() {
+        
+        List<String> urls = Arrays.asList("netention", "dbpedia.org/resource/Thing");
+        
+        while (true) {
+        System.out.println(getPendingPeers() + " " + getConnectedPeers());
+            
+            publish( newInventory( urls ));
+            publish( newGetData( urls ));
+            try { Thread.sleep(12*1000); } catch (InterruptedException ex) {            }
+        }
+    }
+        }
+).start();
     }
 
 
     @Override
     public void onTransaction(Peer peer, Transaction t) {
-        //System.out.println("Transaction: " + t);
+        System.out.println("Transaction: " + t);
         //bus.publish("public", t.toString());
     }
 
@@ -149,7 +150,7 @@ public class Bitcoin extends PeerGroup implements Runnable, PeerEventListener {
     @Override
     public void onPeerConnected(final Peer peer, int peerCount) {
         //refreshUI();
-        //System.out.println("Peer connect: " + peer + " " + peer.toString());
+        System.out.println("Peer connect: " + peer + " " + peer.toString());
         //bus.publish("public", peer.toString());
         //lookupReverseDNS(peer);
     }
@@ -244,17 +245,4 @@ public class Bitcoin extends PeerGroup implements Runnable, PeerEventListener {
         }
     }
     
-    @Override
-    public void run() {
-        
-        List<String> urls = Arrays.asList("netention", "dbpedia.org/resource/Thing");
-        
-        while (true) {
-        System.out.println(getPendingPeers() + " " + getConnectedPeers());
-            
-            publish( newInventory( urls ));
-            publish( newGetData( urls ));
-            try { Thread.sleep(5*1000); } catch (InterruptedException ex) {            }
-        }
-    }
 }
