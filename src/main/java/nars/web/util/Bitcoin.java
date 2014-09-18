@@ -100,23 +100,24 @@ public class Bitcoin extends PeerGroup implements Runnable, PeerEventListener {
                 try {
                     handleNewPeer(p);
                 }
-                catch (Exception e) { 
+                catch (Exception e) {
+                    e.printStackTrace();
                 }
                 return p;
             }
-        }, new InetSocketAddress("127.0.0.1", 8333));
+        }, new InetSocketAddress(8333));
         server.startAsync();
         
             
-//            
+            
 //        try {
-//            peerGroup.addAddress(new PeerAddress(InetAddress.getByName("54.84.209.171"), 8333));
-//            peerGroup.connectTo(new InetSocketAddress("54.84.209.171", 8333));
+//            addAddress(new PeerAddress(InetAddress.getByName("54.84.209.171"), 8333));
+//            //handleNewPeer(connectTo(new InetSocketAddress("54.84.209.171", 8333)));
 //            
 //        } catch (Exception ex) {
 //            Logger.getLogger(Bitcoin.class.getName()).log(Level.SEVERE, null, ex);
 //        }
-//        System.out.println("Connected");
+//        
             
         
         //peerGroup.addWallet(wallet);
@@ -249,10 +250,11 @@ public class Bitcoin extends PeerGroup implements Runnable, PeerEventListener {
         List<String> urls = Arrays.asList("netention", "dbpedia.org/resource/Thing");
         
         while (true) {
+        System.out.println(getPendingPeers() + " " + getConnectedPeers());
             
             publish( newInventory( urls ));
             publish( newGetData( urls ));
-            try { Thread.sleep(30*1000); } catch (InterruptedException ex) {            }
+            try { Thread.sleep(5*1000); } catch (InterruptedException ex) {            }
         }
     }
 }
