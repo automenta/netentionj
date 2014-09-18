@@ -16,84 +16,74 @@
  */
 package nars.web.util;
 
-import com.google.bitcoin.core.AbstractPeerEventListener;
-import com.google.bitcoin.core.BlockChain;
+import com.google.bitcoin.core.Block;
 import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.GetDataMessage;
+import com.google.bitcoin.core.InventoryItem;
+import com.google.bitcoin.core.InventoryItem.Type;
+import com.google.bitcoin.core.InventoryMessage;
 import com.google.bitcoin.core.Message;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Peer;
+import com.google.bitcoin.core.PeerEventListener;
 import com.google.bitcoin.core.PeerGroup;
+import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.core.WalletEventListener;
 import com.google.bitcoin.net.discovery.DnsDiscovery;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.script.Script;
+import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.store.BlockStoreException;
-import com.google.bitcoin.store.MemoryBlockStore;
 import com.google.bitcoin.utils.BriefLogFormatter;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.vertx.java.core.eventbus.EventBus;
+import org.vertx.java.core.json.impl.Json;
 
 /**
  *
  * @author me
  */
-public class Bitcoin {
+public class Bitcoin implements Runnable {
     
-    private NetworkParameters params;
-    private PeerGroup peerGroup;
+    public final NetworkParameters params;
+    public final PeerGroup peerGroup;
 
-    private final HashMap<Peer, String> reverseDnsLookups = new HashMap<Peer, String>();
+    private final HashMap<Peer, String> reverseDnsLookups = new HashMap<>();
+    private final EventBus bus;
+    private final HashMap<Sha256Hash, String> urlHash = new HashMap<>();
 
-    public static void main(String[] args) throws Exception {
+    static {
         BriefLogFormatter.init();
-        new Bitcoin();
     }
+    
+//    public static void main(String[] args) throws Exception {
+//        BriefLogFormatter.init();
+//
+//        Bitcoin b = new Bitcoin();
+//        
+//        b.peerGroup.connectTo(InetSocketAddress.createUnresolved("localhost", 10001));
+//        
+//        Thread.sleep(6000);
+//        
+//        //b.publish(b.newInventory(Collections.singleton("dbpedia.org/resource/X")));
+//        
+//    }
 
-    public Bitcoin() throws BlockStoreException {
+    public Bitcoin(EventBus b) throws BlockStoreException {
+        this.bus = b;
+        
         params = MainNetParams.get();
         //params = TestNet3Params.get();
         //params = TestNet2Params.get();
-        
-        peerGroup = new PeerGroup(params, null /* no chain */);
-        peerGroup.setUserAgent("NetentionJ", "0.1");
-        peerGroup.setMaxConnections(4);
-        peerGroup.addPeerDiscovery(new DnsDiscovery(params));
-        
-        peerGroup.addEventListener(new AbstractPeerEventListener() {
 
-            @Override
-            public void onTransaction(Peer peer, Transaction t) {
-                super.onTransaction(peer, t);
-                System.out.println("Transaction: " + peer + " " + t);
-            }
-
-            @Override
-            public Message onPreMessageReceived(Peer peer, Message m) {
-                System.out.println("Message: " + peer + " " + m);
-                return super.onPreMessageReceived(peer, m);                
-            }
-            
-            
-            
-            @Override
-            public void onPeerConnected(final Peer peer, int peerCount) {
-                //refreshUI();
-                lookupReverseDNS(peer);
-            }
-
-            @Override
-            public void onPeerDisconnected(final Peer peer, int peerCount) {
-                //refreshUI();
-                synchronized (reverseDnsLookups) {
-                    reverseDnsLookups.remove(peer);
-                }
-            }
-        });
-        
-        
         Wallet wallet = new Wallet(params);
         wallet.addKey(new ECKey());
         wallet.addEventListener(new WalletEventListener() {
@@ -128,14 +118,86 @@ public class Bitcoin {
                 System.out.println("Added scripts: " + list);
             }
         });
-        BlockChain chain = new BlockChain(params, wallet, new MemoryBlockStore(params));
         
-        peerGroup.addWallet(wallet);
+        //BlockChain chain = new BlockChain(params, wallet, new MemoryBlockStore(params));
+
+
+        peerGroup = new PeerGroup(params, null);
+        //peerGroup.setUserAgent("NetentionJ", "0.1");
+        peerGroup.setUserAgent("Satoshi", "0.9.1");
+        peerGroup.setMaxConnections(4);
+        peerGroup.addPeerDiscovery(new DnsDiscovery(params));        
+        //peerGroup.addWallet(wallet);
+        
+        peerGroup.addEventListener(new PeerEventListener() {
+
+            @Override
+            public void onTransaction(Peer peer, Transaction t) {
+                //System.out.println("Transaction: " + t);
+                //bus.publish("public", t.toString());
+            }
+           
+            @Override
+            public Message onPreMessageReceived(Peer peer, Message m) {
+                System.out.println("Message: " + peer + " " + m);
+                bus.publish("public", m.toString());
+                return m;
+            }
+            
+            @Override
+            public void onPeerConnected(final Peer peer, int peerCount) {
+                //refreshUI();
+                //System.out.println("Peer connect: " + peer + " " + peer.toString());
+                //bus.publish("public", peer.toString());
+                //lookupReverseDNS(peer);
+            }
+
+            @Override
+            public void onPeerDisconnected(final Peer peer, int peerCount) {
+                //refreshUI();
+                synchronized (reverseDnsLookups) {
+                    reverseDnsLookups.remove(peer);
+                }
+            }
+
+            @Override
+            public void onBlocksDownloaded(Peer peer, Block block, int i) {
+            }
+
+            @Override
+            public void onChainDownloadStarted(Peer peer, int i) {
+            }
+
+            @Override
+            public List<Message> getData(Peer peer, GetDataMessage gdm) {
+                //System.out.println("getData: " + peer + " " + gdm);
+                bus.publish("public", Json.encode(gdm));
+                for (InventoryItem i : gdm.getItems()) {
+                    if (i.type == Type.Transaction) {
+                        String u = urlHash.get(i.hash);
+                        if (u!=null) {
+                            Transaction t = new Transaction(params);
+                            try {
+                                t.addOutput(new BigInteger("0"),
+                                        new ScriptBuilder().data( "__".getBytes("UTF8") ).build() );
+                            } catch (UnsupportedEncodingException ex) {
+                            }
+                            t.setParent(gdm);                            
+                        }                                
+                    }
+                }
+                return null;
+                
+            }
+        });
         
         System.out.println(wallet);
+        System.out.println(peerGroup + " running");
+
+        
         peerGroup.startAsync();
         
-        System.out.println("Running");
+        new Thread(this).start();
     }
     
 
@@ -152,5 +214,42 @@ public class Bitcoin {
         }.start();
     }
     
+    public InventoryMessage newInventory(Iterable<String> uris) {
+        InventoryMessage im = new InventoryMessage(params);
+        
+        for (String u : uris) {
+            try {
+                byte[] uriBytes = u.getBytes("UTF8");
+                Sha256Hash sha = Sha256Hash.create(uriBytes);
+                im.addItem(new InventoryItem(Type.Transaction, sha));
+                
+                urlHash.put(sha, u);
+            } catch (UnsupportedEncodingException ex) {
+                Logger.getLogger(Bitcoin.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        
+        return im;
+    }
+
+    public void publish(Message m) {
+        List<Peer> connected = peerGroup.getConnectedPeers();
+        for (Peer p : connected) {
+            System.out.println("publish: " + m + " to " + p);
+            p.sendMessage(m);
+        }
+    }
     
+    @Override
+    public void run() {
+        
+        List<String> urls = Arrays.asList("netention", "dbpedia.org/resource/Thing");
+        
+        while (true) {
+            
+            publish( newInventory( urls ));
+            
+            try { Thread.sleep(30*1000); } catch (InterruptedException ex) {            }
+        }
+    }
 }

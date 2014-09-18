@@ -20,6 +20,7 @@ import com.google.bitcoin.core.AbstractPeerEventListener;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Peer;
 import com.google.bitcoin.core.PeerGroup;
+import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.net.discovery.DnsDiscovery;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.utils.BriefLogFormatter;
@@ -90,6 +91,14 @@ public class BitcoinPeerMonitor {
                     reverseDnsLookups.remove(peer);
                 }
             }
+        });
+        peerGroup.addEventListener(new AbstractPeerEventListener() {
+
+            @Override
+            public void onTransaction(Peer peer, Transaction t) {
+                System.out.println(t);
+            }
+            
         });
     }
 
@@ -322,4 +331,6 @@ public class BitcoinPeerMonitor {
             return this;
         }
     }
+    
+    
 }

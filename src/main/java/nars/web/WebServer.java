@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toList;
 import nars.web.core.ContextualizeInterest;
 import nars.web.core.Core;
 import nars.web.core.UserActivity;
+import nars.web.util.Bitcoin;
 import nars.web.util.DBPedia;
 import nars.web.util.NOntology;
 import nars.web.util.RDF;
@@ -139,6 +140,7 @@ public class WebServer {
         new ContextualizeInterest(c, vertx.eventBus());
         new UserActivity(c, vertx.eventBus());
         //new IRC(vertx.eventBus());
+        new Bitcoin(vertx.eventBus());
         
         http.requestHandler(r);        
 
