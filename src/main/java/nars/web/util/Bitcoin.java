@@ -17,7 +17,7 @@
 package nars.web.util;
 
 import com.google.bitcoin.core.Block;
-import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.BlockChain;
 import com.google.bitcoin.core.GetDataMessage;
 import com.google.bitcoin.core.InventoryItem;
 import com.google.bitcoin.core.InventoryItem.Type;
@@ -25,25 +25,26 @@ import com.google.bitcoin.core.InventoryMessage;
 import com.google.bitcoin.core.Message;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Peer;
+import com.google.bitcoin.core.PeerAddress;
 import com.google.bitcoin.core.PeerEventListener;
 import com.google.bitcoin.core.PeerGroup;
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.Transaction;
-import com.google.bitcoin.core.Wallet;
-import com.google.bitcoin.core.WalletEventListener;
-import com.google.bitcoin.net.discovery.DnsDiscovery;
-import com.google.bitcoin.params.MainNetParams;
-import com.google.bitcoin.script.Script;
+import com.google.bitcoin.net.NioServer;
+import com.google.bitcoin.net.StreamParser;
+import com.google.bitcoin.net.StreamParserFactory;
 import com.google.bitcoin.script.ScriptBuilder;
-import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.Nullable;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.json.impl.Json;
 
@@ -51,10 +52,8 @@ import org.vertx.java.core.json.impl.Json;
  *
  * @author me
  */
-public class Bitcoin implements Runnable {
+public class Bitcoin extends PeerGroup implements Runnable, PeerEventListener {
     
-    public final NetworkParameters params;
-    public final PeerGroup peerGroup;
 
     private final HashMap<Peer, String> reverseDnsLookups = new HashMap<>();
     private final EventBus bus;
@@ -63,6 +62,8 @@ public class Bitcoin implements Runnable {
     static {
         BriefLogFormatter.init();
     }
+    private final NioServer server;
+    private final NetworkParameters param;
     
 //    public static void main(String[] args) throws Exception {
 //        BriefLogFormatter.init();
@@ -77,127 +78,117 @@ public class Bitcoin implements Runnable {
 //        
 //    }
 
-    public Bitcoin(EventBus b) throws BlockStoreException {
+    public Bitcoin(NetworkParameters params, BlockChain bc, EventBus b) throws Exception {
+        super(params, bc);
+        
         this.bus = b;
+        this.param = params;
         
-        params = MainNetParams.get();
-        //params = TestNet3Params.get();
-        //params = TestNet2Params.get();
-
-        Wallet wallet = new Wallet(params);
-        wallet.addKey(new ECKey());
-        wallet.addEventListener(new WalletEventListener() {
-
-            @Override
-            public void onCoinsReceived(Wallet wallet, Transaction t, BigInteger bi, BigInteger bi1) {
-                System.out.println("Coins received: " + t);
-            }
-
-            @Override
-            public void onCoinsSent(Wallet wallet, Transaction t, BigInteger bi, BigInteger bi1) {
-            }
-
-            @Override
-            public void onReorganize(Wallet wallet) {
-            }
-
-            @Override
-            public void onTransactionConfidenceChanged(Wallet wallet, Transaction t) {
-            }
-
-            @Override
-            public void onWalletChanged(Wallet wallet) {
-            }
-
-            @Override
-            public void onKeysAdded(Wallet wallet, List<ECKey> list) {
-            }
-
-            @Override
-            public void onScriptsAdded(Wallet wallet, List<Script> list) {
-                System.out.println("Added scripts: " + list);
-            }
-        });
-        
-        //BlockChain chain = new BlockChain(params, wallet, new MemoryBlockStore(params));
-
-
-        peerGroup = new PeerGroup(params, null);
         //peerGroup.setUserAgent("NetentionJ", "0.1");
-        peerGroup.setUserAgent("Satoshi", "0.9.1");
-        peerGroup.setMaxConnections(4);
-        peerGroup.addPeerDiscovery(new DnsDiscovery(params));        
+        setUserAgent("Satoshi", "0.9.1");
+        setMaxConnections(4);
+        //peerGroup.addPeerDiscovery(new DnsDiscovery(params));        
+        
+
+        
+        //start server:        
+        server = new NioServer(new StreamParserFactory() {
+            @Nullable
+            @Override
+            public StreamParser getNewParser(InetAddress inetAddress, int port) {                
+                Peer p = new Peer(params, bc, new PeerAddress(inetAddress, port), "NetentionJ", "0.1");
+                try {
+                    handleNewPeer(p);
+                }
+                catch (Exception e) { 
+                }
+                return p;
+            }
+        }, new InetSocketAddress("127.0.0.1", 8333));
+        server.startAsync();
+        
+            
+//            
+//        try {
+//            peerGroup.addAddress(new PeerAddress(InetAddress.getByName("54.84.209.171"), 8333));
+//            peerGroup.connectTo(new InetSocketAddress("54.84.209.171", 8333));
+//            
+//        } catch (Exception ex) {
+//            Logger.getLogger(Bitcoin.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//        System.out.println("Connected");
+            
+        
         //peerGroup.addWallet(wallet);
         
-        peerGroup.addEventListener(new PeerEventListener() {
-
-            @Override
-            public void onTransaction(Peer peer, Transaction t) {
-                //System.out.println("Transaction: " + t);
-                //bus.publish("public", t.toString());
-            }
-           
-            @Override
-            public Message onPreMessageReceived(Peer peer, Message m) {
-                System.out.println("Message: " + peer + " " + m);
-                bus.publish("public", m.toString());
-                return m;
-            }
-            
-            @Override
-            public void onPeerConnected(final Peer peer, int peerCount) {
-                //refreshUI();
-                //System.out.println("Peer connect: " + peer + " " + peer.toString());
-                //bus.publish("public", peer.toString());
-                //lookupReverseDNS(peer);
-            }
-
-            @Override
-            public void onPeerDisconnected(final Peer peer, int peerCount) {
-                //refreshUI();
-                synchronized (reverseDnsLookups) {
-                    reverseDnsLookups.remove(peer);
-                }
-            }
-
-            @Override
-            public void onBlocksDownloaded(Peer peer, Block block, int i) {
-            }
-
-            @Override
-            public void onChainDownloadStarted(Peer peer, int i) {
-            }
-
-            @Override
-            public List<Message> getData(Peer peer, GetDataMessage gdm) {
-                //System.out.println("getData: " + peer + " " + gdm);
-                bus.publish("public", Json.encode(gdm));
-                for (InventoryItem i : gdm.getItems()) {
-                    if (i.type == Type.Transaction) {
-                        String u = urlHash.get(i.hash);
-                        if (u!=null) {
-                            Transaction t = new Transaction(params);
-                            try {
-                                t.addOutput(new BigInteger("0"),
-                                        new ScriptBuilder().data( "__".getBytes("UTF8") ).build() );
-                            } catch (UnsupportedEncodingException ex) {
-                            }
-                            t.setParent(gdm);                            
-                        }                                
-                    }
-                }
-                return null;
+        addEventListener(this);
                 
-            }
-        });
-        
-        System.out.println(wallet);
-        System.out.println(peerGroup + " running");
+        System.out.println(this + " running");
 
         
-        peerGroup.startAsync();
+        startAsync();
         
         new Thread(this).start();
+    }
+
+
+    @Override
+    public void onTransaction(Peer peer, Transaction t) {
+        //System.out.println("Transaction: " + t);
+        //bus.publish("public", t.toString());
+    }
+
+    @Override
+    public Message onPreMessageReceived(Peer peer, Message m) {
+        System.out.println("Message: " + peer + " " + m);
+        bus.publish("public", m.toString());
+        return m;
+    }
+
+    @Override
+    public void onPeerConnected(final Peer peer, int peerCount) {
+        //refreshUI();
+        //System.out.println("Peer connect: " + peer + " " + peer.toString());
+        //bus.publish("public", peer.toString());
+        //lookupReverseDNS(peer);
+    }
+
+    @Override
+    public void onPeerDisconnected(final Peer peer, int peerCount) {
+        //refreshUI();
+        synchronized (reverseDnsLookups) {
+            reverseDnsLookups.remove(peer);
+        }
+    }
+
+    @Override
+    public void onBlocksDownloaded(Peer peer, Block block, int i) {
+    }
+
+    @Override
+    public void onChainDownloadStarted(Peer peer, int i) {
+    }
+
+    @Override
+    public List<Message> getData(Peer peer, GetDataMessage gdm) {
+        //System.out.println("getData: " + peer + " " + gdm);
+        bus.publish("public", Json.encode(gdm));
+        for (InventoryItem i : gdm.getItems()) {
+            if (i.type == Type.Transaction) {
+                String u = urlHash.get(i.hash);
+                if (u!=null) {
+                    Transaction t = new Transaction(param);
+                    try {
+                        t.addOutput(new BigInteger("0"),
+                                new ScriptBuilder().data( "__".getBytes("UTF8") ).build() );
+                    } catch (UnsupportedEncodingException ex) {
+                    }
+                    t.setParent(gdm);                            
+                }                                
+            }
+        }
+        return null;
+
     }
     
 
@@ -213,9 +204,21 @@ public class Bitcoin implements Runnable {
             }
         }.start();
     }
+    public GetDataMessage newGetData(Iterable<String> uris) {
+        GetDataMessage im = new GetDataMessage(param);
+        
+        for (String u : uris) {
+            try {
+                im.addTransaction(Sha256Hash.create(u.getBytes("UTF8")));
+            } catch (UnsupportedEncodingException ex) {
+                Logger.getLogger(Bitcoin.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return im;
+    }
     
     public InventoryMessage newInventory(Iterable<String> uris) {
-        InventoryMessage im = new InventoryMessage(params);
+        InventoryMessage im = new InventoryMessage(param);
         
         for (String u : uris) {
             try {
@@ -233,7 +236,7 @@ public class Bitcoin implements Runnable {
     }
 
     public void publish(Message m) {
-        List<Peer> connected = peerGroup.getConnectedPeers();
+        List<Peer> connected = getConnectedPeers();
         for (Peer p : connected) {
             System.out.println("publish: " + m + " to " + p);
             p.sendMessage(m);
@@ -248,7 +251,7 @@ public class Bitcoin implements Runnable {
         while (true) {
             
             publish( newInventory( urls ));
-            
+            publish( newGetData( urls ));
             try { Thread.sleep(30*1000); } catch (InterruptedException ex) {            }
         }
     }
