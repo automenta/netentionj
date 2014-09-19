@@ -21,7 +21,6 @@ import nars.web.core.Core;
 import nars.web.core.UserActivity;
 import nars.web.util.DBPedia;
 import nars.web.util.NOntology;
-import nars.web.util.RDF;
 import nars.web.util.Wikipedia;
 import org.boon.json.JsonParserFactory;
 import org.boon.json.JsonSerializer;
@@ -43,7 +42,7 @@ import org.vertx.mods.web.StaticFileHandler;
  *
  * @author me
  */
-public class WebServer {
+public class WebServer  {
     
     final MustacheFactory mf = new DefaultMustacheFactory();
     final Vertx vertx;
@@ -51,13 +50,14 @@ public class WebServer {
     public static final JsonSerializer jsonSerializer;    
     private final Options options;
     private final Core core;
-    private final RDF rdf;
+    
     
     ExecutorService executor;
     
     public WebServer(Core c, Options o) throws Exception {
         super();
 
+        
         this.core = c;
         this.options = o;
 
@@ -66,8 +66,8 @@ public class WebServer {
         
         vertx = VertxFactory.newVertx();        
         http = vertx.createHttpServer();        
-        rdf = new RDF();
-                
+    
+        
         
         /*http.websocketHandler(new Handler<ServerWebSocket>() {
 
@@ -171,6 +171,7 @@ public class WebServer {
         Options options = Options.load(optionsPath);
 
         OrientGraph g = new OrientGraph("plocal:" + options.databasePath);
+        
                 
         Core core = new Core((TransactionalGraph)g);
         new NOntology(core);
