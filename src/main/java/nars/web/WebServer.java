@@ -3,11 +3,6 @@ package nars.web;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
-import com.google.bitcoin.core.BlockChain;
-import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.core.Wallet;
-import com.google.bitcoin.params.MainNetParams;
-import com.google.bitcoin.store.MemoryBlockStore;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import java.io.FileInputStream;
@@ -24,7 +19,6 @@ import static java.util.stream.Collectors.toList;
 import nars.web.core.ContextualizeInterest;
 import nars.web.core.Core;
 import nars.web.core.UserActivity;
-import nars.web.util.Bitcoin;
 import nars.web.util.DBPedia;
 import nars.web.util.NOntology;
 import nars.web.util.RDF;
@@ -147,14 +141,7 @@ public class WebServer {
         //new IRC(vertx.eventBus());
         
         
-        
-        
-        MainNetParams params = MainNetParams.get();
-        Wallet wallet = new Wallet(params);
-        wallet.addKey(new ECKey());
-        BlockChain bc = new BlockChain(params, wallet, new MemoryBlockStore(params));
-        new Bitcoin(params, bc, vertx.eventBus());
-        
+
         
         http.requestHandler(r);        
 
