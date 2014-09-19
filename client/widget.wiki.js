@@ -22,7 +22,7 @@ function newWikiBrowser(onTagAdded, options) {
     var backButton = $('<button disabled><i class="fa fa-arrow-left"></i></button>');
     var homeButton = $('<button disabled><i class="fa fa-home"></i></button>');
     homeButton.click(function() {
-        gotoTag(configuration.wikiStartPage);
+        b.gotoTag(configuration.wikiStartPage);
     });
     
     var searchInput = $('<input _placeholder="Search Wikipedia"/>');
@@ -32,7 +32,7 @@ function newWikiBrowser(onTagAdded, options) {
             searchInputButton.click();
     });
     searchInputButton.click(function() {
-        gotoTag(searchInput.val(), true);
+        b.gotoTag(searchInput.val(), true);
     });
     header.append(backButton);
     header.append(homeButton);
@@ -53,7 +53,7 @@ function newWikiBrowser(onTagAdded, options) {
 
     var currentTag = configuration.wikiStartPage;
 
-    function gotoTag(t, search) {
+    b.gotoTag = function(t, search) {
         loading();
         currentTag = t;
 
@@ -78,6 +78,7 @@ function newWikiBrowser(onTagAdded, options) {
             p.click(function() {
                 if (onTagAdded)
                     onTagAdded('dbpedia.org/resource/' + target);
+                return false;
             });
             return p;
         }
@@ -127,7 +128,8 @@ function newWikiBrowser(onTagAdded, options) {
                         var target = h.substring(6);
 
                         t.click(function() {
-                            gotoTag(target);
+                            b.gotoTag(target);
+                            return false;
                         });
 
                         if ((target.indexOf('Portal:') != 0) && (target.indexOf('Special:') != 0)) {
@@ -145,10 +147,10 @@ function newWikiBrowser(onTagAdded, options) {
     }
     if (options.initialSearch) {
         searchInput.val(options.initialSearch);
-        gotoTag(options.initialSearch, true);
+        b.gotoTag(options.initialSearch, true);
     }
     else {
-        gotoTag(currentTag);
+        b.gotoTag(currentTag);
     }
 
     b.append(br);

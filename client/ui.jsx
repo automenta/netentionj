@@ -614,8 +614,8 @@ $(document).ready(function() {
     whenResized();
 
 
-	if ($('title').html().length === 0)
-    	$('title').html(configuration.siteName);
+    if ($('title').html().length === 0)
+    $('title').html(configuration.siteName);
 		
     $('#loginLogo').attr('src', configuration.loginLogo);
     if (configuration.favicon)

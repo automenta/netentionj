@@ -38,7 +38,7 @@ function identity() {
 }
 
 
-function netention(f) {
+function netention(router) {
 
     var $NClient = Backbone.Model.extend({
         reset: function() {
@@ -896,19 +896,6 @@ function netention(f) {
                 });
             }
         },
-        startURLRouter: function() {
-            if (!this.backboneStarted) {
-
-                this.backboneStarted = true;
-                Backbone.history.start();
-
-                $N.on('change:attention', updateView);
-                $N.on('change:currentView', updateView);
-                $N.on('change:tags', updateView);
-                $N.on('change:focus', updateView);
-
-            }
-        },
         getChannel: function(channel, callback) {
             if ($N.channels[channel]) {
                 callback($N.channels[channel]);
@@ -976,30 +963,7 @@ function netention(f) {
     var otherSelves = decodeURIComponent(getCookie('otherSelves')).split(',');
     setClientID(cid, otherSelves);
 
-    if (configuration.connection == 'websocket') {
-        $N.connect(null, function() {
-            f('/ontology.json', $N);
-        });
-    } else {
-        window.addEventListener('beforeunload', function(e) {
-            $N.saveAll();
-            /*var confirmationMessage = "Saved everything";
-             
-             (e || window.event).returnValue = confirmationMessage;     //Gecko + IE
-             return confirmationMessage;                                //Webkit, Safari, Chrome etc.
-             */
-        });
-
-        f('ontology.json', $N);
-    }
-
- 
-}
-
-$(document).ready(function() {
-
-    console.log('netention()');
-    netention(function(schemaURL, $N) {
+    var f = function(schemaURL, $N) {
 
         $('#NotificationArea').html('System loaded.');
 
@@ -1013,107 +977,15 @@ $(document).ready(function() {
 
                 //SETUP ROUTER
                 console.log('Router()');
-                var Workspace = Backbone.Router.extend({
-                    routes: {
-                        'new': 'new',
-                        'me': 'me', // #help
-                        'help': 'help', // #help
-                        'query/:query': 'query', // #search/kiwis
-                        'object/:id': 'showObject',
-                        'object/:id/focus': 'focus',
-                        'tag/:tag': 'tag',
-                        'tag/:tag/new': 'tagNew',
-                        //"new/with/tags/:t":     "newWithTags",
-                        'example': 'completeExample',
-                        'user/:userid': 'user',
-                        ':view': 'view',
-                        ':view/tag/:tag': 'viewTag',
-                        'read/*url': 'read'
-                                //"search/:query/:page":  "query"   // #search/kiwis/p7
-                    },
-                    me: function() {
-                        commitFocus($N.myself());
-                    },
-                    completeExample: function() {
-                        commitFocus(exampleObject);
-                    },
-                    showObject: function(id) {
-                        var x = $N.object[id];
-                        if (x) {
-                            newPopupObjectView(x);
-                        }
-                        else {
-                            notify({
-                                title: 'Unknown object',
-                                text: id
-                            });
-                        }
-                    },
-                    view: function(view) {
-                        $N.set('currentView', view);
-                    },
-                    viewTag: function(view, tag) {
-                        $N.set('currentView', view);
-
-                        var tf = new $N.nobject();
-                        tf.addTag(tag);
-                        $N.setFocus(tf);
-
-                        //show sidebar
-                        if (!$('#FocusEditWrap').is(':visible'))
-                            $('#FocusEditToggleButton').click();
-                    },
-                    user: function(userid) {
-                        $N.set('currentView', {view: 'user', userid: userid});
-                    },
-                    tagNew: function(tag) {
-                        var n = new $N.nobject();
-                        n.addTag(tag);
-                        newPopupObjectEdit(n);
-                    },
-                    read: function(url) {
-                        later(function() {
-                            viewRead(url);
-                        });
-                    }
-
-                });
-
-
-
-                $N.trigger('ui.start');
-
-                var ii = identity();
-
+                var Workspace = Backbone.Router.extend(router);
                 
-                if (ii === ID_AUTHENTICATED) {
-                    $('#NotificationArea').html('Authorized.');
-                }
-                else if (ii === ID_ANONYMOUS) {
-                    $('#NotificationArea').html('Anonymous.');
-                }
-                else {
-                    $('#NotificationArea').html('Read-only public access.');
-                    /*$('.loginlink').click(function() {
-                     $('#LoadingSplash').show();
-                     nn.hide();
-                     });*/
-                }
-
-                $('#View').show();
-                $('#LoadingSplash2').hide();
-
-
-
-
+                Backbone.history.start();
 
                 var w = new Workspace();
                 $N.router = w;
 
-                /*
-                 if (($N.myself()===undefined) && (identity()!=ID_UNKNOWN)) {
-                 openSelectProfileModal("Start a New Profile");
-                 }*/
+
+                $N.trigger('ui.start');
 
 
 
@@ -1171,10 +1043,7 @@ $(document).ready(function() {
 
                 }
 
-
                 //initKeyboard();
-
-
 
                 //USEFUL FOR DEBUGGING EVENTS:
                 /*
@@ -1188,11 +1057,28 @@ $(document).ready(function() {
             });
         });
 
+    };
+            
+    if (configuration.connection == 'websocket') {
+        $N.connect(null, function() {
+            f('/ontology.json', $N);
+        });
+    } else {
+        window.addEventListener('beforeunload', function(e) {
+            $N.saveAll();
+            /*var confirmationMessage = "Saved everything";
+             
+             (e || window.event).returnValue = confirmationMessage;     //Gecko + IE
+             return confirmationMessage;                                //Webkit, Safari, Chrome etc.
+             */
+        });
 
-    });
+        f('ontology.json', $N);
+    }
 
+ 
+}
 
-});
 
 
 ///COMMON UI ------------------------------------

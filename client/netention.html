@@ -344,11 +344,110 @@
 <script>
     $(document).ready(function() {
 
+        var router = {
+            routes: {
+                'new': 'new',
+                'me': 'me', // #help
+                'help': 'help', // #help
+                'query/:query': 'query', // #search/kiwis
+                'object/:id': 'showObject',
+                'object/:id/focus': 'focus',
+                'tag/:tag': 'tag',
+                'tag/:tag/new': 'tagNew',
+                //"new/with/tags/:t":     "newWithTags",
+                'example': 'completeExample',
+                'user/:userid': 'user',
+                ':view': 'view',
+                ':view/tag/:tag': 'viewTag',
+                'read/*url': 'read'
+                        //"search/:query/:page":  "query"   // #search/kiwis/p7
+            },
+            me: function() {
+                commitFocus($N.myself());
+            },
+            completeExample: function() {
+                commitFocus(exampleObject);
+            },
+            showObject: function(id) {
+                var x = $N.object[id];
+                if (x) {
+                    newPopupObjectView(x);
+                }
+                else {
+                    notify({
+                        title: 'Unknown object',
+                        text: id
+                    });
+                }
+            },
+            view: function(view) {
+                $N.set('currentView', view);
+            },
+            viewTag: function(view, tag) {
+                $N.set('currentView', view);
+
+                var tf = new $N.nobject();
+                tf.addTag(tag);
+                $N.setFocus(tf);
+
+                //show sidebar
+                if (!$('#FocusEditWrap').is(':visible'))
+                    $('#FocusEditToggleButton').click();
+            },
+            user: function(userid) {
+                $N.set('currentView', {view: 'user', userid: userid});
+            },
+            tagNew: function(tag) {
+                var n = new $N.nobject();
+                n.addTag(tag);
+                newPopupObjectEdit(n);
+            },
+            read: function(url) {
+                later(function() {
+                    viewRead(url);
+                });
+            }
+        };
+
+        netention(router);
+                
         debugLog();
         
         $N.once('ui.start', function (){        
 
             console.log('initUI()');
+
+            var ii = identity();
+
+
+            if (ii === ID_AUTHENTICATED) {
+                $('#NotificationArea').html('Authorized.');
+            }
+            else if (ii === ID_ANONYMOUS) {
+                $('#NotificationArea').html('Anonymous.');
+            }
+            else {
+                $('#NotificationArea').html('Read-only public access.');
+                /*$('.loginlink').click(function() {
+                 $('#LoadingSplash').show();
+                 nn.hide();
+                 });*/
+            }
+
+            $('#View').show();
+            $('#LoadingSplash2').hide();
+
+
+
+
+
+
+            /*
+             if (($N.myself()===undefined) && (identity()!=ID_UNKNOWN)) {
+             openSelectProfileModal("Start a New Profile");
+             }*/
+
+
 
             updateViewControls();
 
@@ -494,7 +593,13 @@
 
             updateViewLock(0);
 
-            $N.startURLRouter();
+
+
+            $N.on('change:attention', updateView);
+            $N.on('change:currentView', updateView);
+            $N.on('change:tags', updateView);
+            $N.on('change:focus', updateView);
+                
 
             $('#NotificationArea').remove();
 
