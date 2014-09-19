@@ -23,7 +23,6 @@ function setClientID(cid, otherSelves) {
      text: that.myself().name + ' (' + that.get('clientID').substring(0,4) + ')'
      });*/
 
-
 }
 
 function identity() {
@@ -980,6 +979,7 @@ function netention(router) {
                 var Workspace = Backbone.Router.extend(router);
                 
                 Backbone.history.start();
+                
 
                 var w = new Workspace();
                 $N.router = w;
@@ -996,14 +996,15 @@ function netention(router) {
 
                     $N.loadAll(function() {                        
                         if ($N.myself() === undefined) {
-                            if (!configuration.enableAnonymous) {
+                            /*if (!configuration.enableAnonymous) {
                                 openSelectProfileModal('Start a New Profile');
                             }
-                            else {
+                            else*/ {
                                 //start a default anonymous user
-                                var x = $N.newUser('Anonymous');
-                                $N.become(x);
+                                //var x = $N.newUser('Anonymous');
+                                //$N.become(x);
                             }
+                            $N.trigger('session.start');
                         } else {
                             $N.indexOntology();
 

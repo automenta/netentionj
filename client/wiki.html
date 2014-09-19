@@ -5,23 +5,7 @@
         <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
-        <div id="ProfileSelect"  class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                        <h4 class="modal-title">Profile</h4>
-                    </div>
-                    <div class="modal-body">
 
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                        <button id="ProfileSave" type="button" class="btn btn-primary">Save changes</button>
-                    </div>
-                </div><!-- /.modal-content -->
-            </div><!-- /.modal-dialog -->
-        </div><!-- /.modal -->
 
 
         <div id="mainmenu" class="container-fluid navbar-default">                        
@@ -30,7 +14,22 @@
             </div>
             <div id="context"></div>
         </div>
+        
         <div id="wiki"></div>
+        
+        <div id="ProfileSelect" style="display:none">
+            <div>                
+                <h4>Myself</h4>
+            </div>
+            <div class="modal-body">
+
+            </div>
+            <div class="modal-footer">
+                <!--<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>-->
+                <button id="ProfileSave" type="button" class="btn btn-primary">Save changes</button>
+            </div>
+        </div>
+        
         <div id="tagbar" class="container-fluid navbar-default">
 
         </div>
@@ -143,8 +142,7 @@
             
             
             netention(router);
-
-
+            
 
             wiki = newWikiBrowser(function onSelected(e) {
                 onWikiTagAdded($('#tagbar'), e);
@@ -153,10 +151,10 @@
             wiki.gotoTag = function(page, search) {
                 var r;
                 if (search) {
-                    r = 'wiki/search/' + page;
+                    r = 'wiki/search/' + encodeURIComponent(page);
                 }  
                 else {
-                    r = 'wiki/' + page;
+                    r = 'wiki/' + encodeURIComponent(page);
                 }
                 $N.router.navigate(r, {trigger: true});
                 wiki._gotoTag(page, search);
@@ -197,9 +195,26 @@
             });
 
             $N.once('session.start', function () {
+
+                
                 $('#EditSelf').click(function () {
-                    selfEdit(!($('#ProfileSelect').is(':visible')));
+                    selfEdit(true);
                 });
+
+
+ 
+                if (!$N.myself()) {
+
+                     $N.become($N.newUser('Anonymous'));
+                     console.log('New ID: ' + $N.myself());            
+
+                     $N.myself().name = 'Anonymous';
+
+                    later(function() {
+                        $N.router.navigate('me', {trigger:true});
+                    });
+                 }
+
             });
 
         });
@@ -208,30 +223,38 @@
 
         function notify(x) {
             if (typeof x === "string")
-                x = { title: x, text: '' };
+                x = { title: x, text: '' ,
+                 styling: 'fontawesome'
+             };
             
             new PNotify(x);
-            console.log(JSON.stringify(x));
         }
 
         function selfEdit(enable) {
             var ps = $('#ProfileSelect');
-            var modal = $('#ProfileSelect .modal-body');
             if (enable) {
-                ps.modal('show');
-                if (modal.children().size() === 0) {
-                    ps.on('shown.bs.modal', function (e) {
-                        modal.html(newNewProfileWidget());
-                    });
+                if (!ps.is(':visible')) {
+                    //ps.modal('show');
+                    ps.show();
+                    $('#wiki').hide();
+                    
+                    var modal = $('#ProfileSelect .modal-body');
+                    if (modal.children().size() === 0) {
+                        modal.html(profileWidget());
+                    }                    
                 }
             }
             else {
-                ps.modal('hide');
+                //ps.modal('hide');
+                ps.hide();
+                $('#wiki').show();
             }
         }
         //originally from widget.profile.js
-        function newNewProfileWidget(whenFinished) {
+        function profileWidget() {
+            
             var d = newDiv();
+
 
             var nameField = $('<input type="text" placeholder="Name"></input>');
             d.append(nameField).append('<br/>');
@@ -255,21 +278,18 @@
             }
 
 
-            var locationEnabled = true;
+            var geolocate = !($N.myself().geolocation);
+            var location = $N.myself().geolocation || configuration.mapDefaultLocation;
+            var locationEnabled = (location!=='');
             var locEnabled = $('<input type="checkbox" checked="true"/>');
 
             d.append('<br/>').append(locEnabled).append('Location Enabled').append('<br/>');
 
             var cm = $('<div id="SelfMap"/>').appendTo(d);
 
-            /*var createButton = $('<button>Create User</button>');
-             d.append('<br/>').append(createButton);*/
-
-            var location = configuration.mapDefaultLocation;
-
             var lmap;
             later(function () {
-                lmap = initLocationChooserMap('SelfMap', location, 7, true);
+                lmap = initLocationChooserMap('SelfMap', location, 7, geolocate);
             });
 
             locEnabled.change(function () {
@@ -287,11 +307,17 @@
                 var m = $N.myself();
                 m.name = nameField.val();
                 m.email = emailField.val();
+                                
+                if (!locationEnabled) {                    
+                    m.geolocation = '';
+                }
+                else {
+                    if (lmap.location)
+                        m.geolocation = lmap.location();
+                    else
+                        m.geolocation = '';
+                }
                 
-                //TODO remove geolocation if disabled
-                if (lmap.location)
-                    m.geolocation = lmap.location();
-                                    
                 objTouch(m);
 
                 $N.pub(m, function (e) {

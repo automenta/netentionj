@@ -24,6 +24,7 @@ function setGeolocatedLocation(map, onUpdated) {
 
 
 function initLocationChooserMap(target, location, zoom, geolocate) {
+    
     var map = L.map(target, {
         attributionControl: false
     }).setView(location, 12);
@@ -45,7 +46,7 @@ function initLocationChooserMap(target, location, zoom, geolocate) {
     var marker = L.marker(location);
     marker.addTo(map);
 
-    var location = {lat: location[0], lng: location[1]};
+    //var location = {lat: location[0], lng: location[1]};
 
     function clickAt(p) {
         location = {lat: p.lat, lng: p.lng};
