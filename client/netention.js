@@ -996,18 +996,9 @@ function netention(router) {
 
                     $N.loadAll(function() {                        
                         if ($N.myself() === undefined) {
-                            /*if (!configuration.enableAnonymous) {
-                                openSelectProfileModal('Start a New Profile');
-                            }
-                            else*/ {
-                                //start a default anonymous user
-                                //var x = $N.newUser('Anonymous');
-                                //$N.become(x);
-                            }
                             $N.trigger('session.start');
                         } else {
                             $N.indexOntology();
-
                             $N.trigger('session.start');
                         }
                     });
