@@ -30,11 +30,11 @@ import org.vertx.java.core.json.impl.Json;
  *
  * @author me
  */
-public class UserActivity implements Handler<Message> {
+public class Publish implements Handler<Message> {
     private final Core core;
     private final EventBus bus;
 
-    public UserActivity(Core c, EventBus b) {
+    public Publish(Core c, EventBus b) {
         
         this.core = c;
         this.bus = b;
@@ -122,7 +122,10 @@ public class UserActivity implements Handler<Message> {
             }
             
             core.commit();
+            
         }
+        
+        bus.publish("interest", id);
         
     }
 }

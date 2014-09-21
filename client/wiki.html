@@ -9,14 +9,20 @@
 
 
         <div id="mainmenu" class="container-fluid navbar-default">                        
-            <div id="wikimenu">
-                <button id="EditSelf"><i class="fa fa-users"></i></button>
+            <div id="mainmenuicons">
+                <button id="GoHome"><i class="fa fa-home"></i></button>
+                <button id="GoWiki"><i class="fa fa-cubes"></i></button>
+                <button id="GoTagTable"><i class="fa fa-list"></i></button>
+                <button id="GoSelf"><i class="fa fa-users"></i></button>
             </div>
-            <div id="context"></div>
+            <div id="viewmenu">
+            </div>
         </div>
-        
-        <div id="wiki"></div>
-        
+
+        <div id="content">
+        </div>
+
+
         <div id="ProfileSelect" style="display:none">
             <div>                
                 <h4>Myself</h4>
@@ -29,7 +35,7 @@
                 <button id="ProfileSave" type="button" class="btn btn-primary">Save changes</button>
             </div>
         </div>
-        
+
         <div id="tagbar" class="container-fluid navbar-default">
 
         </div>
@@ -41,6 +47,8 @@
     <script src="lib/underscore.string/2.3.3/underscore.string.min.js" type="text/javascript"></script> 
     <script src="lib/backbone.js/backbone-min.js" type="text/javascript"></script> 
 
+    <script src="lib/datatables/jquery.dataTables.min.js" type="text/javascript"></script>
+
     <script src="lib/setImmediate.js" type="text/javascript"></script> 
     <script src="lib/lunr/lunr.min.js"></script>
     <script src="/lib/graphlib.min.js" type="text/javascript"></script> 
@@ -50,6 +58,7 @@
 
     <script src="lib/leaflet/leaflet.js"></script>
     <script src="lib/leaflet/Control.OSMGeocoder.js"></script>
+    
 
     <script src="lib/pnotify/pnotify.custom.min.js" type="text/javascript"></script>
     <script src="lib/bootstrap/bootstrap.min.js"></script>
@@ -71,11 +80,20 @@
 
     <script>
         var wiki;
+        var uri; //current uri
         
+        function resetView() {
+            $('#ProfileSelect').hide();
+            $('#mainmenu #viewmenu').empty();
+            $('#content').empty();                
+        }
+
         $(document).ready(function () {
             var router = {
                 routes: {
+                    '': 'home',
                     'me': 'me', // #help
+                    'tagtable': 'tagtable', // #help
                     'wiki/:page': 'wiki',
                     'wiki/search/:query': 'wikisearch',
 //                    'object/:id': 'showObject',
@@ -90,13 +108,10 @@
 //                    'read/*url': 'read'
 //                            //"search/:query/:page":  "query"   // #search/kiwis/p7
                 },
-                me: function() {
-                    selfEdit(true);
+                me: function () {
+                    selfEdit();
                 },
-                completeExample: function() {
-                    commitFocus(exampleObject);
-                },
-                showObject: function(id) {
+                showObject: function (id) {
                     var x = $N.object[id];
                     if (x) {
                         newPopupObjectView(x);
@@ -108,13 +123,20 @@
                         });
                     }
                 },
-                wiki: function(page) {
-                    wiki.gotoTag(page, false);
+                home: function() {
+                    goHome();
                 },
-                wikisearch: function(query) {
-                    wiki.gotoTag(query, true);
+                tagtable: function() {
+                    goTagTable();
                 },
-                viewTag: function(view, tag) {
+                wiki: function (page) {
+                    goWiki(page, false);
+                },
+                wikisearch: function (query) {
+                    goWiki(query, true);
+                },
+                
+                viewTag: function (view, tag) {
                     $N.set('currentView', view);
 
                     var tf = new $N.nobject();
@@ -125,69 +147,262 @@
                     if (!$('#FocusEditWrap').is(':visible'))
                         $('#FocusEditToggleButton').click();
                 },
-                user: function(userid) {
+                user: function (userid) {
                     $N.set('currentView', {view: 'user', userid: userid});
                 },
-                tagNew: function(tag) {
+                tagNew: function (tag) {
                     var n = new $N.nobject();
                     n.addTag(tag);
                     newPopupObjectEdit(n);
                 },
-                read: function(url) {
-                    later(function() {
+                read: function (url) {
+                    later(function () {
                         viewRead(url);
                     });
                 }
             };
-            
-            
+
+
             netention(router);
-            
 
-            wiki = newWikiBrowser(function onSelected(e) {
-                onWikiTagAdded($('#tagbar'), e);
-            });
-            wiki._gotoTag = wiki.gotoTag; //HACK
-            wiki.gotoTag = function(page, search) {
-                var r;
-                if (search) {
-                    r = 'wiki/search/' + encodeURIComponent(page);
-                }  
-                else {
-                    r = 'wiki/' + encodeURIComponent(page);
+            
+            function goWiki(page, search) {
+                resetView();
+
+                wiki = newWikiBrowser(function onSelected(e) {
+                    onWikiTagAdded($('#tagbar'), e);
+                });
+                wiki.url = function (u) {
+                    console.log('uri=' + u);
+                    uri = u;
+                };
+                wiki._gotoTag = wiki.gotoTag; //HACK
+                wiki.gotoTag = function (page, search) {
+                    var r;
+                    if (search) {
+                        r = 'wiki/search/' + encodeURIComponent(page);
+                    }
+                    else {
+                        r = 'wiki/' + encodeURIComponent(page);
+                    }
+                    $N.router.navigate(r, {trigger: false});
+
+                    $('#sidebar').empty();
+
+
+                    wiki._gotoTag(page, search);
+                };
+
+                $('#content').html('<div id="wiki"></div><div id="sidebar" style="display:none"></div>');
+
+                
+                $('#wiki').html(wiki);
+                $('.WikiBrowserHeader').children().detach().appendTo('#mainmenu #viewmenu');
+                $('#sidebar').show();
+                
+                wiki.gotoTag(page, search);
+
+                
+                
+            }
+
+            
+            function goHome() {
+                resetView();
+                
+                uri = '/';
+                 
+                //$("time.timeago").timeago();
+                
+                var log = $('<div></div>').appendTo('#content');
+                
+
+                function display(x) {
+                     var d = $('<div></div>').addClass('item');
+
+                     if (typeof x === "object") {
+                         for (var k in x) {
+                             if (k === 'uri') {
+                                 d.append('<h3>' + JSON.stringify(x[k]) + '</h3>');
+                             }
+                             else {
+                                 var e = $('<div/>').addClass('section');
+                                 e.append('<h4>' + k + '</h4>');
+                                 e.append('<pre>' + JSON.stringify(x[k], null, 4) + '</pre>');
+                                 d.append(e);
+                             }
+                         }
+                     }
+                     else {
+                         d.append('<h3>' + JSON.stringify(x) + '</h3>');
+                     }
+
+                    //  d.append($('<time>').append($.timeago(new Date())));
+
+                     log.prepend(d);
+                     return d;
+                 }
+
+                 
+                var publicHandler;
+                bus.registerHandler('public', publicHandler = function (message) {
+                    if (!log.is(':visible')) {
+                        bus.unregisterHandler('public', publicHandler);
+                        return;
+                    }
+                    
+                    try {
+                        display(JSON.parse(message));
+                    }
+                    catch (e) {
+                        display(message);
+                    }
+
+                });
+                later(function() {
+                     bus.send("interest", $N.myself().id);                    
+                });
+            }
+            
+            function goTagTable() {
+                resetView();
+                
+                var basetag = 'User';
+
+                function update() {
+
+                    $.getJSON('object/tag/' + basetag + '/json', function(d) {
+                        //$('body').append(JSON.stringify(j));
+
+                            $('#content').empty();
+
+                            var t = $('<table cellpadding="0" cellspacing="0" border="0" class="display" style="width:100%"></table>');
+                            t.appendTo('#content');
+
+
+
+                            var data = [];
+                            _.each(d, function(subject) {
+                                var name = subject.name;
+                                if (subject.out) {
+                                    for (var pred in subject.out) {
+                                        var objList = subject.out[pred];
+                                        for (var i = 0; i < objList.length; i++) {
+                                            var obj = objList[i];
+                                            data.push([name, pred, obj]);
+                                        }
+                                    }
+                                }
+
+                            });
+
+                            var table = t.dataTable({
+                                    'data': data,
+                                    'columns': [
+                                            { 'title': '<i class="fa fa-cubes"></i>'/*, class: ''*/ },
+                                            { 'title': '<i class="fa fa-arrows-h"></i>' },
+                                            { 'title': '<i class="fa fa-cubes"></i>' }
+                                            //{ 'title': 'Author' }
+                                    ],
+                                    'deferRender': true,
+
+                                    //http://www.datatables.net/extensions/scroller/examples
+                                    /*
+                                    "scrollY": "200px",
+                                    "dom": "frtiS",
+                                    'scrollCollapse': true,
+                                    */
+                                    'searching': true,
+                                    'lengthChange': true,
+                                    'paging': true,
+                                    'ordering': true,
+                                    //'order': [2, 'desc'],
+                                    '_columnDefs': [
+                                       {
+                                                    'targets': [0],
+                                                    'visible': true,
+                                                    'searchable': true
+                                            }
+                                            /*{
+                                                    // The `data` parameter refers to the data for the cell (defined by the
+                                                    // `data` option, which defaults to the column being worked with, in
+                                                    // this case `data: 0`.
+                                                    "render": function (data, type, row) {
+                                                            return '';
+                                                    },
+                                                    "targets": 1
+                                            },*/
+
+
+                                    ],
+
+                                    /*
+                                    'createdRow': function(row, data, index ) {
+                                            $('td', row).eq(0).html(
+                                                    newObjectView(data[0], {
+                                                            scale: 0.5,
+                                                            depthRemaining: 0,
+                                                            startMinimized: false,
+                                                            showAuthorName: false,
+                                                            transparent: true
+                                                    })
+                                            );
+                                            $('td', row).eq(1).html($.timeago(new Date(data[2])));
+                                    }
+                                    */
+                            });                    
+                    });
                 }
-                $N.router.navigate(r, {trigger: true});
-                wiki._gotoTag(page, search);
-            };
-            
-            $('#wiki').html(wiki);
-            $('.WikiBrowserHeader').children().detach().appendTo('#mainmenu #wikimenu');
 
+                update();
+        
+            }
 
             $N.once('bus.start', function () {
 
                 bus.on('public', function (message) {
 
+
+                    var c;
                     try {
-                        var c = JSON.parse(message);
-                        var m = '';
-                        var t = $('#context');
-                        t.empty();
-                        for (var k in c.context) {
-                            var count = parseInt(c.context[k]);
-
-                            var label = k;
-                            if (k.indexOf('/') != -1)
-                                label = k.substring(k.lastIndexOf('/') + 1, k.length);
-
-                            var l = $('<a href="#">' + label + '</a>');
-
-                            l.css('font-size', 50.0 * Math.log(1 + count) + '%');
-                            t.append(l, '&nbsp;');
-                        }
+                        c = JSON.parse(message);
                     }
                     catch (e) {
                         console.error('Unable to parse: ' + message);
+                        return;
+                    }
+
+                    var m = '';
+
+                    if (c.uri === uri) {
+                        if ((c.activity) && (c.activity.in)) {
+                            $('#sidebar .activity').remove();
+                            var t = $('<div></div>').addClass('activity').appendTo('#sidebar');
+                            for (var tag in c.activity.in) {
+                                var a = c.activity.in[tag];
+                                t.append('<h2>' + tag + '</h2>');
+                                t.append('<pre>' + JSON.stringify(a) + '</pre>');
+                            }
+                        }
+
+                        if (c.context) {
+
+                            $('#sidebar .related').remove();
+                            var t = $('<div></div>').addClass('related').appendTo('#sidebar');
+                            t.append('<h2>Related</h2>');
+                            for (var k in c.context) {
+                                var count = parseInt(c.context[k]);
+
+                                var label = k;
+                                if (k.indexOf('/') != -1)
+                                    label = k.substring(k.lastIndexOf('/') + 1, k.length);
+
+                                var l = $('<a href="#">' + label + '</a>');
+
+                                l.css('font-size', 50.0 * Math.log(1 + count) + '%');
+                                t.append(l, '<br/>');
+                            }
+                        }
                     }
 
                 });
@@ -195,25 +410,33 @@
             });
 
             $N.once('session.start', function () {
+                Backbone.history.start();
 
-                
-                $('#EditSelf').click(function () {
-                    selfEdit(true);
+
+                $('#GoSelf').click(function() {
+                   $N.router.navigate('me', {trigger: true}); 
+                });
+                $('#GoHome').click(function() {
+                   $N.router.navigate('', {trigger: true}); 
+                });
+                $('#GoWiki').click(function() {
+                    $N.router.navigate('wiki/Portal:Current_events', {trigger: true}); 
+                });
+                $('#GoTagTable').click(function() {
+                    $N.router.navigate('tagtable', {trigger: true}); 
                 });
 
-
- 
                 if (!$N.myself()) {
 
-                     $N.become($N.newUser('Anonymous'));
-                     console.log('New ID: ' + $N.myself());            
+                    $N.become($N.newUser('Anonymous'));
+                    console.log('New ID: ' + $N.myself());
 
-                     $N.myself().name = 'Anonymous';
+                    $N.myself().name = 'Anonymous';
 
-                    later(function() {
-                        $N.router.navigate('me', {trigger:true});
+                    later(function () {
+                        $N.router.navigate('me', {trigger: true});
                     });
-                 }
+                }
 
             });
 
@@ -223,36 +446,31 @@
 
         function notify(x) {
             if (typeof x === "string")
-                x = { title: x, text: '' ,
-                 styling: 'fontawesome'
-             };
-            
+                x = {
+                    title: x, 
+                    text: ''
+                };
+            x.styling = 'fontawesome';
+
             new PNotify(x);
         }
 
-        function selfEdit(enable) {
+        
+        function selfEdit() {
+            resetView();
+            
             var ps = $('#ProfileSelect');
-            if (enable) {
-                if (!ps.is(':visible')) {
-                    //ps.modal('show');
-                    ps.show();
-                    $('#wiki').hide();
-                    
-                    var modal = $('#ProfileSelect .modal-body');
-                    if (modal.children().size() === 0) {
-                        modal.html(profileWidget());
-                    }                    
-                }
-            }
-            else {
-                //ps.modal('hide');
-                ps.hide();
-                $('#wiki').show();
+            ps.show();
+
+            var modal = $('#ProfileSelect .modal-body');
+            if (modal.children().size() === 0) {
+                modal.html(profileWidget());
             }
         }
+        
         //originally from widget.profile.js
         function profileWidget() {
-            
+
             var d = newDiv();
 
 
@@ -279,8 +497,9 @@
 
 
             var geolocate = !($N.myself().geolocation);
-            var location = $N.myself().geolocation || configuration.mapDefaultLocation;
-            var locationEnabled = (location!=='');
+            var geo = $N.myself().geolocation;
+            var location = ((geo && geo.lat && geo.lon) ? geo : false) || configuration.mapDefaultLocation;
+            var locationEnabled = (location !== '');
             var locEnabled = $('<input type="checkbox" checked="true"/>');
 
             d.append('<br/>').append(locEnabled).append('Location Enabled').append('<br/>');
@@ -307,8 +526,8 @@
                 var m = $N.myself();
                 m.name = nameField.val();
                 m.email = emailField.val();
-                                
-                if (!locationEnabled) {                    
+
+                if (!locationEnabled) {
                     m.geolocation = '';
                 }
                 else {
@@ -317,7 +536,7 @@
                     else
                         m.geolocation = '';
                 }
-                
+
                 objTouch(m);
 
                 $N.pub(m, function (e) {
@@ -325,8 +544,8 @@
                 }, function () {
                     notify('Saved profile');
                 });
-                
-                selfEdit(false);
+
+                $N.router.navigate('', {trigger: true});
             });
 
             nameField.val($N.myself().name);
@@ -336,5 +555,9 @@
         }
 
     </script> 
-    <style>@import url("wiki.css");</style>
+    <style>
+        @import url("wiki.css");
+        @import url("lib/datatables/css/jquery.dataTables.min.css");
+    
+    </style>
 </html>

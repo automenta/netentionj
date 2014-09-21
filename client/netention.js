@@ -978,7 +978,6 @@ function netention(router) {
                 console.log('Router()');
                 var Workspace = Backbone.Router.extend(router);
                 
-                Backbone.history.start();
                 
 
                 var w = new Workspace();

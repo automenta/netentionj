@@ -14,12 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-package nars.web.core;
+package nars.web.possibility;
 
 import com.tinkerpop.blueprints.Vertex;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import nars.web.core.Core;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.eventbus.Message;
@@ -29,17 +31,34 @@ import org.vertx.java.core.json.impl.Json;
  *
  * @author me
  */
-public class ContextualizeInterest implements Handler<Message> {
+public class Activity  implements Handler<Message> {
     private final Core core;
     private final EventBus bus;
-
-    public ContextualizeInterest(Core c, EventBus b) {
+    Set<String> excludeProperty;
         
+    public Activity(Core c, EventBus b) {
+
         this.core = c;
         this.bus = b;
-        b.registerHandler("interest", this);
-    }
+        
+        excludeProperty = new HashSet();
+        excludeProperty.add("wikipedia_content");
 
+        b.registerHandler("interest", this);
+        
+        
+    }
+    
+    public static class ActivityGraph {
+        public final String uri;
+        public final Map<String, Object> activity;
+
+        public ActivityGraph(String uri, Map<String, Object> activity) {
+            this.uri = uri;
+            this.activity = activity;
+        }
+        
+    }
     public static class ContextGraph {
         public final String uri;
         public final Map<String, Integer> context;
@@ -51,13 +70,20 @@ public class ContextualizeInterest implements Handler<Message> {
         
     }
     
+    
     @Override
     public void handle(Message e) {
         String id = e.body().toString();
         
-        
         Vertex v = core.vertex(id, false);
-        
+        if (v!=null) {
+            
+                    
+            Map<String, Object> a = core.getObject(v, excludeProperty);
+            if (a!=null) {
+                bus.publish("public", Json.encode(new ActivityGraph(id, a)));
+            }
+        }
         if (v!=null) {       
             final double threshold = 0.01;
             
@@ -87,9 +113,7 @@ public class ContextualizeInterest implements Handler<Message> {
                         c.put(u, (int)(pv*100.0));
                 }
             }
-            System.out.println(c);
-            bus.publish("public", Json.encode(new ContextGraph(id, c)));
-            
+            bus.publish("public", Json.encode(new ContextGraph(id, c)));            
         }
         else {
             System.err.println("unknown context: " + id);
@@ -97,7 +121,10 @@ public class ContextualizeInterest implements Handler<Message> {
         
         core.commit();
         
+        
     }
+    
+
     
     
 }

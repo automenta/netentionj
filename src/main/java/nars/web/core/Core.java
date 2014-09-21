@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import static java.util.stream.StreamSupport.stream;
@@ -61,12 +62,18 @@ public class Core extends EventEmitter {
     TransactionalGraph graph;
 
     public Map<String,Object> getObject(final Vertex v) {
+        return getObject(v, Collections.EMPTY_SET);
+    }
+    
+    public Map<String,Object> getObject(final Vertex v, Set<String> propertyExclude) {
         
         
         Map<String,Object> r = new HashMap();
         
-        for (String s : v.getPropertyKeys())
-            r.put(s, v.getProperty(s));
+        for (String s : v.getPropertyKeys()) {
+            if (!propertyExclude.contains(s))
+                r.put(s, v.getProperty(s));
+        }
 
         Iterable<Edge> outs = v.getEdges(Direction.OUT);            
         Map<String, List<String>> outMap = new HashMap();

@@ -19,11 +19,7 @@ function newWikiBrowser(onTagAdded, options) {
     header.addClass('WikiBrowserHeader');
     
 
-    var backButton = $('<button disabled><i class="fa fa-arrow-left"></i></button>');
-    var homeButton = $('<button disabled><i class="fa fa-home"></i></button>');
-    homeButton.click(function() {
-        b.gotoTag(configuration.wikiStartPage);
-    });
+    //var backButton = $('<button disabled><i class="fa fa-arrow-left"></i></button>');    
     
     var searchInput = $('<input _placeholder="Search Wikipedia"/>');
     var searchInputButton = $('<button><i class="fa fa-play"></i></button>');
@@ -34,8 +30,6 @@ function newWikiBrowser(onTagAdded, options) {
     searchInputButton.click(function() {
         b.gotoTag(searchInput.val(), true);
     });
-    header.append(backButton);
-    header.append(homeButton);
     header.append('<button disabled title="Bookmark"><i class="fa fa-star"></i></button>');
     header.append('<button disabled><i class="fa fa-refresh"></i></button>');
     header.append(searchInput);
@@ -51,7 +45,7 @@ function newWikiBrowser(onTagAdded, options) {
         br.html('Loading...');
     }
 
-    var currentTag = configuration.wikiStartPage;
+    var currentTag = null; //configuration.wikiStartPage;
 
     b.gotoTag = function(t, search) {
         loading();
@@ -96,6 +90,9 @@ function newWikiBrowser(onTagAdded, options) {
 
             var url = metadata.url;
             currentTag = url.substring(url.lastIndexOf('/')+1, url.length);
+
+            if (b.url)
+                b.url('dbpedia.org/resource/' + currentTag);
             
 //            if (extractContent) {
 //                //br.find('head').remove();
@@ -150,7 +147,8 @@ function newWikiBrowser(onTagAdded, options) {
         b.gotoTag(options.initialSearch, true);
     }
     else {
-        b.gotoTag(currentTag);
+        if (currentTag!=null)
+            b.gotoTag(currentTag);
     }
 
     b.append(br);

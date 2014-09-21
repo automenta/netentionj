@@ -12,9 +12,21 @@ body {
     overflow: auto;
     margin: 0;            
 }
-#wiki {
+#content {
     margin: 1em;
-    margin-top:1.8em;
+    margin-top:2.8em;    
+}
+#wiki {
+    width: 70%;
+}
+#sidebar {
+    position: fixed;
+    right: 10px;
+    top: 0;
+    width: 30%;
+    padding-top: 2em;
+    overflow: auto;
+    height: 100%;    
 }
 .WikiBrowser {
     overflow: visible;
@@ -38,15 +50,16 @@ body {
     left: 0;
     width: 100%;
     padding: 0.25em;
+    z-index: 100;
 }
-#wikimenu {
-    width: 50%;
+#mainmenuicons {
     float: left;
 }
-#context {
-    width: 50%;
-    float: right;
+#viewmenu {
+    float: left;
+    margin-left: 2em;
 }
+
 #tagbar .label {
     float: left;
 }
@@ -66,4 +79,7 @@ body {
     right: 0;
     background: none;
     border: 0;
+}
+.item {
+    clear: both;
 }

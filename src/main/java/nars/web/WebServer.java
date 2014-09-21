@@ -16,9 +16,9 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import static java.util.stream.Collectors.toList;
-import nars.web.core.ContextualizeInterest;
 import nars.web.core.Core;
-import nars.web.core.UserActivity;
+import nars.web.core.Publish;
+import nars.web.possibility.Activity;
 import nars.web.util.DBPedia;
 import nars.web.util.NOntology;
 import nars.web.util.Wikipedia;
@@ -79,7 +79,8 @@ public class WebServer  {
         
         .get("/", new Handler<HttpServerRequest>() {            
             @Override public void handle(HttpServerRequest e) {                
-                template(e, "client/debug.eventbus.html", getIndexPage());
+                //template(e, "client/debug.eventbus.html", getIndexPage());
+                template(e, "client/wiki.html", getIndexPage());
             }            
         })
         .get("/netention.html", new Handler<HttpServerRequest>() {            
@@ -136,8 +137,8 @@ public class WebServer  {
 
         new DBPedia(executor, core, vertx.eventBus());
         new Wikipedia(executor, core, vertx.eventBus(), r);
-        new ContextualizeInterest(c, vertx.eventBus());
-        new UserActivity(c, vertx.eventBus());
+        new Activity(c, vertx.eventBus());
+        new Publish(c, vertx.eventBus());
         //new IRC(vertx.eventBus());
         
         
