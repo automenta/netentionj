@@ -374,13 +374,13 @@ public class WebServer  {
 //                    public void handle(Message<JsonObject> event) {
 //                        String sessionId = event.body().getString("sessionId");
 
-        String sessionId = UUID.randomUUID().toString();
-        sessions.put(key, sessionId);
+        String sessionId = UUID.randomUUID().toString();        
         DefaultCookie dc = new DefaultCookie("sessionId", sessionId);
         req.response().putHeader("Set-Cookie", dc.toString());
+        sessions.put(sessionId, key);
         
         if (handler!=null)
-            handler.handle("");
+            handler.handle(key);
         
 //                    }
 //                });
