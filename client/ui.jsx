@@ -77,25 +77,6 @@ function loadJS(url) {
 }
 
 
-function _notifyRemoval() { $(this).remove(); }
-
-function notify(param) {
-    PNotify.desktop.permission();
-    
-    if (typeof param === "string")
-        param = { text: param };
-    if (!param.text)
-        param.text = '';
-    if (!param.type)
-        param.type = 'info';
-    param.animation = 'none';
-    param.desktop = {desktop: 'true'};
-    param.styling = 'jqueryui';
-    //param.desktop = true;
-    new PNotify(param).container.click(_notifyRemoval);                                                
-}
-
-
 
 function addAction(a) {
     if (!a.menu) 	//{ 		console.error('addAction missing menu: ' + a); 	return; 	}

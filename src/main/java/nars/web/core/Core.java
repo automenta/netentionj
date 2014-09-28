@@ -154,6 +154,7 @@ public class Core extends EventEmitter {
         graph.commit();
     }
 
+
     public static class SaveEvent {
 
         public final NObject object;
@@ -308,6 +309,12 @@ public class Core extends EventEmitter {
                     Vertex p = vertex(s, true);
                     uniqueEdge(v, p, "is");
                 }
+            } else if (n instanceof NObject) {
+                NObject no = (NObject)n;
+                for (String t : no.getTags()) {
+                    Vertex p = vertex(t, true);
+                    uniqueEdge(v, p, "is");
+                }
             }
         }
         graph.commit();
@@ -426,6 +433,13 @@ public class Core extends EventEmitter {
         return stream(v.getEdges(Direction.IN, "is").spliterator(), false).map(e -> e.getVertex(Direction.OUT));
     }
 
+    public Stream<Vertex> objectStreamByAuthor(final String author) {
+        Vertex v = vertex(author, false);
+        if (v == null)
+            return Stream.empty();
+        return Stream.concat(Stream.of(v), stream(v.getEdges(Direction.OUT, "has").spliterator(), false).map(e -> e.getVertex(Direction.OUT)));
+    }
+    
 //    public Stream<NObject> objectStreamByTagAndAuthor(final String tagID, final String author) {
 //        return objectStream().filter(o -> (o.author == author && o.hasTag(tagID)));
 //    }
@@ -440,13 +454,13 @@ public class Core extends EventEmitter {
 //    public List<NObject> getSubjects() {
 //        return userStream().collect(Collectors.toList());
 //    }
-    public NObject newUser(String name) {
-        NObject n = new NObject(name);
+    public NObject newUser(String id) {
+        NObject n = new NObject("Anonymous", id);
         n.author = n.id;
         n.add(Tag.User);
         n.add(Tag.Human);
         n.add("@", new SpacePoint(40, -80));
-        publish(n);
+        addObject(n);
         return n;
     }
 

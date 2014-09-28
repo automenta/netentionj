@@ -442,19 +442,6 @@
 
         });
 
-
-
-        function notify(x) {
-            if (typeof x === "string")
-                x = {
-                    title: x, 
-                    text: ''
-                };
-            x.styling = 'fontawesome';
-
-            new PNotify(x);
-        }
-
         
         function selfEdit() {
             resetView();

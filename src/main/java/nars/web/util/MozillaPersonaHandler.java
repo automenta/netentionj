@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package nars.web;
+package nars.web.util;
 
 import info.modprobe.browserid.BrowserIDResponse;
 import info.modprobe.browserid.Verifier;
@@ -22,6 +22,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import nars.web.Session;
+import nars.web.WebServer;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.http.HttpServerRequest;
 
@@ -31,7 +33,7 @@ import org.vertx.java.core.http.HttpServerRequest;
  * @see
  * https://github.com/user454322/browserid-verifier/blob/master/sample/src/main/java/info/modprobe/browserid/sample/servlet/In.java
  */
-class MozillaPersonaHandler implements Handler<HttpServerRequest> {
+public class MozillaPersonaHandler implements Handler<HttpServerRequest> {
     private final WebServer web;
     private final String host;
     private final int port;
@@ -74,9 +76,8 @@ class MozillaPersonaHandler implements Handler<HttpServerRequest> {
                     String email = personaResponse.getEmail();
                     //log.info("{} has sucessfully signed in", email);
 
-                    web.startSession(req, email, new Handler<String>() {
-
-                        @Override public void handle(String e) {
+                    web.startSession(req, email, new Handler<Session>() {
+                        @Override public void handle(Session e) {
                             req.response().end("AUTHENTICATED! " + email);
                         }                 
                     });

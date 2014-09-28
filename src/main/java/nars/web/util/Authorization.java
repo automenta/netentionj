@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package nars.web;
+package nars.web.util;
 
 import java.util.HashMap;
 import java.util.Map;

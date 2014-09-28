@@ -10,30 +10,16 @@ var ID_UNKNOWN = 0;
 var ID_ANONYMOUS = 1;
 var ID_AUTHENTICATED = 2;
 
-
-
-function setClientID(cid, otherSelves) {
-    if (cid) {
-        $N.set('clientID', cid);
-    }
-    $N.set('otherSelves', _.unique(otherSelves));
-
-    /*notify({
-     title: 'Connected',
-     text: that.myself().name + ' (' + that.get('clientID').substring(0,4) + ')'
-     });*/
-
-}
-
+/** deprecated */
 function identity() {
-    var a = getCookie('account');
-    if (a === 'anonymous') {
-        return ID_ANONYMOUS;
-    }
-    if (a !== 'undefined') {
+//    var a = getCookie('account');
+//    if (a === 'anonymous') {
+//        return ID_ANONYMOUS;
+//    }
+//    if (a !== 'undefined') {
         return ID_AUTHENTICATED;
-    }
-    return ID_UNKNOWN;
+//    }
+//    return ID_UNKNOWN;
 }
 
 
@@ -43,7 +29,6 @@ function netention(router) {
         reset: function() {
             this.channels = {};
             this.clearTransients();
-            this.set('clientID', 'undefined');
             this.messages = [];
             this.connections = {};
         },
@@ -54,10 +39,8 @@ function netention(router) {
             });
             this.set('focus', new nobject());
 
-            if (configuration.connection == 'websocket') {
-                var mainChannel = $N.addChannel('main');
-                mainChannel.createdAt = 1382087985419;
-            }
+            var mainChannel = $N.addChannel('main');
+            mainChannel.createdAt = 1382087985419;
 
         },
         //deprecated
@@ -88,22 +71,24 @@ function netention(router) {
             return this.property[p];
         },
         deleteSelf: function(clientID) {
-            var os = this.get('otherSelves');
-            if (os.length < 2) {
-                notify({
-                    title: 'Can not delete self: ' + clientID.substring(6) + '...',
-                    text: 'Must have one extra self to become after deleting',
-                    type: 'Error'
-                });
-                return;
-            }
-            if (_.contains(os, clientID)) {
-                os = _.without(os, clientID);
-                this.set('otherSelves', os);
-
-                $N.deleteObject($N.instance[$N.id()]);
-            }
-
+            notify('Self deletion not implemented yet');
+            
+//            var os = this.get('otherSelves');
+//            if (os.length < 2) {
+//                notify({
+//                    title: 'Can not delete self: ' + clientID.substring(6) + '...',
+//                    text: 'Must have one extra self to become after deleting',
+//                    type: 'Error'
+//                });
+//                return;
+//            }
+//            if (_.contains(os, clientID)) {
+//                os = _.without(os, clientID);
+//                this.set('otherSelves', os);
+//
+//                $N.deleteObject($N.instance[$N.id()]);
+//            }
+//
         },
         getIncidentTags: function(userid, oneOfTags) {
             return objIncidentTags(this.instance, oneOfTags, userid);
@@ -112,7 +97,7 @@ function netention(router) {
             return this.get('layer');
         },
         id: function() {
-            return this.get('clientID');
+            return window.self;
         },
         myself: function() {
             var id = this.id();
@@ -124,191 +109,83 @@ function netention(router) {
             return undefined;
         },
         become: function(target) {
-            if (!target)
+            if (window.self === target)
                 return;
+            
+            var previousSelf = window.self;
 
-            //console.log('Becoming', target);
-
-            var previousID = $N.id();
-
-            var targetID = target;
-            if (typeof (target) !== 'string') {
-                this.add(target);
-                targetID = target.id;
-            }
-
-            if (configuration.connection == 'static') {
-                var os = $N.get('otherSelves');
-                os.push(targetID);
-
-                $N.set('clientID', targetID);
-                $N.set('otherSelves', _.unique(os));
-
+            if (!_.contains(window.selves, target))
+                return;
+            
+            window.self = target;
                 
-                $N.trigger('session.start');
-                
-            } else {
-                this.socket.emit('become', typeof target === 'string' ? target : objCompact(target), function(nextID) {
-                    if (nextID) {
+            notify('Identified: ' + target + (previousSelf ? ' (was: ' + previousSelf  + ')' : ''));
 
-                        $N.set('clientID', nextID);
-                        setCookie('clientID', nextID);
+            $N.indexOntology();
 
-                        var os = $N.get('otherSelves');
-                        os.push(nextID);
-                        $N.set('otherSelves', _.unique(os));
+            console.log('getUserObjects()');
+            $N.getUserObjects(function() {
+                $('#NotificationArea').html('Loading my objects...');
+                $N.getAuthorObjects(target, function() {
+                    $('#NotificationArea').html('Loading new public objects...');
+                    $N.getLatestObjects(1000, function() {
+                        
+                        console.log('Router()');
+                        var Workspace = Backbone.Router.extend(router);
 
-                        $N.clear();
-
-                        $N.clearTransients();
-
-                        $N.indexOntology();
-
-                        $N.getUserObjects(function() {
-                            $('#NotificationArea').html('Loading my objects...');
-                            $N.getAuthorObjects(nextID, function() {
-                                $('#NotificationArea').html('Loading new public objects...');
-                                $N.getLatestObjects(1000, function() {
-                                    $N.trigger('session.start');
-                                }, true);
-                            });
+                        var w = new Workspace();
+                        $N.router = w;
+                        
+                        $N.loadAll(function() {                        
+                            if ($N.myself() === undefined) {
+                                $N.trigger('session.start');
+                            } else {                                
+                                $N.trigger('session.start');
+                            }
                         });
 
-                    } else {
-                        notify({
-                            title: 'Unable to switch profile',
-                            text: (typeof (target) === 'string' ? target : target.id),
-                            type: 'Error'
-                        });
-
-                    }
+                    }, true);
                 });
-            }
-        },
-        connect: function(targetID, whenConnected) {
-            console.log('Websocket start');
+            });
 
-            var originalTargetID = targetID;
-            var suppliedObject = null;
-            if (targetID) {
-                if (typeof (targetID) !== 'string') {
-                    suppliedObject = targetID;
-                    targetID = suppliedObject.id;
-                }
-            }
-
-            if (!targetID) {
-                targetID = this.get('clientID');
-                var os = this.get('otherSelves');
-                if (os) {
-                    if (os.length > 0) {
-                        if (!_.contains(os, 'Self_' + targetID)) {
-                            //targetID = os[os.length - 1];
-                            targetID = os[0];
-                        }
-                    }
-                }
-            } else {
-                $N.set('clientID', targetID);
-            }
-
-            function reconnect() {
-                socket.emit('connectID', targetID, function(_cid, _key, _selves) {
-                    setClientID(_cid, _selves);
-                    setCookie('clientID', _cid);
-
-                    //socket.emit('subscribe', 'User');
-
-                    function doWhenConnected() {
-                        if (whenConnected) {
-                            whenConnected();
-                            whenConnected = null;
-                        }
-                    }
-
-                    doWhenConnected();
-
-                });
-            }
-
-            var socket = this.socket;
-            if (!socket) {
-                /*this.socket = socket = io.connect('/', {
-                 });*/
-                this.socket = socket = io.connect('/', {
-                    'transports': ['websocket', /*'flashsocket',*/ 'htmlfile', 'xhr-multipart', 'xhr-polling', 'jsonp-polling'],
-                    'reconnect': false,
-                    'reconnection': false,
-                    /*'reconnectionDelay': 750,
-                     'reconnectionDelayMax': 25,*/
-                    'try multiple transports': true
-                });
-
-
-                socket.on('connect', function() {
-                    socket.on('disconnect', function() {
-                        /*notify({
-                         title: 'Disconnected.'
-                         });*/
-
-                        var p = newPopup('Disconnected', true, true).addClass('ReconnectDialog');
-                        var disconnectButton = $('<button><h1>&duarr;<br/>Reconnect</h1></button>').appendTo(p).click(function() {
-                            location.reload();
-                        });
-                        console.log('disconnected');
-                    });
-
-                    /*socket.on('reconnecting', function() {
-                     notify({
-                     title: 'Reconnecting..'
-                     });
-                     });*/
-                    /*
-                     socket.on('reconnect', function() {
-                     notify({
-                     title: 'Reconnected.'
-                     });
-                     init();
-                     });*/
-
-                    /*socket.on('error', function(){
-                     socket.socket.reconnect();
-                     });*/
-
-                    socket.on('notice', function(n) {
-                        try {
-                            $N.notice(n);
-                        }
-                        catch (e) {
-                            console.error(e);
-                        }
-                    });
-
-                    socket.on('addTags', function(t, p) {
-                        $N.addProperties(p);
-                        $N.addTags(t);
-                    });
-
-                    socket.on('roster', function(r) {
-                        $N.set('roster', r);
-                    });
-                    socket.on('p2p', function(r) {
-                        $N.set('p2p', r);
-                    });
-
-                    socket.on('channelMessage', function(channel, message) {
-                        if (!$N.channels[channel])
-                            $N.channels[channel] = [];
-                        $N.channels[channel].push(message);
-                        $N.trigger('channel:' + channel, message);
-                    });
-
-
-                    reconnect();
-
-                });
-            }
-            return socket;
+//                
+//            } else {
+//                this.socket.emit('become', typeof target === 'string' ? target : objCompact(target), function(nextID) {
+//                    if (nextID) {
+//
+//                        $N.set('clientID', nextID);
+//                        setCookie('clientID', nextID);
+//
+//                        var os = $N.get('otherSelves');
+//                        os.push(nextID);
+//                        $N.set('otherSelves', _.unique(os));
+//
+//                        $N.clear();
+//
+//                        $N.clearTransients();
+//
+//                        $N.indexOntology();
+//
+//                        $N.getUserObjects(function() {
+//                            $('#NotificationArea').html('Loading my objects...');
+//                            $N.getAuthorObjects(nextID, function() {
+//                                $('#NotificationArea').html('Loading new public objects...');
+//                                $N.getLatestObjects(1000, function() {
+//                                    $N.trigger('session.start');
+//                                }, true);
+//                            });
+//                        });
+//
+//                    } else {
+//                        notify({
+//                            title: 'Unable to switch profile',
+//                            text: (typeof (target) === 'string' ? target : target.id),
+//                            type: 'Error'
+//                        });
+//
+//                    }
+//                });
+//            }
         },
         setWebRTC: function(id, enabled) {
             if (this.socket)
@@ -850,7 +727,7 @@ function netention(router) {
                     console.log('Database empty');
                 }
                 else {
-                    console.log('Loaded ', objects.length, ' objects from local browser');
+                    console.log('Loaded ' + objects.length + ' objects from local browser');
                     $N.notice(objects, false, true);
                 }
 
@@ -864,36 +741,28 @@ function netention(router) {
         },
         //TODO rename to 'load initial objects' or something
         getLatestObjects: function(num, onFinished) {
-            if (configuration.connection == 'static') {
-                return onFinished();
-            }
-
             $.getJSON('/object/latest/' + num + '/json', function(objs) {
                 $N.notice(objs);
                 onFinished();
+            }, function(err) {
+                onFinished(err);
             });
         },
         getUserObjects: function(onFinished) {
-            if (configuration.connection == 'static') {
+            $.getJSON('/object/tag/User/json', function(objs) {
+                $N.notice(objs);
                 onFinished();
-            }
-            else {
-                $.getJSON('/object/tag/User/json', function(objs) {
-                    $N.notice(objs);
-                    onFinished();
-                });
-            }
+            }, function(err) {
+                onFinished(err);
+            });
         },
         getAuthorObjects: function(userID, onFinished) {
-            if (configuration.connection == 'static') {
+            $.getJSON('/object/author/' + userID + '/json', function(j) {
+                $N.notice(j);
                 onFinished();
-            }
-            else {
-                $.getJSON('/object/author/' + userID + '/json', function(j) {
-                    $N.notice(j);
-                    onFinished();
-                });
-            }
+            }, function(err) {
+                onFinished(err);
+            });            
         },
         getChannel: function(channel, callback) {
             if ($N.channels[channel]) {
@@ -957,82 +826,52 @@ function netention(router) {
 
     $N.reset();
 
-    //var account = getCookie('account');
-    var cid = getCookie('clientID');
-    var otherSelves = decodeURIComponent(getCookie('otherSelves')).split(',');
-    setClientID(cid, otherSelves);
 
-    var f = function(schemaURL, $N) {
+    var f = function(ontoURL, $N) {
 
         $('#NotificationArea').html('System loaded.');
 
         console.log('loadOntology()');
-        $N.loadOntology(schemaURL, function() {
+        $N.loadOntology(ontoURL, function() {
             $('#NotificationArea').html('Ontology ready. Loading objects...');
 
-            console.log('getUserObjects()');
-            $N.getUserObjects(function() {
+            $N.trigger('ui.start');
 
-
-                //SETUP ROUTER
-                console.log('Router()');
-                var Workspace = Backbone.Router.extend(router);
+            $N.become(window.selves[0]);
+            
                 
-                
-
-                var w = new Workspace();
-                $N.router = w;
-
-
-                $N.trigger('ui.start');
-
-
-
-                if (configuration.connection == 'static') {
-                    console.log('Connection: static');
-                    
-                    $('.websocket').hide();
-
-                    $N.loadAll(function() {                        
-                        if ($N.myself() === undefined) {
-                            $N.trigger('session.start');
-                        } else {
-                            $N.indexOntology();
-                            $N.trigger('session.start');
-                        }
-                    });
-                }
-                else if (configuration.connection == 'websocket') {
-                    console.log('Connection: websocket');
-                    
-                    $('.websocket').show();
-
-                    $('#NotificationArea').html('Connecting...');
-
-                    if ((configuration.autoLoginDefaultProfile) || (configuration.connection == 'static')) {
-                        var otherSelves = _.filter($N.get('otherSelves'), function(f) {
-                            return $N.getObject(f);
-                        });
-                        if (otherSelves.length >= 1) {
-                            $N.become(otherSelves[0]);
-                            return;
-                        }
-                    }
-
-                    if (isAnonymous()) {
-                        //show profile chooser
-                        openSelectProfileModal('Anonymous Profiles');
-                    }
-                    else if ($N.myself() === undefined) {
-                        if (configuration.requireIdentity)
-                            openSelectProfileModal('Start a New Profile');
-                        else {
-                            $N.trigger('session.start');
-                        }
-                    }
-
-
-                }
+                //}
+//                else if (configuration.connection == 'websocket') {
+//                    console.log('Connection: websocket');
+//                    
+//                    $('.websocket').show();
+//
+//                    $('#NotificationArea').html('Connecting...');
+//
+//                    if ((configuration.autoLoginDefaultProfile) || (configuration.connection == 'static')) {
+//                        var otherSelves = _.filter($N.get('otherSelves'), function(f) {
+//                            return $N.getObject(f);
+//                        });
+//                        if (otherSelves.length >= 1) {
+//                            $N.become(otherSelves[0]);
+//                            return;
+//                        }
+//                    }
+//
+//                    if (isAnonymous()) {
+//                        //show profile chooser
+//                        openSelectProfileModal('Anonymous Profiles');
+//                    }
+//                    else if ($N.myself() === undefined) {
+//                        if (configuration.requireIdentity)
+//                            openSelectProfileModal('Start a New Profile');
+//                        else {
+//                            $N.trigger('session.start');
+//                        }
+//                    }
+//
+//
+//                }
 
                 //initKeyboard();
 
@@ -1045,27 +884,29 @@ function netention(router) {
                  */
 
 
-            });
         });
 
     };
             
-    if (configuration.connection == 'websocket') {
+    /*if (configuration.connection === 'websocket') {
         $N.connect(null, function() {
             f('/ontology.json', $N);
         });
-    } else {
-        window.addEventListener('beforeunload', function(e) {
-            $N.saveAll();
-            /*var confirmationMessage = "Saved everything";
-             
-             (e || window.event).returnValue = confirmationMessage;     //Gecko + IE
-             return confirmationMessage;                                //Webkit, Safari, Chrome etc.
-             */
-        });
+    } else {*/
+    //}
+    
+    window.addEventListener('beforeunload', function(e) {
+        $N.saveAll();
+        /*var confirmationMessage = "Saved everything";
 
-        f('ontology.json', $N);
-    }
+         (e || window.event).returnValue = confirmationMessage;     //Gecko + IE
+         return confirmationMessage;                                //Webkit, Safari, Chrome etc.
+         */
+    });
+    
+    
+
+    f('ontology.json', $N);
 
  
 }
@@ -1076,6 +917,23 @@ function netention(router) {
 
 
 window.later = setImmediate;
+
+
+function _notifyRemoval() { $(this).remove(); }
+
+function notify(x) {
+    PNotify.desktop.permission();
+    if (typeof x === "string")
+        x = { text: x };
+    else if (!x.text)
+        x.text = '';
+    if (!x.type)
+        x.type = 'info';
+    x.animation = 'none';
+    x.styling = 'fontawesome';
+
+    new PNotify(x).container.click(_notifyRemoval);
+}
 
 
 //faster than $('<div/>');
@@ -1339,3 +1197,127 @@ function debugLog() {
     }(window.console));
     
 }
+
+//        connect: function(targetID, whenConnected) {
+//            console.log('Websocket start');
+//
+//            var originalTargetID = targetID;
+//            var suppliedObject = null;
+//            if (targetID) {
+//                if (typeof (targetID) !== 'string') {
+//                    suppliedObject = targetID;
+//                    targetID = suppliedObject.id;
+//                }
+//            }
+//
+//            if (!targetID) {
+//                targetID = this.get('clientID');
+//                var os = this.get('otherSelves');
+//                if (os) {
+//                    if (os.length > 0) {
+//                        if (!_.contains(os, 'Self_' + targetID)) {
+//                            //targetID = os[os.length - 1];
+//                            targetID = os[0];
+//                        }
+//                    }
+//                }
+//            } else {
+//                $N.set('clientID', targetID);
+//            }
+//
+//            function reconnect() {
+//                socket.emit('connectID', targetID, function(_cid, _key, _selves) {
+//
+//                    //socket.emit('subscribe', 'User');
+//
+//                    function doWhenConnected() {
+//                        if (whenConnected) {
+//                            whenConnected();
+//                            whenConnected = null;
+//                        }
+//                    }
+//
+//                    doWhenConnected();
+//
+//                });
+//            }
+//
+//            var socket = this.socket;
+//            if (!socket) {
+//                /*this.socket = socket = io.connect('/', {
+//                 });*/
+//                this.socket = socket = io.connect('/', {
+//                    'transports': ['websocket', /*'flashsocket',*/ 'htmlfile', 'xhr-multipart', 'xhr-polling', 'jsonp-polling'],
+//                    'reconnect': false,
+//                    'reconnection': false,
+//                    /*'reconnectionDelay': 750,
+//                     'reconnectionDelayMax': 25,*/
+//                    'try multiple transports': true
+//                });
+//
+//
+//                socket.on('connect', function() {
+//                    socket.on('disconnect', function() {
+//                        /*notify({
+//                         title: 'Disconnected.'
+//                         });*/
+//
+//                        var p = newPopup('Disconnected', true, true).addClass('ReconnectDialog');
+//                        var disconnectButton = $('<button><h1>&duarr;<br/>Reconnect</h1></button>').appendTo(p).click(function() {
+//                            location.reload();
+//                        });
+//                        console.log('disconnected');
+//                    });
+//
+//                    /*socket.on('reconnecting', function() {
+//                     notify({
+//                     title: 'Reconnecting..'
+//                     });
+//                     });*/
+//                    /*
+//                     socket.on('reconnect', function() {
+//                     notify({
+//                     title: 'Reconnected.'
+//                     });
+//                     init();
+//                     });*/
+//
+//                    /*socket.on('error', function(){
+//                     socket.socket.reconnect();
+//                     });*/
+//
+//                    socket.on('notice', function(n) {
+//                        try {
+//                            $N.notice(n);
+//                        }
+//                        catch (e) {
+//                            console.error(e);
+//                        }
+//                    });
+//
+//                    socket.on('addTags', function(t, p) {
+//                        $N.addProperties(p);
+//                        $N.addTags(t);
+//                    });
+//
+//                    socket.on('roster', function(r) {
+//                        $N.set('roster', r);
+//                    });
+//                    socket.on('p2p', function(r) {
+//                        $N.set('p2p', r);
+//                    });
+//
+//                    socket.on('channelMessage', function(channel, message) {
+//                        if (!$N.channels[channel])
+//                            $N.channels[channel] = [];
+//                        $N.channels[channel].push(message);
+//                        $N.trigger('channel:' + channel, message);
+//                    });
+//
+//
+//                    reconnect();
+//
+//                });
+//            }
+//            return socket;
+//        },

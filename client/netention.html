@@ -342,9 +342,15 @@
 
     </body>
 <script>
+    var auth = '{{auth}}';
+    var selves = {{&selves}};    
+    var self = null;
+    
     $(document).ready(function() {
-
-        var router = {
+ 
+        debugLog();
+ 
+        netention({
             routes: {
                 'new': 'new',
                 'me': 'me', // #help
@@ -407,11 +413,8 @@
                     viewRead(url);
                 });
             }
-        };
-
-        netention(router);
+        });
                 
-        debugLog();
         
         $N.once('ui.start', function (){        
 
@@ -628,9 +631,7 @@
                         });
             }
 
-            updateView();
-
-            if ($N.myself() == null)
+            if (!$N.myself())
                 openSelectProfileModal('Start a New Profile');
             
         });

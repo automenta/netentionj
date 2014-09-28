@@ -4,6 +4,7 @@ import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import com.tinkerpop.blueprints.TransactionalGraph;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import io.netty.handler.codec.http.Cookie;
 import io.netty.handler.codec.http.CookieDecoder;
@@ -13,6 +14,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -22,16 +24,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import static java.util.stream.Collectors.toList;
 import nars.web.core.Core;
+import nars.web.core.NObject;
 import nars.web.core.Publish;
 import nars.web.possibility.Activity;
 import nars.web.util.DBPedia;
+import nars.web.util.MozillaPersonaHandler;
 import nars.web.util.NOntology;
 import nars.web.util.Wikipedia;
 import org.boon.json.JsonParserFactory;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.VertxFactory;
-import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.http.HttpServer;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.RouteMatcher;
@@ -54,19 +57,24 @@ public class WebServer  {
     private final Options options;
     private final Core core;
     
-    //TODO use something more sophisticated that won't memleak (WeakRef, etc)
-    private final Map<String,String> sessions = new HashMap();
+    //TODO use LRU cache on lastActivity
+    private final Map<String,Session> sessions = new HashMap();
     
-    public static class Auth {
-        public String auth;
-
-        public Auth(String key) {
-            this.auth = key;
-        }                
-    }
 
             
     ExecutorService executor;
+    
+    abstract public class SessionHandler implements Handler<HttpServerRequest> {
+
+        @Override public void handle(final HttpServerRequest req) {
+            inSession(req, new Handler<Session>() {
+                @Override public void handle(Session session) {
+                    SessionHandler.this.handle(session, req);
+                }
+            });
+        }        
+        abstract public void handle(Session session, HttpServerRequest e);
+    }
     
     public WebServer(Core c, Options o) throws Exception {
         super();
@@ -91,25 +99,21 @@ public class WebServer  {
         });*/
         RouteMatcher r = new RouteMatcher()
         
-        .get("/", new Handler<HttpServerRequest>() {            
-            @Override public void handle(HttpServerRequest e) {                
+        .get("/wiki", new SessionHandler() {            
+            @Override public void handle(Session session, HttpServerRequest e) {
                 //template(e, "client/debug.eventbus.html", getIndexPage());
-                template(e, "client/wiki.html", getIndexPage());
+                template(e, "client/wiki.html", getIndexPage(session));
             }            
         })
-        .get("/netention.html", new Handler<HttpServerRequest>() {            
-            @Override public void handle(HttpServerRequest e) {                
-                template(e, "client/netention.html", getIndexPage());
+        .get("/", new SessionHandler() {
+            @Override public void handle(Session session, HttpServerRequest e) {
+                template(e, "client/netention.html", getIndexPage(session));
             }
         })
                 
-        .get("/auth", new Handler<HttpServerRequest>() {            
-            @Override public void handle(HttpServerRequest e) {                                   
-                withSessionId(null, e, new Handler<String>() {
-                    @Override public void handle(String key) {
-                        template(e, "client/auth.html", new Auth(key));
-                    }
-                });
+        .get("/auth", new SessionHandler() {            
+            @Override public void handle(Session session, HttpServerRequest e) {
+                template(e, "client/auth.html", session);
             }
         })
                 
@@ -134,14 +138,26 @@ public class WebServer  {
         }})
         .get("/object/tag/:tag/json", new Handler<HttpServerRequest>() {
             @Override public void handle(HttpServerRequest req) {
-                String tag = req.params().get("tag");
-                
+                String tag = req.params().get("tag");                
                 req.response().end( 
-                        Json.encode(
-                            core.objectStreamByTag(tag).map(v -> core.getObject(v))
-                                    .collect(toList())
-                                
-                        ) 
+                    Json.encode(core.objectStreamByTag(tag).map(v -> core.getObject(v)).collect(toList())
+                ));
+                core.commit();
+        }})
+        .get("/object/author/:author/json", new Handler<HttpServerRequest>() {
+            @Override public void handle(HttpServerRequest req) {
+                String author = req.params().get("author");
+                req.response().end( 
+                    Json.encode(core.objectStreamByAuthor(author).map(v -> core.getObject(v)).collect(toList())
+                ));
+                core.commit();
+        }})
+        .get("/object/latest/:num/json", new Handler<HttpServerRequest>() {
+            @Override public void handle(HttpServerRequest req) {
+                //TODO
+                int num = Integer.valueOf(req.params().get("num"));
+                req.response().end( 
+                    Json.encode( new Object[0] )
                 );
                 core.commit();
         }})
@@ -239,17 +255,21 @@ public class WebServer  {
     public static class IndexPage {
         public final String title;
         public final boolean allowSearchEngineIndexing;
+        public final String auth;
+        public final String selves;
 
-        public IndexPage(String title, boolean allowSearchEngineIndexing) {
+        public IndexPage(Session session, String title, boolean allowSearchEngineIndexing) {
+            this.auth = session.auth;
+            this.selves = Json.encode(session.selves);
             this.title = title;
             this.allowSearchEngineIndexing = allowSearchEngineIndexing;
         }
         
     }
     
-    public IndexPage getIndexPage() {
+    public IndexPage getIndexPage(Session session) {
         //TODO cache the instance
-        return new IndexPage(options.name, options.allowSearchEngines);
+        return new IndexPage(session, options.name, options.allowSearchEngines);
     }
     
     public Map<String,Object> getClientOptions() {
@@ -345,28 +365,60 @@ public class WebServer  {
         
     }
 
+    
     /**
      * https://gist.github.com/Narigo/3386443
      */
-    public void withSessionId(final EventBus eb, final HttpServerRequest req, final Handler<String> handler) {
+    public void inSession(final HttpServerRequest req, final Handler<Session> handler) {
         String value = req.headers().get("Cookie");
         if (value != null) {
             Set<Cookie> cookies = CookieDecoder.decode(value);
             for (final Cookie cookie : cookies) {
                 if ("sessionId".equals(cookie.getName())) {
-                    String key = sessions.get(cookie.getValue());
-                    if (key == null) key = "";
-                    handler.handle(key);
-                    return;
+                    Session session = sessions.get(cookie.getValue());                    
+                    if (session!=null) {
+                        session.active(req);
+                        handler.handle(session);
+                        return;
+                    }
                 }
             }
         }
         
-        //req.response().setStatusCode(403 /* no permission */);       
-        startSession(req, "", handler);
+        startSession(req, new Session(req), handler);
     }
 
-    public void startSession(final HttpServerRequest req, String key, final Handler<String> handler) {
+    public void startSession(final HttpServerRequest req, String auth, final Handler<Session> handler) {
+        String userURI = "user_" + auth;
+        Vertex v = core.vertex(userURI, true);
+        Map<String, Object> user = core.getObject(userURI);
+        Session s;
+        if (user.get("selves") == null) {
+            s = new Session(req, auth);                        
+            v.setProperty("createdAt", System.currentTimeMillis());
+            v.setProperty("lastLoginAt", System.currentTimeMillis());            
+            v.setProperty("selves", s.selves);
+            
+            for (final String self : s.selves) {
+                NObject u = core.newUser(self);
+                //s.addSelfObject(u);
+            }
+            
+        }
+        else {
+            s = new Session(req, auth, (List<String>)user.get("selves"));            
+            v.setProperty("lastLoginAt", System.currentTimeMillis());
+//            for (String self : s.selves) {
+//                s.addSelfObject( core.getObject(self) );
+//            }
+            handler.handle(s);
+        }
+        
+        core.commit();
+        handler.handle(s);        
+    }
+    
+    public void startSession(final HttpServerRequest req, Session session, final Handler<Session> handler) {
         // Create a new session and use that
 //        vertx.eventBus().send("session", new JsonObject().putString("action", "start"),
 //                new Handler<Message<JsonObject>>() {
@@ -377,10 +429,10 @@ public class WebServer  {
         String sessionId = UUID.randomUUID().toString();        
         DefaultCookie dc = new DefaultCookie("sessionId", sessionId);
         req.response().putHeader("Set-Cookie", dc.toString());
-        sessions.put(sessionId, key);
+        sessions.put(sessionId, session);
         
         if (handler!=null)
-            handler.handle(key);
+            handler.handle(session);
         
 //                    }
 //                });
