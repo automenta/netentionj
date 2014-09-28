@@ -61,10 +61,12 @@ class MozillaPersonaHandler implements Handler<HttpServerRequest> {
 
 
                 final String audience = urlBuilder.toString();
+                System.out.println("Audience: " + audience);
                 final String assertion = req.formAttributes().get("assertion");
                 final Verifier verifier = new Verifier();
                 final BrowserIDResponse personaResponse = verifier.verify(assertion, audience);
                 BrowserIDResponse.Status status = personaResponse.getStatus();
+                
 
                 
                 if (status == BrowserIDResponse.Status.OK) {

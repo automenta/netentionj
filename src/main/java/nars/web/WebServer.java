@@ -161,7 +161,15 @@ public class WebServer  {
                         ) 
                 );
         }})
+                
+        //TODO Realm parameter: https://github.com/mozilla/persona/pull/3854
         .post("/login/persona", new MozillaPersonaHandler(this))
+        .post("/logout", new Handler<HttpServerRequest>() {
+
+            @Override public void handle(HttpServerRequest e) {
+                e.response().end("logged out.");
+            }
+        })
         
         .noMatch(new StaticFileHandler(vertx, "client/", "index.html", options.compressHTTP, options.cacheStaticFiles));
         
@@ -204,7 +212,7 @@ public class WebServer  {
 
         TransactionalGraph g;
         String dbPath = options.databasePath;
-        if (dbPath.startsWith("orientdb:")) {
+        if ((dbPath!=null) && (dbPath.startsWith("orientdb:"))) {
             String orientPath = dbPath.substring("orientdb:".length());
             //"plocal:" + options.databasePath
             g = new OrientGraph(orientPath);
