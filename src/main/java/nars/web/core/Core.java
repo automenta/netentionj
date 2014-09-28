@@ -77,7 +77,7 @@ public class Core extends EventEmitter {
         Map<String, List<String>> outMap = new HashMap();
         for (Edge e : outs) {
             String edge = e.getLabel();
-            String uri = e.getVertex(Direction.IN).getProperty("uri");
+            String uri = e.getVertex(Direction.IN).getProperty("i");
             List<String> uris = outMap.get(edge);
             if (uris == null) {
                 uris = new ArrayList();
@@ -93,7 +93,7 @@ public class Core extends EventEmitter {
         Map<String, List<String>> inMap = new HashMap();
         for (Edge e : ins) {
             String edge = e.getLabel();
-            String uri = e.getVertex(Direction.OUT).getProperty("uri");
+            String uri = e.getVertex(Direction.OUT).getProperty("i");
             List<String> uris = inMap.get(edge);
             if (uris == null) {
                 uris = new ArrayList();
@@ -177,15 +177,15 @@ public class Core extends EventEmitter {
 
         this.graph = db;
 
-        if (!((KeyIndexableGraph) graph).getIndexedKeys(Vertex.class).contains("uri")) {
-            ((KeyIndexableGraph) graph).createKeyIndex("uri", Vertex.class, new Parameter("type", "UNIQUE"));
+        if (!((KeyIndexableGraph) graph).getIndexedKeys(Vertex.class).contains("i")) {
+            ((KeyIndexableGraph) graph).createKeyIndex("i", Vertex.class, new Parameter("type", "UNIQUE"));
         }
 
 //                
 //                TitanManagement mgmt = graph.getManagementSystem();
-//        if (!mgmt.containsGraphIndex("uri")) {
-//            PropertyKey name = mgmt.makePropertyKey("uri").dataType(String.class).cardinality(Cardinality.SINGLE).make();
-//            TitanGraphIndex namei = mgmt.buildIndex("uri",Vertex.class).addKey(name).unique().buildCompositeIndex();
+//        if (!mgmt.containsGraphIndex("i")) {
+//            PropertyKey name = mgmt.makePropertyKey("i").dataType(String.class).cardinality(Cardinality.SINGLE).make();
+//            TitanGraphIndex namei = mgmt.buildIndex("i",Vertex.class).addKey(name).unique().buildCompositeIndex();
 //            mgmt.commit();
 //        }        
     }
@@ -247,7 +247,7 @@ public class Core extends EventEmitter {
         Iterable<Edge> existing = from.getEdges(Direction.OUT, predicate);
         for (Edge e : existing) {
             if (e.getVertex(Direction.IN).equals(to)) {
-                //System.out.println(predicate + " existing edge: " + e + " " + e.getLabel() + " " + e.getProperty("uri"));
+                //System.out.println(predicate + " existing edge: " + e + " " + e.getLabel() + " " + e.getProperty("i"));
 
                 //TODO set any updated properties
                 return e;
@@ -274,7 +274,7 @@ public class Core extends EventEmitter {
 
     public void printGraph() {
         for (Vertex v : (Iterable<Vertex>) graph.getVertices()) {
-            System.out.println(v.toString() + " " + v.getProperty("uri"));
+            System.out.println(v.toString() + " " + v.getProperty("i"));
         }
         for (Edge e : (Iterable<Edge>) graph.getEdges()) {
             System.out.println(e.toString() + " " + e.getLabel() + " " + e.getPropertyKeys());
@@ -282,22 +282,27 @@ public class Core extends EventEmitter {
     }
 
     public Vertex vertex(String uri, boolean createIfNonExist) {
-        for (Object v : graph.getVertices("uri", uri)) {
+        for (Object v : graph.getVertices("i", uri)) {
             if (v != null) {
                 return (Vertex) v;
             }
         }
         if (createIfNonExist) {
             Vertex v = graph.addVertex(uri);
-            v.setProperty("uri", uri);
+            v.setProperty("i", uri);
             return v;
         }
         return null;
     }
 
     public void addObjects(Iterable<NObject> N) {
-        for (NObject n : N) {
+        //TODO existing old copies of objects first
+        
+        for (final NObject n : N) {
+            System.out.println("Adding object: " + n);
+            
             Vertex v = vertex(n.id, true);
+            
             if (n instanceof NProperty) {
                 NProperty np = (NProperty) n;
                 property.put(np.id, np);
@@ -314,6 +319,12 @@ public class Core extends EventEmitter {
                 for (String t : no.getTags()) {
                     Vertex p = vertex(t, true);
                     uniqueEdge(v, p, "is");
+                }
+                if (no.name!=null) v.setProperty("name", no.name);
+                //no.createdAt
+                if ((no.author!=null) && (no.author!=no.id)) {
+                    //TODO create link
+
                 }
             }
         }

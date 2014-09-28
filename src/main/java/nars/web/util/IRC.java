@@ -22,6 +22,7 @@ import java.io.BufferedWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import nars.web.Bus;
 import org.vertx.java.core.eventbus.EventBus;
 
 /**
@@ -79,7 +80,7 @@ public class IRC {
             }
             else {
                 // Print the raw line received by the bot.
-                eventBus.publish("public", line);
+                eventBus.publish(Bus.SAY, line);
             }
         }
     }    

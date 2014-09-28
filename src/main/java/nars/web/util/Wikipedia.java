@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import nars.web.Bus;
 import nars.web.core.Core;
 import static nars.web.core.Core.u;
 import org.jsoup.Jsoup;
@@ -161,7 +162,7 @@ public class Wikipedia {
                                 
                 wikipage = returnPage(doc, req);
                 
-                bus.publish("wikipedia", wikipage);
+                bus.publish(Bus.INTEREST_WIKIPEDIA, wikipage);
                 
             } catch (IOException ex) {
                 req.response().end(ex.toString());
@@ -184,7 +185,7 @@ public class Wikipedia {
                 Document doc = Jsoup.connect(u).get();    
                 String wikipage = returnPage(doc, req);
                 
-                bus.publish("wikipedia", wikipage);
+                bus.publish(Bus.INTEREST_WIKIPEDIA, wikipage);
                 
             } catch (IOException ex) {
                 req.response().end(ex.toString());

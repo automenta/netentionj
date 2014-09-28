@@ -119,6 +119,11 @@ function netention(router) {
             
             window.self = target;
                 
+            console.log('Router()');
+            var Workspace = Backbone.Router.extend(router);
+            var w = new Workspace();
+            $N.router = w;
+                        
             notify('Identified: ' + target + (previousSelf ? ' (was: ' + previousSelf  + ')' : ''));
 
             $N.indexOntology();
@@ -130,11 +135,10 @@ function netention(router) {
                     $('#NotificationArea').html('Loading new public objects...');
                     $N.getLatestObjects(1000, function() {
                         
-                        console.log('Router()');
-                        var Workspace = Backbone.Router.extend(router);
 
-                        var w = new Workspace();
-                        $N.router = w;
+                        
+                        
+                        Backbone.history.start();
                         
                         $N.loadAll(function() {                        
                             if ($N.myself() === undefined) {
@@ -619,48 +623,47 @@ function netention(router) {
         },
         pub: function(object, onErr, onSuccess, suppressChange) {
 
-            if (configuration.connection == 'static') {
-                $N.notice(object);
-                if (onSuccess)
-                    onSuccess();
-            } else {
-                if (this.socket) {
-                    this.socket.emit('pub', objCompact(object), function(err, objProcessed) {
-                        if (err) {
-                            if (onErr)
-                                onErr(object);
-
-                            notify({
-                                title: 'Error saving:',
-                                text: err,
-                                type: 'error'
-                            });
-                        }
-                        else {
-                            if (objProcessed === null) {
-                                //null means that the object was untransformed by the server,
-                                //so server avoided sending it back
-                                objProcessed = object;
-                            }
-
-                            $N.notice(objProcessed, suppressChange);
-
-                            if (!suppressChange) {
-                                if (!object.focus)
-                                    $N.add(objProcessed);
-                                //$N.trigger('change:attention');
-                            }
-                            if (onSuccess)
-                                onSuccess(objProcessed);
-                        }
-                    });
-                } else {
-                    if (onErr)
-                        onErr('Not connected.');
-                    else
-                        console.log('Not connected.');
-                }
-            }
+            $N.notice(object);
+            
+            $N.trigger('pub', object);
+            
+//            if (this.socket) {
+//                this.socket.emit('pub', objCompact(object), function(err, objProcessed) {
+//                    if (err) {
+//                        if (onErr)
+//                            onErr(object);
+//
+//                        notify({
+//                            title: 'Error saving:',
+//                            text: err,
+//                            type: 'error'
+//                        });
+//                    }
+//                    else {
+//                        if (objProcessed === null) {
+//                            //null means that the object was untransformed by the server,
+//                            //so server avoided sending it back
+//                            objProcessed = object;
+//                        }
+//
+//                        $N.notice(objProcessed, suppressChange);
+//
+//                        if (!suppressChange) {
+//                            if (!object.focus)
+//                                $N.add(objProcessed);
+//                            //$N.trigger('change:attention');
+//                        }
+//                        if (onSuccess)
+//                            onSuccess(objProcessed);
+//                    }
+//                });
+//            } else {
+//                if (onErr)
+//                    onErr('Not connected.');
+//                else
+//                    console.log('Not connected.');
+//            }
+            
         },
         //THIS NEEDS UPDATED
         getClientInterests: function(f) {

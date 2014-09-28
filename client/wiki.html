@@ -222,7 +222,7 @@
 
                      if (typeof x === "object") {
                          for (var k in x) {
-                             if (k === 'uri') {
+                             if (k === 'id') {
                                  d.append('<h3>' + JSON.stringify(x[k]) + '</h3>');
                              }
                              else {
@@ -374,7 +374,7 @@
 
                     var m = '';
 
-                    if (c.uri === uri) {
+                    if (c.id === uri) {
                         if ((c.activity) && (c.activity.in)) {
                             $('#sidebar .activity').remove();
                             var t = $('<div></div>').addClass('activity').appendTo('#sidebar');
@@ -410,7 +410,7 @@
             });
 
             $N.once('session.start', function () {
-                Backbone.history.start();
+                
 
 
                 $('#GoSelf').click(function() {

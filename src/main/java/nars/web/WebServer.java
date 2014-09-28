@@ -377,6 +377,7 @@ public class WebServer  {
                 if ("sessionId".equals(cookie.getName())) {
                     Session session = sessions.get(cookie.getValue());                    
                     if (session!=null) {
+                        System.out.println(req.remoteAddress() + " in session " + session);
                         session.active(req);
                         handler.handle(session);
                         return;
@@ -384,40 +385,11 @@ public class WebServer  {
                 }
             }
         }
-        
-        startSession(req, new Session(req), handler);
+        startSession(req,
+                req.remoteAddress().toString() + "_" + UUID.randomUUID().toString()
+                , handler);
     }
 
-    public void startSession(final HttpServerRequest req, String auth, final Handler<Session> handler) {
-        String userURI = "user_" + auth;
-        Vertex v = core.vertex(userURI, true);
-        Map<String, Object> user = core.getObject(userURI);
-        Session s;
-        if (user.get("selves") == null) {
-            s = new Session(req, auth);                        
-            v.setProperty("createdAt", System.currentTimeMillis());
-            v.setProperty("lastLoginAt", System.currentTimeMillis());            
-            v.setProperty("selves", s.selves);
-            
-            for (final String self : s.selves) {
-                NObject u = core.newUser(self);
-                //s.addSelfObject(u);
-            }
-            
-        }
-        else {
-            s = new Session(req, auth, (List<String>)user.get("selves"));            
-            v.setProperty("lastLoginAt", System.currentTimeMillis());
-//            for (String self : s.selves) {
-//                s.addSelfObject( core.getObject(self) );
-//            }
-            handler.handle(s);
-        }
-        
-        core.commit();
-        handler.handle(s);        
-    }
-    
     public void startSession(final HttpServerRequest req, Session session, final Handler<Session> handler) {
         // Create a new session and use that
 //        vertx.eventBus().send("session", new JsonObject().putString("action", "start"),
@@ -437,6 +409,42 @@ public class WebServer  {
 //                    }
 //                });
     }
+    
+    public void startSession(final HttpServerRequest req, String auth, final Handler<Session> handler) {
+        String userURI = "user_" + auth;
+        Vertex v = core.vertex(userURI, true);
+        Map<String, Object> user = core.getObject(userURI);
+        Session s;
+        
+        System.out.println(req.remoteAddress() + " new session (" + auth + ")");
+        
+        if (user.get("selves") == null) {
+            s = new Session(req, auth);                        
+            System.out.println("New user: " + req.remoteAddress() + " " + auth);
+            v.setProperty("createdAt", System.currentTimeMillis());
+            v.setProperty("lastLoginAt", System.currentTimeMillis());            
+            v.setProperty("selves", s.selves);
+            
+            for (final String self : s.selves) {
+                NObject u = core.newUser(self);
+                //s.addSelfObject(u);
+            }
+            
+        }
+        else {
+            s = new Session(req, auth, (List<String>)user.get("selves"));            
+            System.out.println("Existing user: " + req.remoteAddress() + " " + auth);
+            v.setProperty("lastLoginAt", System.currentTimeMillis());
+//            for (String self : s.selves) {
+//                s.addSelfObject( core.getObject(self) );
+//            }
+            handler.handle(s);
+        }
+        
+        startSession(req, s, handler);
+        core.commit();
+    }
+    
     
     public void initWebSockets() {
         JsonObject config = new JsonObject().putString("prefix", "/eventbus");

@@ -3,6 +3,9 @@
 function openSelectProfileModal(title) {
     if (!title)
         title = 'Profiles';
+    
+    console.log('Selecting profile');
+    
     //var d = newPopup(title, {width: '450px', modal: true});
     
     $('#LoadingSplash').show();
@@ -38,6 +41,7 @@ function openSelectProfileModal(title) {
 function newProfileWidget() {
     var d = newDiv();
 
+    console.log('Editing new profile');
 
     function closeDialog() {
         //d.parent().dialog('close');

@@ -50,10 +50,6 @@ public class Session {
         this(req, auth, Arrays.asList(UUID.randomUUID().toString()));
     }
 
-    /** new anonymous session with new auth and new self */
-    public Session(HttpServerRequest req) {
-        this(req, req.remoteAddress().getHostString() + "_" + UUID.randomUUID().toString(), Arrays.asList(UUID.randomUUID().toString()));
-    }
 
     public void active(HttpServerRequest req) {
         this.lastActive = System.currentTimeMillis();

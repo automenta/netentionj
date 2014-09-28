@@ -21,6 +21,7 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import java.util.List;
 import java.util.Map;
+import nars.web.Bus;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.eventbus.Message;
@@ -38,15 +39,16 @@ public class Publish implements Handler<Message> {
         
         this.core = c;
         this.bus = b;
-        b.registerHandler("publish", this);
+        b.registerHandler(Bus.PUBLISH, this);
     }
 
     
     @Override
     public void handle(Message e) {
         switch (e.address()) {
-            case "publish":
+            case Bus.PUBLISH:
                 try {
+                    System.out.println("Publish: "+ e.address() + "|" + e.replyAddress() + "|" + e.body());
                     publish(e.body().toString());
                 }
                 catch (Exception ex) {
@@ -59,6 +61,8 @@ public class Publish implements Handler<Message> {
     }
     
     public void publish(String nobjectJSON) {
+        
+        
         Map m = Json.decodeValue(nobjectJSON, Map.class);
         Object pred;
         
@@ -91,6 +95,7 @@ public class Publish implements Handler<Message> {
                 }
             }
         }
+        //Add/Set Object
         else {
             //set vertex value
             System.out.println("Setting vertex: " + m);
@@ -125,7 +130,7 @@ public class Publish implements Handler<Message> {
             
         }
         
-        bus.publish("interest", id);
+        bus.publish(Bus.INTEREST, id);
         
     }
 }

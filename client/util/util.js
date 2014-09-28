@@ -2302,6 +2302,10 @@ exports.objExpandAll = objExpandAll;
 
 /** expands an object in-place, and returns it */
 function objExpand(o) {
+    
+    if (o.i && !o.id)
+        o.id = o.i;
+    
     if (o.id!==undefined && o.i===undefined) {
             //console.error(o, ' already expanded');
             //console.log(new Error().stack);

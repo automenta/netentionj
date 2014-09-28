@@ -21,6 +21,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.tinkerpop.blueprints.Vertex;
 import java.util.concurrent.ExecutorService;
+import nars.web.Bus;
 import nars.web.core.Core;
 import static nars.web.core.Core.u;
 import org.apache.jena.riot.RDFDataMgr;
@@ -49,7 +50,7 @@ public class DBPedia extends HandlerThread<Message> {
         super(e);
         this.bus = b;
         this.core = c;
-        b.registerHandler("wikipedia", this);
+        b.registerHandler(Bus.INTEREST_WIKIPEDIA, this);
     }
     
     public boolean learnedRecently(String wikiID) {
@@ -77,7 +78,7 @@ public class DBPedia extends HandlerThread<Message> {
 
         if (!learnedRecently(wikiURL))
             learn(wikiURL);
-        bus.publish("interest", u(wikiURL));
+        bus.publish(Bus.INTEREST, u(wikiURL));
     }
     
     public void learn(String wikiURL) {

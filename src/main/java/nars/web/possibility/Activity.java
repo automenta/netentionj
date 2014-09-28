@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import nars.web.Bus;
 import nars.web.core.Core;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.EventBus;
@@ -44,7 +45,7 @@ public class Activity  implements Handler<Message> {
         excludeProperty = new HashSet();
         excludeProperty.add("wikipedia_content");
 
-        b.registerHandler("interest", this);
+        b.registerHandler(Bus.INTEREST, this);
         
         
     }
@@ -77,11 +78,9 @@ public class Activity  implements Handler<Message> {
         
         Vertex v = core.vertex(id, false);
         if (v!=null) {
-            
-                    
             Map<String, Object> a = core.getObject(v, excludeProperty);
             if (a!=null) {
-                bus.publish("public", Json.encode(new ActivityGraph(id, a)));
+                bus.publish(Bus.SAY, Json.encode(new ActivityGraph(id, a)));
             }
         }
         if (v!=null) {       
@@ -106,14 +105,18 @@ public class Activity  implements Handler<Message> {
             }
             if (max > 0) {
                 for (Map.Entry<Vertex, Number> n : m.entrySet()) {
-                    String u = n.getKey().getProperty("uri");
-                    double vv = n.getValue().doubleValue();
-                    double pv = vv/total;
-                    if (pv >= threshold)
-                        c.put(u, (int)(pv*100.0));
+                    String u = n.getKey().getProperty("i");
+                    if (u!=null) {
+                        double vv = n.getValue().doubleValue();
+                        double pv = vv/total;
+                        if (pv >= threshold)
+                            c.put(u, (int)(pv*100.0));
+                    }
                 }
             }
-            bus.publish("public", Json.encode(new ContextGraph(id, c)));            
+            System.err.println(id + "===> " + c);
+            if (c.size() > 0)
+                bus.publish(Bus.SAY, Json.encode(new ContextGraph(id, c)));            
         }
         else {
             System.err.println("unknown context: " + id);

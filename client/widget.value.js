@@ -1085,11 +1085,12 @@ newTagValueWidget.chat = function(x, index, t, prop, editable, d, events) {
 
     var channel = t.value.channel || 'main';
     
-    var c = newChatWidget(function onSend(m) {
+    /*var c = newChatWidget(function onSend(m) {
         $N.channelSend(channel, {a: $N.id(), w: Date.now(), m:m} );
     }, {
        localEcho: false
-    });
+    });*/
+    var c = newDiv();
     
     $N.on('channel:'+channel, function(m) {
        if (c.closest(document.documentElement).length === 0) {

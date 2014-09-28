@@ -92,7 +92,7 @@ function newWikiBrowser(onTagAdded, options) {
             currentTag = url.substring(url.lastIndexOf('/')+1, url.length);
 
             if (b.url)
-                b.url('dbpedia.org/resource/' + currentTag);
+                b.setURL('dbpedia.org/resource/' + currentTag);
             
 //            if (extractContent) {
 //                //br.find('head').remove();

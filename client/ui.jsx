@@ -365,7 +365,7 @@ function _updateView(force) {
 		v.html('Unknown view: ' + view);
 		currentView = null;
 	}
-    
+        
 
     if (configuration.device == configuration.MOBILE) {
         //auto-hide the menu
@@ -375,7 +375,9 @@ function _updateView(force) {
             _firstView = false;
     }
     _firstView = false;
-    
+
+    $N.router.navigate(view, {trigger: false});
+
     delete v;
 
 }

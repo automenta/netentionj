@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014 me
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,34 +14,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package nars.web;
 
-/*
-Include:
-<script src="lib/sockjs/sockjs-0.3.4.min.js"></script>
-<script src='lib/sockjs/vertxbus.min.js'></script>
-*/
-
-var bus = new vertx.EventBus('/eventbus');
-bus.on = bus.registerHandler;
-
-$(document).ready(function() {
-
-    bus.onopen = function() {
-
-        //  
-        //  bus.on('public', function(message) {
-        //
-        //    try {
-        //        console.dir(JSON.parse(message));
-        //    }
-        //    catch (e) {
-        //        console.error('Unable to parse: ' + message);
-        //    }
-        //
-        //  });
-          console.log('Websocket Event Bus start');
-          $N.trigger('bus.start');
-
-    };
+/**
+ * Event Bus channels
+ */
+final public class Bus {
+    /** status of interactive sessions */
+    public final static String SESSION = "session";
     
-});
+    /** declared interest in a topic, passively requests for more information */
+    public final static String INTEREST = "interest";
+    public final static String INTEREST_WIKIPEDIA = "interest.wikipedia";
+
+    /** permanent knowledge to share */
+    public final static String PUBLISH = "publish";
+ 
+    /** transient knowledge to share */
+    public final static String SAY = "say";
+}
