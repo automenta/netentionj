@@ -172,7 +172,7 @@
                 wiki = newWikiBrowser(function onSelected(e) {
                     onWikiTagAdded($('#tagbar'), e);
                 });
-                wiki.url = function (u) {
+                wiki.onURL = function (u) {
                     console.log('uri=' + u);
                     uri = u;
                 };
@@ -245,9 +245,9 @@
 
                  
                 var publicHandler;
-                bus.registerHandler('public', publicHandler = function (message) {
+                bus.registerHandler('say', publicHandler = function (message) {
                     if (!log.is(':visible')) {
-                        bus.unregisterHandler('public', publicHandler);
+                        bus.unregisterHandler('say', publicHandler);
                         return;
                     }
                     
@@ -360,7 +360,7 @@
 
             $N.once('bus.start', function () {
 
-                bus.on('public', function (message) {
+                bus.on('say', function (message) {
 
 
                     var c;

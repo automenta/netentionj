@@ -297,6 +297,7 @@
         <!--<script src="view.templates.js" type="text/javascript"></script> -->
         <!-- <script src="view.notebook.js" type="text/javascript"></script>  -->
         <script src="view.wall.js" type="text/javascript"></script> 
+        <script src="view.wiki.js" type="text/javascript"></script> 
 
         <script src="webcam.js"></script>
         <script src="search.js" type="text/javascript"></script> 
@@ -464,7 +465,7 @@
             var firstView = true;
 
             var throttledUpdateView = _.throttle(function() {
-
+                                    
                     $('#AvatarButton').addClass('ViewBusy');
                     later(function() {
                             _updateView();
@@ -636,11 +637,22 @@
             }
             
     
-            //WebSockets
-            $N.on('pub', function(x) {
-                bus.send('publish', x );
-            });
-              
+            //WebSockets Event Bus
+            if (bus) {
+                $N.on('pub', function(x) {
+                    bus.send('publish', x );
+                });
+
+                bus.registerHandler('say', publicHandler = function (message) {
+                    try {
+                        //notify(JSON.parse(message));
+                        notify(message);
+                    }
+                    catch (e) {
+                        console.log(message);
+                    }
+                });  
+            }
 
 
             if (!$N.myself())

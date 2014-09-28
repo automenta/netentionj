@@ -605,8 +605,6 @@ function netention(router) {
                     if (window.updateViewLock) //TEMPORARY, use an emit to decouple this
                         updateViewLock(viewUpdatesBuffered + 1);
 
-
-
                 this.trigger('change:attention');
             }
         },

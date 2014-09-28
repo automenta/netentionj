@@ -99,7 +99,7 @@ public class WebServer  {
         });*/
         RouteMatcher r = new RouteMatcher()
         
-        .get("/wiki", new SessionHandler() {            
+        .get("/app/wiki", new SessionHandler() {            
             @Override public void handle(Session session, HttpServerRequest e) {
                 //template(e, "client/debug.eventbus.html", getIndexPage());
                 template(e, "client/wiki.html", getIndexPage(session));

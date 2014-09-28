@@ -91,8 +91,8 @@ function newWikiBrowser(onTagAdded, options) {
             var url = metadata.url;
             currentTag = url.substring(url.lastIndexOf('/')+1, url.length);
 
-            if (b.url)
-                b.setURL('dbpedia.org/resource/' + currentTag);
+            if (b.onURL)
+                b.onURL('dbpedia.org/resource/' + currentTag);
             
 //            if (extractContent) {
 //                //br.find('head').remove();
@@ -179,65 +179,5 @@ function onWikiTagAdded(d, tag) {
     d.append( $('<div class="label"></div>').append('<h4><span class="label label-success">' + tag + '</span></h4>') );
     d.append( $('<div class="quicktag"></div>').append(tagBar) );
     d.append( $('<div class="save"></div>').append(saveButton, cancelButton) );
-}
-
-function newWikiView(v) {
-
-    var frame = newDiv().attr('class', 'SelfView');
-    frame.append(newWikiBrowser(onWikiTagAdded));
-
-    v.append(frame);
-
-    frame.onChange = function () {
-        //update user summary?
-    };
-
-    return frame;
-
-    /*
-     var roster = newRoster();
-     roster.addClass('SelfRoster');
-     
-     var contentTags = newDiv().attr('class', 'SelfViewTags');
-     var contentTime = newDiv().attr('class', 'SelfViewTime');
-     var content = newDiv().attr('class', 'SelfViewContent');
-     
-     frame.append(roster);
-     frame.append(content);
-     
-     var currentUser = $N.myself();
-     
-     function summaryUser(x) {
-     currentUser = x;
-     content.empty();
-     content.append(newSelfSummary(s, x, content));
-     content.append(contentTags);       
-     content.append(contentTime);       
-     updateTags(x);
-     }
-     
-     function updateTags(x) {
-     contentTags.html(newSelfTagList(s, x, content));
-     
-     if (x)
-     if (configuration.showPlanOnSelfPage) {
-     //contentTime.html(newSelfTimeList(x, contentTime));
-     }
-     
-     roster.html(newRoster(function(x) {
-     summaryUser(x);
-     }));
-     }
-     
-     summaryUser(currentUser);
-     
-     v.append(frame);
-     
-     frame.onChange = function() {
-     updateTags(currentUser);
-     //update user summary?
-     };
-     */
-
 }
 
