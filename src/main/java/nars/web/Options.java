@@ -47,11 +47,11 @@ public class Options {
         s.compressHTTP = false;
         s.cacheStaticFiles = false;
         s.threads = 8;
-        s.databasePath = "/tmp/graph";
+        //s.databasePath = "/tmp/graph";
         return s;
     }
 
-    static Options load(String optionsPath)  {                
+    static Options load(String optionsPath)  {                        
         try {
             return WebServer.jsonLoad(optionsPath, Options.class);
         }

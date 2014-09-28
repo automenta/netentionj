@@ -62,6 +62,12 @@
 	<version>0.8.16</version>
 </dependency>
 
+   <dependency>
+      <groupId>info.modprobe</groupId>
+      <artifactId>browserid-verifier</artifactId>
+      <version>0.2</version>
+    </dependency>
+
 <!--
 <dependency>
 	<groupId>org.crashub</groupId>

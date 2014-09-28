@@ -5,12 +5,17 @@ import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import io.netty.handler.codec.http.Cookie;
+import io.netty.handler.codec.http.CookieDecoder;
+import io.netty.handler.codec.http.DefaultCookie;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -23,11 +28,10 @@ import nars.web.util.DBPedia;
 import nars.web.util.NOntology;
 import nars.web.util.Wikipedia;
 import org.boon.json.JsonParserFactory;
-import org.boon.json.JsonSerializer;
-import org.boon.json.JsonSerializerFactory;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.VertxFactory;
+import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.http.HttpServer;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.RouteMatcher;
@@ -47,11 +51,21 @@ public class WebServer  {
     final MustacheFactory mf = new DefaultMustacheFactory();
     final Vertx vertx;
     private final HttpServer http;        
-    public static final JsonSerializer jsonSerializer;    
     private final Options options;
     private final Core core;
     
+    //TODO use something more sophisticated that won't memleak (WeakRef, etc)
+    private final Map<String,String> sessions = new HashMap();
     
+    public static class Auth {
+        public String auth;
+
+        public Auth(String key) {
+            this.auth = key;
+        }                
+    }
+
+            
     ExecutorService executor;
     
     public WebServer(Core c, Options o) throws Exception {
@@ -86,7 +100,23 @@ public class WebServer  {
         .get("/netention.html", new Handler<HttpServerRequest>() {            
             @Override public void handle(HttpServerRequest e) {                
                 template(e, "client/netention.html", getIndexPage());
-            }            
+            }
+        })
+        .get("/auth", new Handler<HttpServerRequest>() {            
+            
+
+            @Override public void handle(HttpServerRequest e) {   
+                
+                
+                withSessionId(null, e, new Handler<String>() {
+
+                    @Override
+                    public void handle(String key) {
+                        
+                        template(e, "client/auth.html", new Auth(key));
+                    }
+                });
+            }
         })
                 
         .get("/client_configuration.js", new Handler<HttpServerRequest>() {                        
@@ -131,6 +161,7 @@ public class WebServer  {
                         ) 
                 );
         }})
+        .post("/login/persona", new MozillaPersonaHandler(this))
         
         .noMatch(new StaticFileHandler(vertx, "client/", "index.html", options.compressHTTP, options.cacheStaticFiles));
         
@@ -171,8 +202,17 @@ public class WebServer  {
         String optionsPath = args.length > 0 ? args[0] : "options.json";        
         Options options = Options.load(optionsPath);
 
-        OrientGraph g = new OrientGraph("plocal:" + options.databasePath);
-        
+        TransactionalGraph g;
+        String dbPath = options.databasePath;
+        if (dbPath.startsWith("orientdb:")) {
+            String orientPath = dbPath.substring("orientdb:".length());
+            //"plocal:" + options.databasePath
+            g = new OrientGraph(orientPath);
+        }
+        else {
+            g = new OrientGraph("orientdb:memory:test");
+            System.err.println("Using OrientDB in-memory database.  Changes will not be saved");
+        }
                 
         Core core = new Core((TransactionalGraph)g);
         new NOntology(core);
@@ -241,18 +281,18 @@ public class WebServer  {
          //temporar yworkaround for boon
          System.setProperty ( "java.version", "1.8" );
          
-         JsonSerializerFactory jsonSerializerFactory = new JsonSerializerFactory()
-                .useFieldsFirst()//.useFieldsOnly().usePropertiesFirst().usePropertyOnly() //one of these
-                //.addPropertySerializer(  )  customize property output
-                //.addTypeSerializer(  )      customize type output
-                .useJsonFormatForDates() //use json dates
-                //.addFilter(  )   add a property filter to exclude properties
-                .includeEmpty().includeNulls().includeDefaultValues() //override defaults
-                //.handleComplexBackReference() //uses identity map to track complex back reference and avoid them
-                //.setHandleSimpleBackReference( true ) //looks for simple back reference for parent
-                .setCacheInstances( true ) //turns on caching for immutable objects
-                ;
-        jsonSerializer = jsonSerializerFactory.create();        
+//         JsonSerializerFactory jsonSerializerFactory = new JsonSerializerFactory()
+//                .useFieldsFirst()//.useFieldsOnly().usePropertiesFirst().usePropertyOnly() //one of these
+//                //.addPropertySerializer(  )  customize property output
+//                //.addTypeSerializer(  )      customize type output
+//                .useJsonFormatForDates() //use json dates
+//                //.addFilter(  )   add a property filter to exclude properties
+//                .includeEmpty().includeNulls().includeDefaultValues() //override defaults
+//                //.handleComplexBackReference() //uses identity map to track complex back reference and avoid them
+//                //.setHandleSimpleBackReference( true ) //looks for simple back reference for parent
+//                .setCacheInstances( true ) //turns on caching for immutable objects
+//                ;
+        //jsonSerializer = jsonSerializerFactory.create();        
         /*
                 .useFieldsFirst()//useFieldsOnly().usePropertiesFirst().usePropertyOnly() //one of these
                 //.plistStyle() //allow parsing of ASCII PList style files
@@ -302,6 +342,47 @@ public class WebServer  {
         
     }
 
+    /**
+     * https://gist.github.com/Narigo/3386443
+     */
+    public void withSessionId(final EventBus eb, final HttpServerRequest req, final Handler<String> handler) {
+        String value = req.headers().get("Cookie");
+        if (value != null) {
+            Set<Cookie> cookies = CookieDecoder.decode(value);
+            for (final Cookie cookie : cookies) {
+                if ("sessionId".equals(cookie.getName())) {
+                    String key = sessions.get(cookie.getValue());
+                    if (key == null) key = "";
+                    handler.handle(key);
+                    return;
+                }
+            }
+        }
+        
+        //req.response().setStatusCode(403 /* no permission */);       
+        startSession(req, "", handler);
+    }
+
+    public void startSession(final HttpServerRequest req, String key, final Handler<String> handler) {
+        // Create a new session and use that
+//        vertx.eventBus().send("session", new JsonObject().putString("action", "start"),
+//                new Handler<Message<JsonObject>>() {
+//                    @Override
+//                    public void handle(Message<JsonObject> event) {
+//                        String sessionId = event.body().getString("sessionId");
+
+        String sessionId = UUID.randomUUID().toString();
+        sessions.put(key, sessionId);
+        DefaultCookie dc = new DefaultCookie("sessionId", sessionId);
+        req.response().putHeader("Set-Cookie", dc.toString());
+        
+        if (handler!=null)
+            handler.handle("");
+        
+//                    }
+//                });
+    }
+    
     public void initWebSockets() {
         JsonObject config = new JsonObject().putString("prefix", "/eventbus");
 
