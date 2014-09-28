@@ -102,17 +102,11 @@ public class WebServer  {
                 template(e, "client/netention.html", getIndexPage());
             }
         })
+                
         .get("/auth", new Handler<HttpServerRequest>() {            
-            
-
-            @Override public void handle(HttpServerRequest e) {   
-                
-                
+            @Override public void handle(HttpServerRequest e) {                                   
                 withSessionId(null, e, new Handler<String>() {
-
-                    @Override
-                    public void handle(String key) {
-                        
+                    @Override public void handle(String key) {
                         template(e, "client/auth.html", new Auth(key));
                     }
                 });
@@ -163,10 +157,11 @@ public class WebServer  {
         }})
                 
         //TODO Realm parameter: https://github.com/mozilla/persona/pull/3854
-        .post("/login/persona", new MozillaPersonaHandler(this))
+        .post("/login/persona", new MozillaPersonaHandler(options.host, options.port, this))
         .post("/logout", new Handler<HttpServerRequest>() {
 
             @Override public void handle(HttpServerRequest e) {
+                //TODO erase session on server, and the session field in client's cookie
                 e.response().end("logged out.");
             }
         })

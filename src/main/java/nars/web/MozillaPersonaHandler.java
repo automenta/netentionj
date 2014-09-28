@@ -33,10 +33,14 @@ import org.vertx.java.core.http.HttpServerRequest;
  */
 class MozillaPersonaHandler implements Handler<HttpServerRequest> {
     private final WebServer web;
+    private final String host;
+    private final int port;
     
 
-    public MozillaPersonaHandler(WebServer server) {
+    public MozillaPersonaHandler(String host, int port, WebServer server) {
         this.web = server;        
+        this.host = host;        
+        this.port = port;        
     }
 
     
@@ -56,18 +60,14 @@ class MozillaPersonaHandler implements Handler<HttpServerRequest> {
                     Logger.getLogger(MozillaPersonaHandler.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 StringBuilder urlBuilder = new StringBuilder()
-                        .append(url.getProtocol()).append("://").append(url.getHost())
-                        .append(':').append(url.getPort());
-
+                        .append(url.getProtocol()).append("://").append(host)
+                        .append(':').append(port);
 
                 final String audience = urlBuilder.toString();
-                System.out.println("Audience: " + audience);
                 final String assertion = req.formAttributes().get("assertion");
                 final Verifier verifier = new Verifier();
                 final BrowserIDResponse personaResponse = verifier.verify(assertion, audience);
                 BrowserIDResponse.Status status = personaResponse.getStatus();
-                
-
                 
                 if (status == BrowserIDResponse.Status.OK) {
                     /* Authentication with Persona was successful */
