@@ -280,7 +280,7 @@ function renderLeafletMap(v) {
                 return x;
             });
 
-            newPopupObjectViews(nobs);
+            newPopupObjectViews(nobs, e);
 
         });
 

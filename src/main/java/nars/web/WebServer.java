@@ -182,7 +182,15 @@ public class WebServer  {
             }
         })
         
-        .noMatch(new StaticFileHandler(vertx, "client/", "index.html", options.compressHTTP, options.cacheStaticFiles));
+                //https://gist.github.com/Ryan-ZA/8375100 ?
+        .noMatch(new StaticFileHandler(vertx, "client/", "index.html", options.compressHTTP, options.cacheStaticFiles) {
+            @Override public void handle(HttpServerRequest req) {
+                try { super.handle(req); }
+                catch (Exception e) {
+                    //suppress 404 errors
+                }
+            }            
+        });
         
 
         new DBPedia(executor, core, vertx.eventBus());

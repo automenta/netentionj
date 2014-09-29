@@ -194,8 +194,8 @@ addView({
 					var rc = newRightColDiv().appendTo(d);
 
 					var nameLink = $('<a">' + X.name + '</a>');
-					nameLink.click(function() {
-						newPopupObjectView(x);
+					nameLink.click(function(e) {
+						newPopupObjectView(x, e);
 					});
 					var colorSquare = $('<span>&nbsp;&nbsp;&nbsp;</span>&nbsp;');
 					lc.append(colorSquare, nameLink);
@@ -304,8 +304,8 @@ function newGoalWidget(g) {
 
 
     var aa = $('<a><h2>' + g.name + '</h2></a>').appendto(d);
-    aa.click(function () {
-        newPopupObjectView(g);
+    aa.click(function (e) {
+        newPopupObjectView(g, e);
     });
 
     d.addClass('GoalSummary ui-widget-content').attr('style', 'font-size: ' + (100.0 * (0.25 + g.strength)) + '%');
@@ -586,8 +586,8 @@ function newSelfTagList(s, user, c) {
             var theTag = otherTags[0];
             var b = $('<div>' + '</div>');
             var a = $('<a title="Tag Instance">' + theTag + '</a>');
-            a.click(function () {
-                newPopupObjectView(i);
+            a.click(function (e) {
+                newPopupObjectView(i, e);
             });
             a.appendTo(b);
 

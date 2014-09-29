@@ -1004,8 +1004,18 @@ function getAvatarURL(s, style) {
 
 
 function newPopup(title, p, isModal, existingDiv) {
-    if (configuration.device == configuration.MOBILE) {
+    var target = null;
+    
+    if (configuration.device === configuration.MOBILE) {
         p = isModal = true;
+    }
+    else if (p) {
+        //p is a click event, indicating to popup at location where clicked
+        if (p.screenX) {
+            //targetPosition = [ p.screenX, p.screenY ];
+            target = p.target;
+        }        
+        
     }
 
     var d = existingDiv ? existingDiv : newDiv();
@@ -1018,7 +1028,7 @@ function newPopup(title, p, isModal, existingDiv) {
         var clientWidth = $(document).width();
         var margin = 24;
         var leftMargin = 64;
-        if (configuration.device == configuration.MOBILE) {
+        if (configuration.device === configuration.MOBILE) {
             margin = leftMargin = 0;
             clientWidth -= 4;
         }
@@ -1042,6 +1052,10 @@ function newPopup(title, p, isModal, existingDiv) {
         show: 'fade',
         hide: 'fade' //'drop'
     }, p || {});
+    
+    if (target) {
+        p.position = {my: 'center', at: 'center', of: target};
+    }
 
     if (isModal)
         p.modal = true;

@@ -964,7 +964,7 @@ newTagValueWidget.sketch = function(x, index, v, prop, editable, d, events) {
     }
 };
         
-function _objectLinkClick() { newPopupObjectView($(this).data('target')); return false; }
+function _objectLinkClick(e) { newPopupObjectView($(this).data('target'), e); return false; }
 
 newTagValueWidget.object = function(x, index, t, prop, editable, d, events) {
 

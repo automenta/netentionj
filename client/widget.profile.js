@@ -244,8 +244,8 @@ function newRosterWidget(full) {
             if (U) {
                 if ((full && (uid != $N.id())) || (!full)) {
                     var a = newAvatarImage(U).appendTo(d);
-                    a.click(function() {
-                        newPopupObjectView(U);
+                    a.click(function(e) {
+                        newPopupObjectView(U, e);
                     });
                     if (full && configuration.webrtc && (uid != $N.id())) {
                         var webrtc = r[uid];

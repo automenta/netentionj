@@ -27,6 +27,14 @@ select {
 .ui-dialog-content {
 	clear:both;
 }
+.ui-dialog-title {
+    max-width: 92%;
+    padding: 0;
+}
+.ui-dialog-titlebar {
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
 
 /* @group Blink */
 

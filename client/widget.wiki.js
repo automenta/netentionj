@@ -69,9 +69,9 @@ function newWikiBrowser(onTagAdded, options) {
 
         function newPopupButton(target) {
             var p = $('<a href="#" title="Tag">+</a>');
-            p.click(function() {
+            p.click(function(e) {
                 if (onTagAdded)
-                    onTagAdded('dbpedia.org/resource/' + target);
+                    onTagAdded('dbpedia.org/resource/' + target, e);
                 return false;
             });
             return p;
@@ -157,14 +157,8 @@ function newWikiBrowser(onTagAdded, options) {
     return b;
 }
 
-function onWikiTagAdded(d, tag) {
-    d.empty();
-    
-    /*var d = newPopup(target, {
-        width: 650,
-        modal: true
-    });*/
-    
+function newWikiTagTagger(tag) {
+    var d = newDiv();
     
     var tagBar = newTagBar(self, d);
     var saveButton = newTagBarSaveButton(self, tag, tagBar, function () {
@@ -176,8 +170,10 @@ function onWikiTagAdded(d, tag) {
         d.empty();
     });
 
-    d.append( $('<div class="label"></div>').append('<h4><span class="label label-success">' + tag + '</span></h4>') );
+    //d.append( $('<div class="label"></div>').append('<h4><span class="label label-success">' + tag + '</span></h4>') );
     d.append( $('<div class="quicktag"></div>').append(tagBar) );
     d.append( $('<div class="save"></div>').append(saveButton, cancelButton) );
+    
+    return d;
 }
 

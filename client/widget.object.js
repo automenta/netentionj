@@ -16,38 +16,35 @@ function newPopupObjectEdit(n, p) {
     return e;
 }
 
-function newPopupObjectView(_x, p, ovParams) {
+function newPopupObjectView(obj, popupParam, objectViewParam) {
     var x;
-    if (typeof (_x) == 'string')
-        x = $N.object[_x];
+    if (typeof (obj) === 'string')
+        x = $N.object[obj];
     else
-        x = _x;
+        x = obj;
 
     if (!x) {
-        console.log('Unknown object: ' + _x);
+        console.log('Unknown object: ' + obj);
         return;
     }
 
-    if (ovParams === undefined) {
-        ovParams = {
+    if (objectViewParam === undefined) {
+        objectViewParam = {
             depthRemaining: 4,
-            nameClickable: false
+            nameClickable: false,
+            showName: false
         };
     }
 
-    var d = newPopup(x.name, p);
-    var s = newObjectView(x, ovParams);
-    s.css('border', 'none');
-    d.append(s);
-    return d;
-
+    return newPopup(x.name, popupParam).append( 
+            newObjectView(x, objectViewParam).css('border', 'none') );
 }
 
-function newPopupObjectViews(objectIDs) {
+function newPopupObjectViews(objectIDs, e) {
     if (objectIDs.length === 0)
         return;
     if (objectIDs.length === 1)
-        return newPopupObjectView(objectIDs[0]);
+        return newPopupObjectView(objectIDs[0], e);
 
     var objects = objectIDs.map(function(i) {
         if (typeof i === 'string')
@@ -962,8 +959,8 @@ function newSimilaritySummary(x) {
                 var li = $('<li></li>').appendTo(d);
                 var lia = $('<a>' + _s(name, 32, true) /*+ ' (' + st + '%) */ + '</a>').appendTo(li);
                 li.append('&nbsp;');
-                lia.click(function() {
-                    newPopupObjectView(v.value);
+                lia.click(function(e) {
+                    newPopupObjectView(v.value, e);
                 });
                 lia.css('opacity', 0.5 + (0.5 * stf));
             }
@@ -1216,7 +1213,7 @@ function newObjectView(x, options) {
     var showSelectionCheck = (options.showSelectionCheck !== undefined) ? options.showSelectionCheck : true;
     var titleClickMode = (options.titleClickMode !== undefined) ? options.titleClickMode : 'view';
     var showTime = (options.showTime !== undefined) ? options.showTime : true;
-    var transparent = (options.transparent !== undefined) ? options.transparent : false;
+    var transparent = (options.transparent !== undefined) ? options.transparent : true;
     var xid = x.id;
     var replyCallback = options.replyCallback ? function(rx) { options.replyCallback(rx); } : null;
     var startMinimized = (options.startMinimized != undefined) ? options.startMinimized : false;
@@ -1351,13 +1348,14 @@ function newObjectView(x, options) {
         if (!nameClickable) {
             haxn.append(xxn);
         } else {
-            haxn.append(newEle('a').html(xxn).click(function() {
+            haxn.append(newEle('a').html(xxn).click(function(e) {
                 if ((xauthor === $N.id()) && (titleClickMode === 'edit'))
                     newPopupObjectEdit(xid, true);
                 else if (typeof (titleClickMode) === 'function') {
                     titleClickMode(xid);
                 } else {
-                    newPopupObjectView(xid, true);
+                    
+                    newPopupObjectView(xid, e);
                 }
                 return false;
             }));

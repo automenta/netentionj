@@ -816,14 +816,14 @@ exports.objIsProperty = objIsProperty;
 
 
 function objEqual(x, y) {
-	if (x.id == y.id)
-		if (x.name == y.name)
-			if (x.author == y.author)
-				if (x.modifiedAt == y.modifiedAt)
-					if (x.createdAt == y.createdAt)
+	if (x.id === y.id)
+		if (x.name === y.name)
+			if (x.author === y.author)
+				if (x.modifiedAt === y.modifiedAt)
+					if (x.createdAt === y.createdAt)
 						if (_.isEqual(x.value, y.value))
-							if (x.subject == y.subject)
-								if (x.when == y.when)
+							if (x.subject === y.subject)
+								if (x.when === y.when)
 									//TODO compare other object fields
 									return true;
 	return false;

@@ -3,11 +3,27 @@ addView({
     name: 'Wiki',
     icon: 'icon/view.wiki.svg',
     start: function(v) {
-        var onWikiTagAdded = function(x) {
+        var onWikiTagAdded = function(tagURI, e) {
             
+            if (!$N.object[tagURI]) {
+                //create proto-tag
+                var newTag = {
+                    id: tagURI,
+                    name: tagURI,
+                    extend: []
+                };
+                
+                $N.add(newTag);
+            }
+            var v = newPopupObjectView(tagURI, e);
+            
+            v.append(newWikiTagTagger(tagURI));
         };
         
         var wiki = newWikiBrowser(onWikiTagAdded);
+        
+        wiki.gotoTag(configuration.wikiStartPage, false);
+        
         var frame = newDiv().attr('class', 'SelfView');
         frame.append(wiki);
 
