@@ -1,6 +1,8 @@
 "use strict";
 function newTagValueWidget(x, index, t, editable, whenSaved, onAdd, onRemove, onChange, onStrengthChange, onOrderChange, whenSliderChange) {
-	var tag = t.id || t;
+    t = t || { };
+    
+    var tag = t.id || t;
 
     var strength = t.strength;
     if (t.readonly)

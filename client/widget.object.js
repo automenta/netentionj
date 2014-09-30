@@ -12,6 +12,8 @@ function newPopupObjectEdit(n, p) {
 	p.parent().prepend(nameInput);
 	p.draggable({ handle: ".ui-dialog-titlebar" });
 	*/
+    
+    
 
     return e;
 }
@@ -36,8 +38,31 @@ function newPopupObjectView(obj, popupParam, objectViewParam) {
         };
     }
 
-    return newPopup(x.name, popupParam).append( 
-            newObjectView(x, objectViewParam).css('border', 'none') );
+    var v;
+    var p = newPopup(x.name, popupParam).append( 
+            v = newObjectView(x, objectViewParam).css('border', 'none') );
+    
+    var objectURI = v.id;
+    var channel = objectURI + '_channel';
+    var h;
+    var chatWidget;
+        
+    v.append(chatWidget = newChatWidget(function onSend(x) {        
+        //console.log('send: ' , JSON.stringify(x));
+        bus.publish(channel, x);
+    }, { }));
+        
+    bus.registerHandler(channel, h = function(x) {
+        //console.log('receive: ' , JSON.stringify(x));
+        chatWidget.receive(x);
+    }); 
+    
+    p.bind('dialogclose', function () {
+        bus.unregisterHandler(channel, h);
+    });
+
+
+    return p;
 }
 
 function newPopupObjectViews(objectIDs, e) {
@@ -350,6 +375,8 @@ function newObjectEdit(ix, editable, hideWidgets, onTagRemove, whenSliderChange,
     var headerTagButtons = ix.tagSuggestions || [];
     var ontocache = {};
 
+    D.id = ix.id;
+    
     function update(x) {
         var widgetsToAdd = [];
 
@@ -1489,6 +1516,8 @@ function newObjectView(x, options) {
     else {
         maximize();
     }
+    
+    d.id = xid;
 
     return d;
 }

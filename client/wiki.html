@@ -260,7 +260,7 @@
 
                 });
                 later(function() {
-                     bus.send("interest", $N.myself().id);                    
+                     bus.publish("interest", $N.myself().id);                    
                 });
             }
             
