@@ -98,18 +98,28 @@ public class Publish implements Handler<Message> {
         //Add/Set Object
         else {
             //set vertex value
-            System.out.println("Setting vertex: " + m);
+            ///System.out.println("Setting vertex: " + m);
             
             
             Vertex sv = core.vertex(id, true);
             
-            final String[] rootFields =  { "name", "geolocation" };            
+            final String[] rootFields =  { "name", "geolocation", "createdAt", "modifiedAt", "author", "scope" };
             for (String r : rootFields) {
                 Object v = m.get(r);
-                if (v!=null)
-                    sv.setProperty(r, v.toString());
+                if (v!=null) {                    
+                    if (v instanceof Number) {
+                        
+                    }
+                    else if (v instanceof String) {
+                        
+                    }
+                    //other primitive types supported by the graph database
+                    else {
+                        v = v.toString();
+                    }
+                    sv.setProperty(r, v);
+                }
             }
-            
             //TODO remove existing non-specified edges
             
             Object value = m.get("value");

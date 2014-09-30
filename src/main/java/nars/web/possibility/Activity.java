@@ -114,7 +114,6 @@ public class Activity  implements Handler<Message> {
                     }
                 }
             }
-            System.err.println(id + "===> " + c);
             if (c.size() > 0)
                 bus.publish(Bus.SAY, Json.encode(new ContextGraph(id, c)));            
         }

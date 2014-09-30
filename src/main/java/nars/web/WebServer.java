@@ -136,31 +136,38 @@ public class WebServer  {
             @Override public void handle(HttpServerRequest e) {                
                 e.response().end(core.getOntologyJSON());
         }})
+                
+        //TODO use streaming HTTP response
         .get("/object/tag/:tag/json", new Handler<HttpServerRequest>() {
             @Override public void handle(HttpServerRequest req) {
                 String tag = req.params().get("tag");                
                 req.response().end( 
                     Json.encode(core.objectStreamByTag(tag).map(v -> core.getObject(v)).collect(toList())
                 ));
-                core.commit();
+                //core.commit();
         }})
+                
+        //TODO use streaming HTTP response
         .get("/object/author/:author/json", new Handler<HttpServerRequest>() {
             @Override public void handle(HttpServerRequest req) {
                 String author = req.params().get("author");
                 req.response().end( 
                     Json.encode(core.objectStreamByAuthor(author).map(v -> core.getObject(v)).collect(toList())
                 ));
-                core.commit();
+                //core.commit();
         }})
+                
+        //TODO use streaming HTTP response
         .get("/object/latest/:num/json", new Handler<HttpServerRequest>() {
             @Override public void handle(HttpServerRequest req) {
                 //TODO
                 int num = Integer.valueOf(req.params().get("num"));
                 req.response().end( 
-                    Json.encode( new Object[0] )
-                );
-                core.commit();
+                    Json.encode( core.objectStreamNewest(60*60*24*7*2, num).map(v -> core.getObject(v)).collect(toList() )
+                ));
+                //core.commit();
         }})
+                
         .get("/object/:id/json", new Handler<HttpServerRequest>() {
             @Override public void handle(HttpServerRequest req) {
                 String id = req.params().get("id");

@@ -45,8 +45,6 @@ import org.vertx.java.core.json.impl.Json;
  */
 public class Core extends EventEmitter {
 
-    private final static String Session_MYSELF = "myself";
-
     static final Pattern primitiveRegEx = Pattern.compile("/^(class|property|boolean|text|html|integer|real|url|object|spacepoint|timepoint|timerange|sketch|markdown|image|tagcloud|chat)$/");
 
     public static boolean isPrimitive(String s) {
@@ -150,7 +148,7 @@ public class Core extends EventEmitter {
         return m;
     }
 
-    public void commit() {
+    public synchronized void commit() {
         graph.commit();
     }
 
@@ -173,13 +171,21 @@ public class Core extends EventEmitter {
 
     private NObject myself;
 
+    
+    public void ensureIndex(String property, Class c) {
+        
+        if (!((KeyIndexableGraph) graph).getIndexedKeys(c).contains(property)) {
+            ((KeyIndexableGraph) graph).createKeyIndex(property, c, new Parameter("type", "UNIQUE"));
+        }
+        
+    }
+    
     public Core(TransactionalGraph db) {
 
         this.graph = db;
 
-        if (!((KeyIndexableGraph) graph).getIndexedKeys(Vertex.class).contains("i")) {
-            ((KeyIndexableGraph) graph).createKeyIndex("i", Vertex.class, new Parameter("type", "UNIQUE"));
-        }
+        ensureIndex("i", Vertex.class);
+        ensureIndex("modifiedAt", Vertex.class);
 
 //                
 //                TitanManagement mgmt = graph.getManagementSystem();
@@ -449,6 +455,13 @@ public class Core extends EventEmitter {
         if (v == null)
             return Stream.empty();
         return Stream.concat(Stream.of(v), stream(v.getEdges(Direction.OUT, "has").spliterator(), false).map(e -> e.getVertex(Direction.OUT)));
+    }
+
+    public Stream<Vertex> objectStreamNewest(double secondsAgo, int max) {
+        long now = System.currentTimeMillis();
+        long then = (long)(now - (secondsAgo * 1000.0));
+        Iterable<Vertex> v = graph.query().interval("modifiedAt", then, now).limit(max).vertices();
+        return stream(v.spliterator(), false);
     }
     
 //    public Stream<NObject> objectStreamByTagAndAuthor(final String tagID, final String author) {
