@@ -30,6 +30,7 @@ import nars.web.possibility.Activity;
 import nars.web.util.DBPedia;
 import nars.web.util.MozillaPersonaHandler;
 import nars.web.util.NOntology;
+import nars.web.util.StaticFileHandler;
 import nars.web.util.Wikipedia;
 import org.boon.json.JsonParserFactory;
 import org.vertx.java.core.Handler;
@@ -42,7 +43,6 @@ import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.json.impl.Json;
 import org.vertx.java.core.sockjs.SockJSServer;
-import org.vertx.mods.web.StaticFileHandler;
 
 
 /**
@@ -190,8 +190,9 @@ public class WebServer  {
         })
         
                 //https://gist.github.com/Ryan-ZA/8375100 ?
-        .noMatch(new StaticFileHandler(vertx, "client/", "index.html", options.compressHTTP, options.cacheStaticFiles) {
-            @Override public void handle(HttpServerRequest req) {
+        //.noMatch(new StaticFileHandler(vertx, "client/", "index.html", options.compressHTTP, options.cacheStaticFiles) {
+          .noMatch(new StaticFileHandler(vertx, "client/") {
+                @Override public void handle(HttpServerRequest req) {
                 try { super.handle(req); }
                 catch (Exception e) {
                     //suppress 404 errors
