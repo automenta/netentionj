@@ -277,6 +277,8 @@ function newTagImage(ti) {
 function newTagButton(t, onClicked, isButton, dom) {
     var ti = null;
 
+    if (!t.id) return $('<span>&nbsp;</span>');
+    
     if (t) {
         if (!t.id) {
             var to = $N.class[t];
@@ -307,7 +309,7 @@ function newTagButton(t, onClicked, isButton, dom) {
     b.setAttribute('class', 'tagLink');
     b.style.backgroundImage = 'url(' + ti + ')';
 
-    if (t && (t.name)) {
+    if (t && (t.name||t.id)) {
         b.innerHTML = t.name || t.id;
         b.setAttribute('taguri', t.id || (t + ''));
     }
