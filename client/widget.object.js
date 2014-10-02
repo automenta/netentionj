@@ -1300,6 +1300,9 @@ function newObjectView(x, options) {
     }*/
 
     var infoLabel = '<img class="TagButtonIcon" src="' + getTagIcon(x) + '"/>';
+    if (options.titleInInfoTab) {
+        infoLabel += x.name;
+    }
 
     //var infoLabel = '<i title="Info" class="fa fa-bars"></i>';
 

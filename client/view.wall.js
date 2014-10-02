@@ -47,13 +47,26 @@ addView({
 		var categories = newDiv().addClass('CategoryPreviews panel panel-default').appendTo(v);
 		categories.append('<div class="panel-heading">News</div>');
 		var categoryBody = newDiv().addClass('panel-body').appendTo(categories);
-		var col1 = newDiv().appendTo(categoryBody);
-		var col2 = newDiv().appendTo(categoryBody);
-		var col3 = newDiv().appendTo(categoryBody);
+		var col1 = newDiv().appendTo(categoryBody).addClass('col-xs-6').addClass('col-md-4');
+		var col2 = newDiv().appendTo(categoryBody).addClass('col-xs-6').addClass('col-md-4');
+		var col3 = newDiv().appendTo(categoryBody).addClass('col-xs-6').addClass('col-md-4');
 
+                var ovo = {                  
+                    titleInInfoTab: true,
+                    showName: false
+                };
+                function nv(t) {  return newObjectView(t, ovo).addClass('panel panel-default panel-body');  }
+                
                 _.each(category1, function(tag) {
-                    col1.append( newObjectView(tag) );
+                    col1.append( nv(tag) );
                 });
+                _.each(category2, function(tag) {
+                    col2.append( nv(tag) );
+                });
+                _.each(category3, function(tag) {
+                    col3.append( nv(tag) );
+                });
+                
 		/*React.renderComponent(CategoryPreviews(getCategory(category1)), col1[0]);
 		React.renderComponent(CategoryPreviews(getCategory(category2)), col2[0]);
 		React.renderComponent(CategoryPreviews(getCategory(category3)), col3[0]);*/
