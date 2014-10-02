@@ -190,21 +190,8 @@ select {
     height: 5em;
 }
 
-.objectView .propertySection .tagLabel img {
-    margin-left: 0;
-}
-
 .tagSectionEditable {
     border: 1px solid rgba(127,127,127,0.35);
-}
-    
-.objectView .tagSectionItem div, .objectView .tagSectionItem span {
-    clear: none;
-}
-.ObjectViewButtons {
-    float: right;
-    padding: 0;
-    opacity: 1.0 !important;
 }
 
 
@@ -297,6 +284,26 @@ select {
 .objectView .tag100 {    width: 100%; min-width: 100%; max-width: 100%;      }
 
 .objectView .propertySection .tagLabel { font-weight: bold; }
+
+    
+.objectView .tagSectionItem div, .objectView .tagSectionItem span {
+    clear: none;
+}
+.ObjectViewButtons {
+    float: right;
+    padding: 0;
+    padding-top: 0.25em;
+    opacity: 1.0 !important;
+}
+
+.objectView .nav {    
+    padding-top: 0;
+    margin: 0;
+}
+
+.objectView .propertySection .tagLabel img {
+    margin-left: 0;
+}
 
 
 .tag0 { opacity: 0.25;  }
@@ -995,7 +1002,9 @@ div.olControlZoom { top:auto !important; bottom:8px !important; }*/
 
 .objectView {
     position: relative;
-    padding: 4px;
+    padding-bottom: 3px;
+    padding-left: 3px;
+    padding-right: 3px;
     margin-bottom: 0;
     display: block;
     clear: both;
@@ -1105,9 +1114,6 @@ div.objectView .metadataReplyButton {
     margin-left: 1em;
     margin-right: 1em;
     margin-top: 0.5em;
-}
-.objectView ul li {
-    padding: 0.3em;
 }
 .objectView h3,
 .objectView p,

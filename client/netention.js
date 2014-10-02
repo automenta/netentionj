@@ -968,6 +968,14 @@ function getTagIcon(t) {
                     return r;
             }
         }
+        
+        //else use author's avatar
+        if (t.author) {
+            var avurl = getAvatarURL(t.author);
+            if (avurl)
+                return avurl;
+        }
+        
         return defaultIcons.unknown;
     } else {
         return defaultIcons[t] || defaultIcons.unknown;

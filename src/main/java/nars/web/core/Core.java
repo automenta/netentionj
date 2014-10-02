@@ -47,7 +47,7 @@ public class Core extends EventEmitter {
 
     static final Pattern primitiveRegEx = Pattern.compile("/^(class|property|boolean|text|html|integer|real|url|object|spacepoint|timepoint|timerange|sketch|markdown|image|tagcloud|chat)$/");
 
-    public static boolean isPrimitive(String s) {
+    public static boolean isPrimitive(final String s) {
         return primitiveRegEx.matcher(s).matches();
     }
 

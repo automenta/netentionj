@@ -72,7 +72,7 @@ addView({
 						newObjectView(data[0], {
 							scale: 0.5,
 							depthRemaining: 0,
-							startMinimized: false,
+							startMinimized: true,
 							showAuthorName: false,
 							transparent: true
 						})

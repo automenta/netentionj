@@ -51,9 +51,12 @@ addView({
 		var col2 = newDiv().appendTo(categoryBody);
 		var col3 = newDiv().appendTo(categoryBody);
 
-		React.renderComponent(CategoryPreviews(getCategory(category1)), col1[0]);
+                _.each(category1, function(tag) {
+                    col1.append( newObjectView(tag) );
+                });
+		/*React.renderComponent(CategoryPreviews(getCategory(category1)), col1[0]);
 		React.renderComponent(CategoryPreviews(getCategory(category2)), col2[0]);
-		React.renderComponent(CategoryPreviews(getCategory(category3)), col3[0]);
+		React.renderComponent(CategoryPreviews(getCategory(category3)), col3[0]);*/
 
 	},
 	stop: function() {

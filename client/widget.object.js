@@ -34,7 +34,8 @@ function newPopupObjectView(obj, popupParam, objectViewParam) {
         objectViewParam = {
             depthRemaining: 4,
             nameClickable: false,
-            showName: false
+            showName: false,
+            showAuthorIcon: false
         };
     }
 
@@ -42,27 +43,31 @@ function newPopupObjectView(obj, popupParam, objectViewParam) {
     var p = newPopup(x.name, popupParam).append( 
             v = newObjectView(x, objectViewParam).css('border', 'none') );
     
-    var objectURI = v.id;
+
+    return p;
+}
+
+
+function newChannelWidget(objectURI) {
     var channel = objectURI + '_channel';
     var h;
-    var chatWidget;
-        
-    v.append(chatWidget = newChatWidget(function onSend(x) {        
+
+    var chat = newChatWidget(function onSend(x) {        
         //console.log('send: ' , JSON.stringify(x));
         bus.publish(channel, x);
-    }, { }));
+    }, { });
         
     bus.registerHandler(channel, h = function(x) {
         //console.log('receive: ' , JSON.stringify(x));
-        chatWidget.receive(x);
+        chat.receive(x);
     }); 
-    
-    p.bind('dialogclose', function () {
-        bus.unregisterHandler(channel, h);
+        
+    chat.on("remove", function () {
+        chat.send('(exit)');
+        bus.unregisterHandler(channel, h);        
     });
-
-
-    return p;
+    chat.send('(enter)');
+    return chat;
 }
 
 function newPopupObjectViews(objectIDs, e) {
@@ -276,8 +281,6 @@ function newTagImage(ti) {
 
 function newTagButton(t, onClicked, isButton, dom) {
     var ti = null;
-
-    if (!t.id) return $('<span>&nbsp;</span>');
     
     if (t) {
         if (!t.id) {
@@ -1226,41 +1229,36 @@ function newSubjectTagButton(buttonTitle, icon, params) {
 function newObjectView(x, options) {
     if (!options)
         options = {};
+    
+    var xid = x.id;
+    var scale = options.scale;
+    var transparent = (options.transparent !== undefined) ? options.transparent : true;
+    var showActionPopupButton = (options.showActionPopupButton !== undefined) ? options.showActionPopupButton : true;
+    var showSelectionCheck = (options.showSelectionCheck !== undefined) ? options.showSelectionCheck : true;
+
+    if (typeof(x) === "string") {
+        x = $N.object[x];
+    }
 
     //var onRemoved = options.onRemoved;
-    var scale = options.scale;
-    var depthRemaining = options.depthRemaining || 1;
-    var depth = options.depth || depthRemaining;
-    var nameClickable = (options.nameClickable !== undefined) ? options.nameClickable : true;
-    var showName = (options.showName !== undefined) ? options.showName : true;
-    var showAuthorIcon = (options.showAuthorIcon !== undefined) ? options.showAuthorIcon : true;
-    var showAuthorName = (options.showAuthorName !== undefined) ? options.showAuthorName : true;
-    var hideAuthorNameAndIconIfZeroDepth = (options.hideAuthorNameAndIconIfZeroDepth !== undefined) ? options.hideAuthorNameAndIconIfZeroDepth : false;
-    var showMetadataLine = (options.showMetadataLine !== undefined) ? options.showMetadataLine : true;
-    var showActionPopupButton = (options.showActionPopupButton !== undefined) ? options.showActionPopupButton : true;
-    var showReplyButton = (options.showReplyButton !== undefined) ? options.showReplyButton : true;
-    var showSelectionCheck = (options.showSelectionCheck !== undefined) ? options.showSelectionCheck : true;
-    var titleClickMode = (options.titleClickMode !== undefined) ? options.titleClickMode : 'view';
-    var showTime = (options.showTime !== undefined) ? options.showTime : true;
-    var transparent = (options.transparent !== undefined) ? options.transparent : true;
-    var xid = x.id;
-    var replyCallback = options.replyCallback ? function(rx) { options.replyCallback(rx); } : null;
     var startMinimized = (options.startMinimized != undefined) ? options.startMinimized : false;
 
     if (!x) {
         return newDiv().html('Object Missing');
     }
 
-    //check for Similarity
-    var ot = objTags(x);
-    if ((ot[0] === 'Similar') && (ot[1] === 'similarTo')) {
-        /*showMetadataLine = false;
-         showActionPopupButton = false;
-         showSelectionCheck = false;
-         showTime = false;
-         nameClickable = false;*/
-        return newSimilaritySummary(x);
-    }
+    var d = newDiv().attr({
+        'xid': xid,
+        'class': 'objectView'
+    });
+
+    if (!transparent)
+        d.addClass('ui-widget-content ui-corner-all');
+
+    var oStyle = x.style;
+    if (scale !== undefined)
+        d.attr('style', 'font-size:' + ((scale) ? ((0.5 + scale) * 100.0 + '%') : ('100%')) + (oStyle ? '; ' + oStyle : ''));
+
 
     //check for PDF
     /*
@@ -1301,126 +1299,12 @@ function newObjectView(x, options) {
         }
     }*/
 
+    var infoLabel = '<img class="TagButtonIcon" src="' + getTagIcon(x) + '"/>';
 
-    var d = newDiv().attr({
-        'xid': xid,
-        'class': 'objectView'
-    });
+    //var infoLabel = '<i title="Info" class="fa fa-bars"></i>';
 
-    if (!transparent)
-        d.addClass('ui-widget-content ui-corner-all');
-
-    var oStyle = x.style;
-    if (scale !== undefined)
-        d.attr('style', 'font-size:' + ((scale) ? ((0.5 + scale) * 100.0 + '%') : ('100%')) + (oStyle ? '; ' + oStyle : ''));
-
-    var xn = x.name || '';
-    if (x._class)
-        xn += ' (tag)';
-    if (x._property)
-        xn += ' (property)';
-
-    var authorID = x.author;
-
-    //d.append(cd);
-
-
-        //showAuthorName = showAuthorIcon = false;
-
-    var replies;
-
-    if (showAuthorIcon) {
-        if (!((depth === depthRemaining) && (hideAuthorNameAndIconIfZeroDepth))) {
-
-            var authorClient = $N.getObject(authorID);
-            if (authorClient) {
-                if (authorID) {
-                    newAvatarImage(authorClient).appendTo(d);
-                }
-            }
-        }
-    }
-
-
-
-    function minimize() {
-        d.addClass('ObjectViewMinimized');
-        d.removeClass('ObjectViewMaximized');
-    }
-
-    function maximize() {
-        d.removeClass('ObjectViewMinimized');
-        d.addClass('ObjectViewMaximized');
-        ensureMaximized();
-    }
-
-    function toggleMaxMin() {
-        if (d.hasClass('ObjectViewMinimized'))
-            maximize();
-        else
-            minimize();
-        reflowView();
-        return false;
-    }
-
-
-    //Name
-    if (showName) {
-
-        var haxn = newEle('div').addClass('TitleLine').appendTo(d);
-        if (startMinimized)
-            haxn.click(toggleMaxMin);
-
-        var xxn = xn.length > 0 ? xn : '?';
-        var xauthor = x.author;
-
-        if (!nameClickable) {
-            haxn.append(xxn);
-        } else {
-            haxn.append(newEle('a').html(xxn).click(function(e) {
-                if ((xauthor === $N.id()) && (titleClickMode === 'edit'))
-                    newPopupObjectEdit(xid, true);
-                else if (typeof (titleClickMode) === 'function') {
-                    titleClickMode(xid);
-                } else {
-                    
-                    newPopupObjectView(xid, e);
-                }
-                return false;
-            }));
-        }
-
-        if (showAuthorName && (!((depth === depthRemaining) && (hideAuthorNameAndIconIfZeroDepth)))) {
-            if (!isSelfObject(x.id)) { //exclude self objects
-                if (x.author) {
-                    var a = x.author;
-                    var ai = $N.instance[a];
-                    var an = ai ? ai.name || a : a;
-
-                    if (!nameClickable) {
-                        haxn.prepend(an, ': ');
-                    } else {
-                        haxn.prepend(newEle('a').html(an).click(function() {
-                            newPopupObjectView(a, true);
-                            return false;
-                        }), ':&nbsp;');
-                    }
-                }
-            }
-        }
-    }
-
-    var maximized = false;
-
-    function ensureMaximized() {
-        if (maximized)
-            return;
-
-        maximized = true;
-
-        if (replies)
-            replies.detach();
-
+    function newActionButtons() {
+        
         //Selection Checkbox
         var selectioncheck = null;
         if (showSelectionCheck) {
@@ -1437,88 +1321,54 @@ function newObjectView(x, options) {
 
         if (selectioncheck)
             buttons.prepend(selectioncheck);
-
-
-        if ((showMetadataLine) && (!x._class) && (!x._property)) {
-            var mdl = newMetadataLine(x, showTime).appendTo(d);
-
-            if (showReplyButton && (x.id !== $N.id())) {
-                mdl.append(
-					' ',
-					newEle('a').html('<i class="fa fa-mail-reply"></i>').attr('title', 'Reply').click(function() {
-                    	newReplyPopup(xid, replyCallback);
-                    	return false;
-                	}),
-					' ',
-                    newSubjectTagButton('Like', 'fa-thumbs-o-up', subjectTag.Like),
-					' ',
-                    newSubjectTagButton('Dislike', 'fa-thumbs-o-down', subjectTag.Dislike),
-					' ',
-                    newSubjectTagButton('Trust', 'fa-check', subjectTag.Trust)
-                );
-            }
-        }
-
-        //d.append('<h3>Relevance:' + parseInt(r*100.0)   + '%</h3>');
-
-
-        //var nod = newObjectDetails(x);
-        //if (nod)
-            //d.append(nod);
-
-        addNewObjectDetails(x, d, showMetadataLine ? ['spacepoint'] : undefined);
-
-        if (replies)
-            replies.appendTo(d);
-
+        
+        return buttons;
     }
 
-    var r = x.reply;
-    if (r) {
-        var vr = _.values(r);
+    /*
+    <ul class="nav nav-tabs" role="tablist"> <!-- Nav tabs -->
+      <li class="active"><a href="#home" role="tab" data-toggle="tab">Home</a></li>
+      <li><a href="#profile" role="tab" data-toggle="tab">Profile</a></li>
+    </ul>
+    
+    <div class="tab-content"> <!-- Tab panes -->
+      <div class="tab-pane active" id="home">...</div>
+      <div class="tab-pane" id="profile">...</div>
+    </div>
+    */
+    function addTabs() {
 
-        if (vr.length > 0) {
-            if (!replies) {
-                replies = newDiv().appendTo(d);
-                if (!hideAuthorNameAndIconIfZeroDepth)
-                    replies.addClass('ObjectReply');
-                else
-                    replies.addClass('ObjectReplyChatZeroDepth');
-            }
-            else {
-                replies.empty();
-            }
-            if (depthRemaining > 0) {
-                var childOptions = _.clone(options);
-                childOptions.depthRemaining = depthRemaining - 1;
-                childOptions.transparent = true;
-                childOptions.hideAuthorNameAndIconIfZeroDepth = false;
-                delete childOptions.scale;
+        var tabNavs = $('<ul class="nav nav-tabs" role="tablist">').appendTo(d);
+        var tabContent = $('<div class="tab-content">').appendTo(d);
 
-                //TODO sort the replies by age, oldest first?
-                vr.forEach(function(p) {
-                    replies.append(newObjectView(p, childOptions));
-                });
-            }
-            else {
-                replies.append(vr.length + ' replies...');
+        function addTab(label, view, active) {
+            var tabid = uuid();
+            
+            //TODO lazy start on tab shown rather than auto-create all
+            var content = view.start(x, options);
+            var t = $('<li><a href="#' + tabid + '" role="tab" data-toggle="tab">' + label + '</a></li>').appendTo(tabNavs);
+            var c = $('<div class="tab-pane" id="' + tabid + '"></div>').appendTo(tabContent).append(content);        
+            if (active) {
+                c.addClass('active');
+                t.addClass('active');
             }
         }
-    } else {
-        if (replies) {
-            replies.remove();
-            replies = null;
-        }
-    }
-
-
-    if (startMinimized) {
-        minimize();
-    }
-    else {
-        maximize();
+        addTab(infoLabel, objectView.info, true);
+        addTab('<i title="Chat" class="fa fa-smile-o"></i>', objectView.chat);
+        addTab('<i title="Value" class="fa fa-line-chart"></i>', objectView.value);
+        addTab('<i title="Links" class="fa fa-share-alt"></i>', objectView.links);
+        
+        tabNavs.append(newActionButtons());
     }
     
+    
+    if (!startMinimized) 
+        addTabs();    
+    else {
+        d.append(newActionButtons());
+        d.append(objectView.info.start(x, options));
+    }
+        
     d.id = xid;
 
     return d;

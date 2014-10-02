@@ -48,15 +48,18 @@ function newChatWidget(onSend, options) {
 
     var input = newDiv().addClass('ChatInput').appendTo(c);
 
+    c.send = function(m) {
+        var mm = {a: $N.id(), m: m};
+        onSend(mm);
+        if (options.localEcho)
+            c.receive(mm); //local echo    
+    };
+    
     var textInput = $('<input type="text"/>').appendTo(input);
     textInput.keydown(function (e) {
         if (e.keyCode === 13) {
-            var m = $(this).val();
+            c.send( $(this).val() );
             $(this).val('');
-            var mm = {a: $N.id(), m: m};
-            onSend(mm);
-            if (options.localEcho)
-                c.receive(mm); //local echo
         }
     });
 

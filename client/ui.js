@@ -167,7 +167,10 @@ var refreshActionContext = _.throttle(function() {
 
         //get selected items from .ObjectSelection
         $('input.ObjectSelection:checked').each(function(index) {
-            var aoid = $(this).parent().parent().attr('xid');
+            var aoid = $(this).parent().parent().attr('xid') ||
+                        $(this).parent().parent().parent().attr('xid') ||
+                        $(this).parent().parent().parent().parent().attr('xid');
+            
             if (aoid) {
                 var o = $N.getObject(aoid);
                 if (o)
