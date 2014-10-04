@@ -112,6 +112,11 @@ public class WebServer  {
                 template(e, "client/netention.html", getIndexPage(session));
             }
         })
+        .get("/login", new SessionHandler() {
+            @Override public void handle(Session session, HttpServerRequest e) {
+                template(e, "client/auth.html", getIndexPage(session));
+            }
+        })                
                 
         .get("/auth", new SessionHandler() {            
             @Override public void handle(Session session, HttpServerRequest e) {
@@ -204,7 +209,7 @@ public class WebServer  {
                 );
         }})
                 
-        //TODO Realm parameter: https://github.com/mozilla/persona/pull/3854
+        //TODO Realm parameter: https://github.com/mozilla/persona/pull/3854        
         .post("/login/persona", new MozillaPersonaHandler(options.host, options.port, this))
         .post("/logout", new Handler<HttpServerRequest>() {
 

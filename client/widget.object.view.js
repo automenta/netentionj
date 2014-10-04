@@ -293,7 +293,7 @@ objectView.links = {
                 }
             }
 
-            if (n.length > 0) {
+            if (n.length > 1) {
                 x.append(newGraphChart({nodes: n, links: e}, 300, 300));
             }
         });
