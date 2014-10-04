@@ -18,6 +18,7 @@ package nars.web.possibility;
 
 import com.tinkerpop.blueprints.Vertex;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -55,8 +56,11 @@ public class Activity  implements Handler<Message> {
 
         public ActivityGraph(Core core, String uri) {
             this.uri = uri;
-            Vertex v = core.vertex(uri, true);
-            this.activity = core.getObject(v, excludeProperty);
+            Vertex v = core.vertex(uri, false);
+            if (v!=null)
+                this.activity = core.getObject(v, excludeProperty);
+            else
+                this.activity = Collections.EMPTY_MAP;
         }
         
     }
@@ -64,16 +68,20 @@ public class Activity  implements Handler<Message> {
         public final String uri;
         public final Map<String, Integer> context;
         final double threshold = 0.01;
+        final int iterations = 1600;
 
         public ContextGraph(Core core, String uri) {
             this.uri = uri;
-            this.context = new HashMap();
             
-            Vertex v = core.vertex(uri, true);
-            if (v == null)
+            Vertex v = core.vertex(uri, false);
+            if (v == null) {
+                context = Collections.EMPTY_MAP;
                 return;
+            }
+            else
+                context = new HashMap();
             
-            Map<Vertex, Number> m = core.centrality(1000, v);
+            Map<Vertex, Number> m = core.centrality(iterations, v);
             
             m.remove(v); //exclude own vertex
             
