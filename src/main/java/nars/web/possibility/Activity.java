@@ -17,6 +17,7 @@
 package nars.web.possibility;
 
 import com.tinkerpop.blueprints.Vertex;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -35,15 +36,13 @@ import org.vertx.java.core.json.impl.Json;
 public class Activity  implements Handler<Message> {
     private final Core core;
     private final EventBus bus;
-    Set<String> excludeProperty;
+    static final Set<String> excludeProperty = new HashSet(Arrays.asList("wikipedia_content"));
         
     public Activity(Core c, EventBus b) {
 
         this.core = c;
         this.bus = b;
         
-        excludeProperty = new HashSet();
-        excludeProperty.add("wikipedia_content");
 
         b.registerHandler(Bus.INTEREST, this);
         
@@ -54,44 +53,31 @@ public class Activity  implements Handler<Message> {
         public final String uri;
         public final Map<String, Object> activity;
 
-        public ActivityGraph(String uri, Map<String, Object> activity) {
+        public ActivityGraph(Core core, String uri) {
             this.uri = uri;
-            this.activity = activity;
+            Vertex v = core.vertex(uri, true);
+            this.activity = core.getObject(v, excludeProperty);
         }
         
     }
     public static class ContextGraph {
         public final String uri;
         public final Map<String, Integer> context;
+        final double threshold = 0.01;
 
-        public ContextGraph(String uri, Map<String, Integer> context) {
+        public ContextGraph(Core core, String uri) {
             this.uri = uri;
-            this.context = context;
-        }
-        
-    }
-    
-    
-    @Override
-    public void handle(Message e) {
-        String id = e.body().toString();
-        
-        Vertex v = core.vertex(id, false);
-        if (v!=null) {
-            Map<String, Object> a = core.getObject(v, excludeProperty);
-            if (a!=null) {
-                bus.publish(Bus.SAY, Json.encode(new ActivityGraph(id, a)));
-            }
-        }
-        if (v!=null) {       
-            final double threshold = 0.01;
+            this.context = new HashMap();
             
+            Vertex v = core.vertex(uri, true);
+            if (v == null)
+                return;
             
             Map<Vertex, Number> m = core.centrality(1000, v);
             
             m.remove(v); //exclude own vertex
             
-            Map<String, Integer> c = new HashMap();
+            Map<String, Integer> c = context;
             
             double total = 0;
             int count = 0;
@@ -114,19 +100,26 @@ public class Activity  implements Handler<Message> {
                     }
                 }
             }
-            if (c.size() > 0)
-                bus.publish(Bus.SAY, Json.encode(new ContextGraph(id, c)));            
+            
         }
-        else {
-            System.err.println("unknown context: " + id);
-        }
-        
-        core.commit();
-        
         
     }
     
-
     
-    
+    @Override
+    public void handle(Message e) {
+        String id = e.body().toString();
+                
+        //TODO avoid calling Core.vertex() twice by passing it as a parameter to both constructors
+        
+        ActivityGraph ag = new ActivityGraph(core, id);
+        if (!ag.activity.isEmpty())
+            bus.publish(Bus.SAY, Json.encode(ag));
+        
+        ContextGraph cg = new ContextGraph(core, id);
+        if (!cg.context.isEmpty())
+            bus.publish(Bus.SAY, Json.encode(cg));
+        
+    }    
+        
 }

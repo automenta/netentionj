@@ -13,6 +13,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -167,6 +169,29 @@ public class WebServer  {
                 ));
                 //core.commit();
         }})
+                
+        .get("/object/:id/context/json", new Handler<HttpServerRequest>() {
+            @Override public void handle(HttpServerRequest req) {                
+                try {                    
+                    req.response().end(
+                            Json.encode( new Activity.ContextGraph(core, 
+                                    URLDecoder.decode(req.params().get("id"),"UTF8")
+                            ) )
+                    );
+                } catch (UnsupportedEncodingException ex) { req.response().end(ex.toString());  }
+            }            
+        })
+        .get("/object/:id/activity/json", new Handler<HttpServerRequest>() {
+            @Override public void handle(HttpServerRequest req) {                
+                try {                    
+                    req.response().end(
+                            Json.encode( new Activity.ActivityGraph(core, 
+                                    URLDecoder.decode(req.params().get("id"),"UTF8")
+                            ) )
+                    );
+                } catch (UnsupportedEncodingException ex) { req.response().end(ex.toString());  }
+            }            
+        })
                 
         .get("/object/:id/json", new Handler<HttpServerRequest>() {
             @Override public void handle(HttpServerRequest req) {

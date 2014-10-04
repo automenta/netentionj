@@ -6,7 +6,7 @@ Web Server Features
 	 - REST API
  - Each client connection exclusively manages a set of NAR reasoners which provide high-level logic processing and goal-driven procedure activation.
  - High-efficiency, multi-user, multi-channel distributed event-bus for real-time pub/sub & end-to-end communication and collaboration
- - Semantic event-bus adaptively forms and suggests virtual channels for broadcasting messages to partialky relevant channels which are adjacent in semantic space
+ - Semantic event-bus adaptively forms and suggests virtual channels for broadcasting messages to partially-relevant channels which are adjacent in semantic space
  - Data self enhances through aggregation and agent processing, allowing mere discussion to automatically evolve into actions and results.
  - Graph database (via TinkerPop Blueprints) for metrics and storage
  - Ontology that encompasses all aspects of experience by adaptively integrating DBpedia resources

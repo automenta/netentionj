@@ -366,13 +366,250 @@ function newReplyWidget(onReply, onCancel) {
 }
 
 
+function newObjectEdit(ix, editable) {
+    if (typeof ix === 'string')
+        ix = $N.instance[ix];
+
+    function getEditedFocus() { return ix; }
+        
+    var u = uuid();
+
+    var D = newDiv();
+    var edit = newDiv().attr('id', u).appendTo(D);
+
+        /*if ((hideWidgets !== true) && (!x.readonly))*/ {
+            var menuWrap = newDiv().addClass('nav');
+
+
+            var addButtons = newEle('span').appendTo(menuWrap);
+
+            var whatButton = $('<button title="What?"><i class="fa fa-plus-square"/></button>').click(function() {
+				var p;
+				var taggerOptions;
+					p = newPopup('Select Tags', true, true);
+					taggerOptions = [];
+
+				var tagger = newTagger(taggerOptions, function(t) {
+                    var y = getEditedFocus();
+                    for (var i = 0; i < t.length; i++) {
+                        var T = $N.getTag(t[i]);
+                        if ((T) && (T.reserved)) {
+                            notify('Tag "' + T.name + '" can not be added to objects.');
+                        } else {
+                            y = objAddTag(y, t[i]);
+						}
+                    }
+                    update(y);
+
+					if (p && p.dialog) p.dialog('close');
+                });
+
+
+				p.append(tagger);
+
+            });
+
+            var whenButton = $('<button title="When?" id="AddWhenButton" ><i class="fa fa-clock-o"/></button>').click(function() {
+                update(objAddValue(getEditedFocus(), 'timepoint', ''));
+            });
+
+            var whereButton = $('<button title="Where?"><i class="fa fa-map-marker"/></button>').click(function() {
+                update(objAddValue(getEditedFocus(), 'spacepoint', {}));
+            });
+
+            var whoButton = $('<button disabled title="Who?" id="AddWhoButton"><i class="fa fa-user"/></button>');
+
+            var drawButton = $('<button title="Draw"><i class="fa fa-pencil"/></button>').click(function() {
+                update(objAddValue(getEditedFocus(), 'sketch', ''));
+            });
+
+            var webcamButton = $('<button title="Webcam"><i class="fa fa-camera"/></button>').click(function() {
+                newWebcamWindow(function(imgURL) {
+                    update(objAddValue(getEditedFocus(), 'image', imgURL));
+                });
+            });
+
+            var uploadButton = $('<button title="Add Media (Upload or Link)"><i class="fa fa-file-picture-o"/></button>').click(function() {
+
+
+                function attachURL(url) {
+                    if (url.endsWith('.png') || url.endsWith('.jpeg') || url.endsWith('.jpg') || url.endsWith('.svg') || url.endsWith('.gif')) {
+                        update(objAddValue(getEditedFocus(), 'image', url));
+                    }
+                    else {
+                        update(objAddValue(getEditedFocus(), 'url', url));
+                    }
+
+                    later(function() {
+                        x.dialog('close');
+                    });
+                }
+
+                var y = newDiv();
+
+                var fuf = $('<form id="FocusUploadForm" action="/upload" method="post" enctype="multipart/form-data">File:</form>').appendTo(y);
+                var fileInput = $('<input type="file" name="uploadfile" />').appendTo(fuf);
+                fuf.append('<br/>');
+                var fileSubmit = $('<input type="submit" value="Upload" />').hide().appendTo(fuf);
+
+                fileInput.change(function() {
+                    if (fileInput.val().length > 0)
+                        fileSubmit.show();
+                });
+
+                var stat = $('<div class="FocusUploadProgress"><div class="FocusUploadBar"></div><div class="FocusUploadPercent">0%</div></div><br/><div id="FocusUploadStatus"></div>').appendTo(y).hide();
+
+                y.append('<hr/>');
+
+                var mediaInput = $('<input type="text" placeholder="Image or Video URL"/>').appendTo(y);
+                var mediaButton = $('<button>Attach</button>').appendTo(y).click(function() {
+                    attachURL(mediaInput.val());
+                });
+
+
+                y.append('<hr/>');
+                var okButton = $('<button class="btn">Cancel</button>').appendTo(y);
+
+
+                var x = newPopup('Add Media', {
+                    modal: true,
+                    width: '50%'
+                });
+                x.append(y);
+
+                okButton.click(function() {
+                    x.dialog('close');
+                });
+
+                var bar = $('.FocusUploadBar');
+                var percent = $('.FocusUploadPercent');
+                var status = $('#FocusUploadStatus');
+
+                $('#FocusUploadForm').ajaxForm({
+                    beforeSend: function() {
+                        status.empty();
+                        var percentVal = '0%';
+                        bar.width(percentVal);
+                        percent.html(percentVal);
+                        stat.show();
+                    },
+                    uploadProgress: function(event, position, total, percentComplete) {
+                        var percentVal = percentComplete + '%';
+                        bar.width(percentVal);
+                        percent.html(percentVal);
+                    },
+                    complete: function(xhr) {
+                        var url = xhr.responseText;
+                        if ((url) && (url.length > 0)) {
+                            status.html($('<a>File uploaded</a>').attr('href', url));
+                            var absURL = url.substring(1);
+                            attachURL(absURL);
+                        }
+                    }
+                });
+
+            });
+
+            addButtons.append(whatButton, whenButton, whereButton, whoButton, drawButton, webcamButton, uploadButton);
+ 			addButtons.find('button').addClass('btn btn-default');
+
+            D.prepend(menuWrap);
+
+
+
+            var scopeSelect = null;
+            /*if (!objHasTag(getEditedFocus(), 'User'))*/ {
+                scopeSelect = $('<select class="form-control" style="width:auto;float:right"/>').append(
+                        //store on server but only for me
+                        '<option value="2">Private</option>',
+                        //store on server but share with who i follow
+                        '<option value="5">Trusted</option>',
+                        //store on server for public access (inter-server)
+                        '<option value="7">Public</option>',
+                        '<option value="7a">Anonymous</option>',
+                        '<option value="8">Advertise</option>').
+        		val(getEditedFocus().scope);
+
+                /*if (configuration.connection == 'static')
+                    scopeSelect.attr('disabled', 'disabled');
+                else {*/
+                    scopeSelect.change(function() {
+                        var e = getEditedFocus();
+                        e.scope = scopeSelect.val();
+                        update(e);
+                    });
+                //}
+            }
+
+            var saveButton = $('<button class="btn btn-primary" style="float:right"><b>Save</b></button>').click(function() {
+
+                var e = getEditedFocus();
+
+                if (e.scope === '7a') {
+                    e.scope = 7;
+                }
+                else {
+                    e.author = $N.id();
+                }
+
+                e.scope = parseInt(e.scope);
+
+                objTouch(e);
+
+                $N.pub(e, function(err) {
+                    notify({
+                        title: 'Unable to save.',
+                        text: x.name,
+                        type: 'Error'
+                    });
+                }, function() {
+                    notify({
+                        title: 'Saved (' + x.id.substring(0, 6) + ')'
+                                //text: '<button disabled>Goto: ' + x.name + '</button>'  //TODO button to view object
+                    });
+                });
+                D.parent().dialog('close');
+            });
+
+            var mwb = newDiv().css('float', 'right');
+            mwb.append(saveButton);
+            if (scopeSelect) mwb.append(scopeSelect);
+            //if (tagInput)	mwb.append(tagInput);
+
+            menuWrap.append(mwb);
+            menuWrap.prependTo(D);
+        }
+
+
+    later(function() {
+        tinymce.init({
+            selector: "div#" + u,
+            schema: "html5",
+            //inline: true,
+            menubar: false,
+            statusbar: false,
+            resize: "both",
+            valid_elements: "+*[*]",
+            content_css: "lib/tinymce/plugins/rdface/css/rdface.css, lib/tinymce/plugins/rdface/schema_creator/schema_colors.css",
+            plugins: [
+                "advlist autolink lists link image charmap anchor",
+                "searchreplace visualblocks fullscreen",
+                "insertdatetime media table contextmenu paste rdface emoticons textcolor"
+            ],
+            toolbar: "rdfaceMain " /*rdfaceRun*/ + "link emoticons | styleselect forecolor bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent table image"
+        });
+        
+    });
+    
+    return D;
+}
 
 /**
  *  focus - a function that returns the current focus
  *  commitFocus - a function that takes as parameter the next focus to save
  *  TODO - use a parameter object like newObjectView
  */
-function newObjectEdit(ix, editable, hideWidgets, onTagRemove, whenSliderChange, excludeTags, onNameEdit) {
+function newObjectEdit0(ix, editable, hideWidgets, onTagRemove, whenSliderChange, excludeTags, onNameEdit) {
     if (typeof ix === 'string')
         ix = $N.instance[ix];
 
@@ -629,212 +866,6 @@ function newObjectEdit(ix, editable, hideWidgets, onTagRemove, whenSliderChange,
 
 
 
-        if ((hideWidgets !== true) && (!x.readonly)) {
-            var menuWrap = newDiv().addClass('nav');
-
-
-            var addButtons = newEle('span').appendTo(menuWrap);
-
-            var whatButton = $('<button title="What?"><i class="fa fa-plus-square"/></button>').click(function() {
-				var p;
-				var taggerOptions;
-					p = newPopup('Select Tags', true, true);
-					taggerOptions = [];
-
-				var tagger = newTagger(taggerOptions, function(t) {
-                    var y = getEditedFocus();
-                    for (var i = 0; i < t.length; i++) {
-                        var T = $N.getTag(t[i]);
-                        if ((T) && (T.reserved)) {
-                            notify('Tag "' + T.name + '" can not be added to objects.');
-                        } else {
-                            y = objAddTag(y, t[i]);
-						}
-                    }
-                    update(y);
-
-					if (p && p.dialog) p.dialog('close');
-                });
-
-
-				p.append(tagger);
-
-            });
-
-            var howButton = $('<button title="How/Why?" id="AddDescriptionButton"><i class="fa fa-edit"/></button>').click(function() {
-                update(objAddValue(getEditedFocus(), 'html', ''));
-            });
-
-            var whenButton = $('<button title="When?" id="AddWhenButton" ><i class="fa fa-clock-o"/></button>').click(function() {
-                update(objAddValue(getEditedFocus(), 'timepoint', ''));
-            });
-
-            var whereButton = $('<button title="Where?"><i class="fa fa-map-marker"/></button>').click(function() {
-                update(objAddValue(getEditedFocus(), 'spacepoint', {}));
-            });
-
-            var whoButton = $('<button disabled title="Who?" id="AddWhoButton"><i class="fa fa-user"/></button>');
-
-            var drawButton = $('<button title="Draw"><i class="fa fa-pencil"/></button>').click(function() {
-                update(objAddValue(getEditedFocus(), 'sketch', ''));
-            });
-
-            var webcamButton = $('<button title="Webcam"><i class="fa fa-camera"/></button>').click(function() {
-                newWebcamWindow(function(imgURL) {
-                    update(objAddValue(getEditedFocus(), 'image', imgURL));
-                });
-            });
-
-            var uploadButton = $('<button title="Add Media (Upload or Link)"><i class="fa fa-file-picture-o"/></button>').click(function() {
-
-
-                function attachURL(url) {
-                    if (url.endsWith('.png') || url.endsWith('.jpeg') || url.endsWith('.jpg') || url.endsWith('.svg') || url.endsWith('.gif')) {
-                        update(objAddValue(getEditedFocus(), 'image', url));
-                    }
-                    else {
-                        update(objAddValue(getEditedFocus(), 'url', url));
-                    }
-
-                    later(function() {
-                        x.dialog('close');
-                    });
-                }
-
-                var y = newDiv();
-
-                var fuf = $('<form id="FocusUploadForm" action="/upload" method="post" enctype="multipart/form-data">File:</form>').appendTo(y);
-                var fileInput = $('<input type="file" name="uploadfile" />').appendTo(fuf);
-                fuf.append('<br/>');
-                var fileSubmit = $('<input type="submit" value="Upload" />').hide().appendTo(fuf);
-
-                fileInput.change(function() {
-                    if (fileInput.val().length > 0)
-                        fileSubmit.show();
-                });
-
-                var stat = $('<div class="FocusUploadProgress"><div class="FocusUploadBar"></div><div class="FocusUploadPercent">0%</div></div><br/><div id="FocusUploadStatus"></div>').appendTo(y).hide();
-
-                y.append('<hr/>');
-
-                var mediaInput = $('<input type="text" placeholder="Image or Video URL"/>').appendTo(y);
-                var mediaButton = $('<button>Attach</button>').appendTo(y).click(function() {
-                    attachURL(mediaInput.val());
-                });
-
-
-                y.append('<hr/>');
-                var okButton = $('<button class="btn">Cancel</button>').appendTo(y);
-
-
-                var x = newPopup('Add Media', {
-                    modal: true,
-                    width: '50%'
-                });
-                x.append(y);
-
-                okButton.click(function() {
-                    x.dialog('close');
-                });
-
-                var bar = $('.FocusUploadBar');
-                var percent = $('.FocusUploadPercent');
-                var status = $('#FocusUploadStatus');
-
-                $('#FocusUploadForm').ajaxForm({
-                    beforeSend: function() {
-                        status.empty();
-                        var percentVal = '0%';
-                        bar.width(percentVal);
-                        percent.html(percentVal);
-                        stat.show();
-                    },
-                    uploadProgress: function(event, position, total, percentComplete) {
-                        var percentVal = percentComplete + '%';
-                        bar.width(percentVal);
-                        percent.html(percentVal);
-                    },
-                    complete: function(xhr) {
-                        var url = xhr.responseText;
-                        if ((url) && (url.length > 0)) {
-                            status.html($('<a>File uploaded</a>').attr('href', url));
-                            var absURL = url.substring(1);
-                            attachURL(absURL);
-                        }
-                    }
-                });
-
-            });
-
-            addButtons.append(whatButton, howButton, whenButton, whereButton, whoButton, drawButton, webcamButton, uploadButton);
- 			addButtons.find('button').addClass('btn btn-default');
-
-            D.prepend(menuWrap);
-
-
-
-            var scopeSelect = null;
-            if (!objHasTag(getEditedFocus(), 'User')) {
-                scopeSelect = $('<select class="form-control" style="width:auto;float:right"/>').append(
-                        //store on server but only for me
-                        '<option value="2">Private</option>',
-                        //store on server but share with who i follow
-                        '<option value="5">Trusted</option>',
-                        //store on server for public access (inter-server)
-                        '<option value="7">Public</option>',
-                        '<option value="7a">Anonymous</option>',
-                        '<option value="8">Advertise</option>').
-						val(getEditedFocus().scope);
-
-                /*if (configuration.connection == 'static')
-                    scopeSelect.attr('disabled', 'disabled');
-                else {*/
-                    scopeSelect.change(function() {
-                        var e = getEditedFocus();
-                        e.scope = scopeSelect.val();
-                        update(e);
-                    });
-                //}
-            }
-
-            var saveButton = $('<button class="btn btn-primary" style="float:right"><b>Save</b></button>').click(function() {
-
-                var e = getEditedFocus();
-
-                if (e.scope === '7a') {
-                    e.scope = 7;
-                }
-                else {
-                    e.author = $N.id();
-                }
-
-                e.scope = parseInt(e.scope);
-
-                objTouch(e);
-
-                $N.pub(e, function(err) {
-                    notify({
-                        title: 'Unable to save.',
-                        text: x.name,
-                        type: 'Error'
-                    });
-                }, function() {
-                    notify({
-                        title: 'Saved (' + x.id.substring(0, 6) + ')'
-                                //text: '<button disabled>Goto: ' + x.name + '</button>'  //TODO button to view object
-                    });
-                });
-                D.parent().dialog('close');
-            });
-
-			var mwb = newDiv().css('float', 'right');
-            mwb.append(saveButton);
-            if (scopeSelect) mwb.append(scopeSelect);
-			if (tagInput)	mwb.append(tagInput);
-
-			menuWrap.append(mwb);
-
-        }
 
         if (x.value) {
             var tags = []; //tags & properties, actually

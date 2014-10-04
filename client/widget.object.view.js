@@ -246,8 +246,18 @@ objectView.value = {
 };
 
 objectView.links = {
-    start: function(id, options) {
+    start: function(o, options) {
+        var id = o.id;
+        
         var x = newDiv();
+        
+        var c = $.getJSON('/object/' + encodeURIComponent(id) + '/activity/json', function(context) {
+           x.append(JSON.stringify(context));
+        });
+        var c = $.getJSON('/object/' + encodeURIComponent(id) + '/context/json', function(context) {
+           x.append(JSON.stringify(context));
+        });
+        
         //    //check for Similarity
         //    var ot = objTags(x);
         //    if ((ot[0] === 'Similar') && (ot[1] === 'similarTo')) {

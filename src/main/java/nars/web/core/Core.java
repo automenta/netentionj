@@ -296,6 +296,7 @@ public class Core extends EventEmitter {
         if (createIfNonExist) {
             Vertex v = graph.addVertex(uri);
             v.setProperty("i", uri);
+            commit();
             return v;
         }
         return null;
