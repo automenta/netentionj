@@ -377,7 +377,7 @@
     },
     {
       "id": "Not",
-      "name": "Dislike",
+      "name": "Not",
       "extend": [
         "Action"
       ],

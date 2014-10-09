@@ -21,7 +21,9 @@
 .WikiBrowserHeader {
 	float: center;
 	text-align: center;
-	padding: 0.5em;
+	padding-top: 5px;
+	font-size: 125%;
+	
 }
 
 

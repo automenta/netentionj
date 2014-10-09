@@ -223,22 +223,32 @@ function newWikiBrowser(onTagAdded, options) {
 }
 
 function newWikiTagTagger(tag) {
-    var d = newDiv();
+    var d = newDiv().addClass('bs-callout bs-callout-default');
     
     var tagBar = newTagBar(self, d);
     var saveButton = newTagBarSaveButton(self, tag, tagBar, function () {
         //d.dialog('close');
-        d.empty();
+        //d.remove();
     });
-    var cancelButton = $('<button title="Cancel" class="cancelButton"><i class="fa fa-times"></i></button>').click(function () {
+    var otherButton = $('<button class="btn btn-default" title="More tags.."><i class="fa fa-search-plus"></i></button>').click(function(e) {
+		
+    });
+	
+	
+    /*var cancelButton = $('<button title="Cancel" class="cancelButton"><i class="fa fa-times"></i></button>').click(function () {
         //d.dialog('close');
         d.empty();
-    });
-
-    //d.append( $('<div class="label"></div>').append('<h4><span class="label label-success">' + tag + '</span></h4>') );
-    d.append( $('<div class="quicktag"></div>').append(tagBar) );
-    d.append( $('<div class="save"></div>').append(saveButton, cancelButton) );
+    });*/    
     
+	var userSelect = newAuthorCombo($N.id());
+	userSelect.change(function(v) {
+		saveButton.subject(v);
+	});
+	d.append(newEle('p').append(userSelect));
+	
+	d.append( $('<div class="quicktag" style="float: left"></div>').append(tagBar) );
+    d.append( $('<div class="save" style="float: right"></div>').append(saveButton,'<br/>',otherButton) );
+    d.append('<div style="clear: both;"/>');
     return d;
 }
 

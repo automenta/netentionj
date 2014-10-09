@@ -14,7 +14,7 @@ addView({
             
             v.append(newWikiTagTagger(prototag));
 			
-			var l = $('<a href="#">Read more..</a>');
+			var l = $('<button class="btn btn-primary" style="float: right" href="#">Read more..</a>');
 			l.click(function() {
 				v.remove();
 				wiki._gotoTag(tagURI);

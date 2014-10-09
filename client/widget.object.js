@@ -118,131 +118,6 @@ function newAvatarImage(s) {
 
 
 
-function newTagBarSaveButton(s, prototag, tagBar, onSave) {
-	var currentTag = prototag.id;
-	var currentTagName = prototag.name;
-	
-    var saveButton = $('<button title="Save"><i class="fa fa-floppy-o"></i></button>').click(function () {
-        if (currentTag == null) {
-            alert('Choose a wikitag.');
-            return;
-        }
-
-        var selTags = [];
-
-        tagBar.find('div input').each(function () {
-            var x = $(this);
-            var c = x[0].checked;
-            if (c) {
-                var i = x.attr('id').split('_')[1];
-                selTags.push(i);
-            }
-        });
-        if (selTags.length > 0) {
-            var id = uuid();
-            var o = objNew(id, currentTag);
-			
-            o.author = o.subject = $N.id();
-
-            o.predicate = [];
-            for (var i = 0; i < selTags.length; i++) {
-                var T = selTags[i];
-                o.predicate.push(T);
-            }			
-			
-			o.name = o.predicate + ': ' + currentTagName;
-            o.object = currentTag;
-
-            $N.pub(o, function (err) {
-                notify({
-                    title: 'Error saving:',
-                    text: err,
-                    type: 'error'
-                });
-            }, function () {
-                $N.notice(o);
-                notify({
-                    title: 'Saved',
-                    text: currentTag
-                });
-            });
-
-            if (onSave)
-                onSave();
-        } else {
-            alert('Choose 1 or more tags to combine with the wikitag.');
-        }
-    });
-    return saveButton;
-}
-
-function newTagBar(s, currentTag) {
-    var tagBar = $('<div/>');
-    tagBar.addClass('TagBar');
-
-    //http://jqueryui.com/button/#checkbox
-    var skillSet = $('<div class="btn-group" data-toggle="buttons"/>');
-    var canNeedSet = $('<div class="btn-group" data-toggle="buttons"/>');
-    
-    function tbutton(tag, target) {
-        var b = $('<input/>');
-        var cid = 'skill_' + tag + '_' + currentTag;                
-        b.attr('id', cid).attr('type', 'checkbox');
-
-        b.html(tag);
-        b.click(function (event) {
-            var t = event.target;
-            if (t.checked) {
-                target.children('input').each(function () {
-                    var x = $(this);
-                    if (x.attr('id') != t.id) {
-                        x.attr('checked', false);
-                    }
-                });
-                //target.buttonset('refresh');
-            }
-        });
-        target.append(b);
-
-        var tt = $N.tag(tag);
-
-        var tagname;
-        var tooltip;
-        
-//        if (tagAlias && (tagAlias[tag])) {
-//            tagname = tagAlias[tag];
-//            if (tt)
-//                tooltip = tt.name;
-//        } else
-            tagname = tt ? tt.name : tag;
-
-        var icon = getTagIcon(tag);
-        var iconString = '';
-        if (icon)
-            iconString = '<img src="' + icon + '" style="height: 1em"/>&nbsp;';
-        
-        var l = $('<label class="btn btn-primary"></label>');        
-        l.append(iconString, tag, b);
-        target.append(l);
-        return b;
-    }
-
-    tbutton('Learn', skillSet);
-    tbutton('Do', skillSet);
-    tbutton('Teach', skillSet);
-    tagBar.append(skillSet);
-    //skillSet.buttonset();   
-
-    tbutton('Can', canNeedSet);
-    tbutton('Need', canNeedSet);
-    tbutton('Not', canNeedSet);
-    tagBar.append(canNeedSet);
-    //canNeedSet.buttonset();  
-
-    return tagBar;
-}
-
-
 
 //(function is globalalized for optimization purposes)
 function _onTagButtonClicked() {
@@ -1180,13 +1055,13 @@ function _addObjectViewPopupMenu(authored, target) {
     if (authored) {
         newEle('button').text('+').attr({
             title: 'Edit',
-            class: 'ObjectViewPopupButton'
+            class: 'btn btn-default ObjectViewPopupButton'
         }).click(_objectViewEdit).appendTo(target);
     }
 
     newEle('button').html('&gt;').attr({
         title: 'Actions...',
-        class: 'ObjectViewPopupButton'
+        class: 'btn btn-default ObjectViewPopupButton'
     }).appendTo(target).click(_objectViewContext);
 }
 

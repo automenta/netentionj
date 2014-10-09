@@ -9,8 +9,15 @@ body {
     color: #ddd;
 }
 
-.panel, .dropdown-menu {
-	background-color: rgba(10,10,10, 0.75);
+.panel, .dropdown-menu, .ui-widget-content, .ui-menu .ui-menu-item {
+	background-color: rgba(10,10,10, 0.90) !important;
+}
+.ui-dialog-titlebar {
+	background-image: linear-gradient(#666, #333, #222);
+	background-repeat: no-repeat;
+}
+.ui-widget-content {
+    border: 0 !important;
 }
 
 a, a:visited, .ui-state-active a, .ui-state-active a:link, .ui-state-active a:visited, .ui-state-focus a, .ui-state-focus a:link, .ui-state-focus a:visited {
@@ -19,7 +26,7 @@ a, a:visited, .ui-state-active a, .ui-state-active a:link, .ui-state-active a:vi
 a:hover {
     color: #FFF !important;
 }
-select {
+select, button, input {
 	background-color: #555;
 	border: none;
 }
@@ -84,6 +91,7 @@ select {
 }
 
 
+/* graph */
 .link {
     fill: white !important;
 }
@@ -94,3 +102,14 @@ select {
     fill: white !important;
     opacity: 0.65;
 }
+
+
+/* datatables */
+.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper .dataTables_paginate {
+	color: white !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+	color: white !important;
+}
+

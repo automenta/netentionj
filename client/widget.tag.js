@@ -427,3 +427,102 @@ function newObjectSelector(T) {
         return e;
     };
 }
+
+
+
+function newTagBarSaveButton(s, prototag, tagBar, onSave) {
+	var currentTag = prototag.id;
+	var currentTagName = prototag.name;
+	
+    var saveButton = $('<button class="btn btn-success" title="Save"><i class="fa fa-floppy-o"></i></button>').click(function () {
+        if (currentTag == null) {
+            alert('Choose a wikitag.');
+            return;
+        }
+
+        var selTags = _.keys(tagBar.selected);
+		
+        if (selTags.length > 0) {
+            var id = uuid();
+            var o = objNew(id, currentTag);
+			
+            o.author = $N.id();
+			o.subject = saveButton.subj || o.author;
+
+            o.predicate = [];
+            for (var i = 0; i < selTags.length; i++) {
+                var T = selTags[i];
+                o.predicate.push(T);
+            }			
+			
+			o.name = o.predicate + ': ' + currentTagName;
+            o.object = currentTag;
+
+            $N.pub(o, function (err) {
+                notify({
+                    title: 'Error saving:',
+                    text: err,
+                    type: 'error'
+                });
+            }, function () {
+                $N.notice(o);
+                notify({
+                    title: 'Saved',
+                    text: currentTag
+                });
+            });
+
+            if (onSave)
+                onSave();
+        } else {
+            alert('Choose 1 or more tags to combine with the wikitag.');
+        }
+    });
+	
+	saveButton.subject = function(s) {
+		saveButton.subj = s;
+	};
+	
+    return saveButton;
+}
+
+function newTagToggleButton(t, selection) {
+	var l = $(newEle('li'));
+	
+	var b = newTagButton(t, function() {
+		b.checked = !b.checked;
+
+		if (b.checked) {
+			selection[t] = true;
+			l.addClass('active');			
+		}
+		else {
+			delete selection[t];
+			l.removeClass('active');
+		}
+		
+	}).addClass('TagToggleButton btn-s').appendTo(l);
+	
+	b.checked = false;		
+    
+	return l;
+}
+
+/** speed-dial selector for predicates of a relation to an object */
+function newTagBar(s, object) {
+    var tagBar = newDiv();
+	var s = { };
+	tagBar.selected = s;
+
+	return tagBar.append(
+		newEle('p').append($('<ul class="nav nav-pills"/>').append(
+			newTagToggleButton('Learn', s),
+			newTagToggleButton('Do', s),
+			newTagToggleButton('Teach', s))),
+
+		newEle('p').append($('<ul class="nav nav-pills"/>').append(
+			newTagToggleButton('Can', s),
+			newTagToggleButton('Need', s),
+			newTagToggleButton('Not', s))));
+}
+
