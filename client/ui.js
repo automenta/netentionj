@@ -367,7 +367,7 @@ function _updateView(force) {
 
 function setView(view, param) {
 
-	$N.set('currentView', view, {trigger:false});
+	//$N.set('currentView', view, {trigger:false});
 
     function indent() {
         v.addClass('overthrow view-indented');

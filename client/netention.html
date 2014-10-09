@@ -372,12 +372,13 @@
                 //"new/with/tags/:t":     "newWithTags",
                 'example': 'completeExample',
                 'user/:userid': 'user',
-                ':view': 'view',
-                ':view/tag/:tag': 'viewTag',
                 'read/*url': 'read',
                 
                 'wiki/:page': 'wiki',
-                'wiki/search/:query': 'wikisearch'
+                'wiki/search/:query': 'wikisearch',
+
+				':view': 'view',
+                ':view/tag/:tag': 'viewTag'
                         //"search/:query/:page":  "query"   // #search/kiwis/p7
             },
             me: function() {
@@ -606,7 +607,10 @@
             $N.on('change:tags', updateView);
             $N.on('change:focus', updateView);
                 
-            updateView();
+			
+			//setup default view if none already created by router
+			if ($('#View').children().length === 0)
+            	updateView();
 
             $('#NotificationArea').remove();
 

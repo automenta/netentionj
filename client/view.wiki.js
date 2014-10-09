@@ -3,21 +3,23 @@ addView({
     name: 'Wiki',
     icon: 'icon/view.wiki.svg',
     start: function(v, param) {
-        var onWikiTagAdded = function(tagURI, e) {
+        var onWikiTagAdded = function(prototag, e) {
             
+			var tagURI = prototag.id;
             if (!$N.object[tagURI]) {
-                //create proto-tag
-                var newTag = {
-                    id: tagURI,
-                    name: tagURI,
-                    extend: []
-                };
-                
-                $N.add(newTag);
+                //create proto-tag                
+                $N.add(prototag);
             }
             var v = newPopupObjectView(tagURI, e);
             
-            v.append(newWikiTagTagger(tagURI));
+            v.append(newWikiTagTagger(prototag));
+			
+			var l = $('<a href="#">Read more..</a>');
+			l.click(function() {
+				v.remove();
+				wiki._gotoTag(tagURI);
+			});
+			v.append(l);
         };
         
         var wiki = newWikiBrowser(onWikiTagAdded);
@@ -41,21 +43,21 @@ addView({
 
         wiki.onURL = function (u) {
             console.log('uri=' + u);
+			
+			/*var r;
+			if (search) {
+				r = 'wiki/search/' + encodeURIComponent(page);
+			}
+			else {
+				
+			}*/
+			u = wiki.wikipage(u);			
+			var r = 'wiki/' + encodeURIComponent(u);
+			$N.router.navigate(r, {trigger: false});
+			
         };
         
         wiki.gotoTag = function (page, search) {
-            var r;
-            if (search) {
-                r = 'wiki/search/' + encodeURIComponent(page);
-            }
-            else {
-                r = 'wiki/' + encodeURIComponent(page);
-            }
-            $N.router.navigate(r, {trigger: false});
-
-            $('#sidebar').empty();
-
-
             wiki._gotoTag(page, search);
         };
 

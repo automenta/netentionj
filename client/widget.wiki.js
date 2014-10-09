@@ -47,10 +47,18 @@ function newWikiBrowser(onTagAdded, options) {
 
     var currentTag = null; //configuration.wikiStartPage;
 
+	b.wikipage = function(t) {
+		if (t.indexOf('/')!=-1) {
+			t = t.substring(t.lastIndexOf('/')+1, t.length);
+		}
+		return t;
+	}
+	
     b.gotoTag = function(t, search) {
-        loading();
-        currentTag = t;
-
+        loading();        		
+		
+		currentTag = t = b.wikipage(t);
+		
         var url;
         var extractContent;
         if (configuration.wikiProxy) {
@@ -63,19 +71,11 @@ function newWikiBrowser(onTagAdded, options) {
             extractContent = true;
         }
         else {
-            url = search ? '/wiki/search/' + t : '/wiki/' + t + '/html';
+            url = search ? '/wiki/search/' + encodeURIComponent(t) :
+							'/wiki/' + encodeURIComponent(t) + '/html';
             extractContent = false;
         }
-
-        function newPopupButton(target) {
-            var p = $('<a href="#" class="link pulse outline-inward">+</a>');
-            p.click(function(e) {
-                if (onTagAdded)
-                    onTagAdded('dbpedia.org/resource/' + target, e);
-                return false;
-            });
-            return p;
-        }
+		
 
         $.get(url, function(d) {
 
@@ -94,10 +94,15 @@ function newWikiBrowser(onTagAdded, options) {
             if (b.onURL)
                 b.onURL('dbpedia.org/resource/' + currentTag);
 
-			
+			var heading = br.find('#firstHeading');
+			var pageTitle = heading.text();
 			
 			//remove useless content
 			br.find('#coordinates').remove();
+			br.find('.ambox').remove();
+			br.find('.noprint').remove();
+			br.find('.editlink').remove();
+			br.find('.thumbcaption .magnify').remove();
 			
 //            if (extractContent) {
 //                //br.find('head').remove();
@@ -120,35 +125,64 @@ function newWikiBrowser(onTagAdded, options) {
 //            }
             
 
+			function setTagButton(a, target) {
+				a.addClass(linkClass);
+				a.click(function(e) {
+					if (onTagAdded) {
+						var prototag = {
+							id: 'dbpedia.org/resource/' + target,
+							name: target,
+							extend: []
+						};
+
+						onTagAdded(prototag, e);
+					}
+					return false;
+				});
+				return a;
+			}
+			
+			var linkClass = "link pulse outline-inward";
+			
+			function newGotoButton(target) {
+				var p = $('<a href="#">▹</a>').addClass(linkClass);
+				p.click(function() {
+					b.gotoTag(target);
+					return false;
+				});
+				return p;
+			}
+
 
             br.find('a').each(function() {
                 var t = $(this);
-                var h = t.attr('href');
+                var h = t.attr('href');				
 				
-				t.attr({
-					'title': null,
-					'href': '#'
-				}).addClass('link pulse outline-inward');
-				
-                if (h) {
+                if (h) {					
                     if (h.indexOf('/wiki') == 0) {
-                        var target = h.substring(6);
+						if (h.indexOf('/wiki/File:')==-1) {
 
-                        t.click(function() {
-                            b.gotoTag(target);
-                            return false;
-                        });
+							t.attr({
+								'title': null,
+								'href': '#'
+							});
 
-                        if ((target.indexOf('Portal:') != 0) && (target.indexOf('Special:') != 0)) {
-                            t.after(newPopupButton(target));
-                        }
+							var target = h.substring(6);
+
+							setTagButton(t, target);
+
+							t.after(newGotoButton(target));
+						}
                     }
+					else {
+						t.attr('target', '_blank');
+					}
                 }
             });
-            var lt = newPopupButton(currentTag);
-
-            if (currentTag.indexOf('Portal:') != 0)
-                br.find('#firstHeading').append(lt);
+			
+			heading.html( setTagButton($('<a href="#">' + pageTitle + '</a>'), currentTag) );
+			heading.append(newGotoButton(currentTag));
+			
         });
 
     }

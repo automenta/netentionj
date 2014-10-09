@@ -118,7 +118,10 @@ function newAvatarImage(s) {
 
 
 
-function newTagBarSaveButton(s, currentTag, tagBar, onSave) {
+function newTagBarSaveButton(s, prototag, tagBar, onSave) {
+	var currentTag = prototag.id;
+	var currentTagName = prototag.name;
+	
     var saveButton = $('<button title="Save"><i class="fa fa-floppy-o"></i></button>').click(function () {
         if (currentTag == null) {
             alert('Choose a wikitag.');
@@ -136,39 +139,18 @@ function newTagBarSaveButton(s, currentTag, tagBar, onSave) {
             }
         });
         if (selTags.length > 0) {
-            var id = $N.id() + '-' + currentTag;
+            var id = uuid();
             var o = objNew(id, currentTag);
+			
             o.author = o.subject = $N.id();
 
             o.predicate = [];
             for (var i = 0; i < selTags.length; i++) {
                 var T = selTags[i];
                 o.predicate.push(T);
-//                if (!$N.getTag('DoLearn')) {
-//                    //apply 3-vector
-//                    objRemoveTag(o, 'Do');
-//                    objRemoveTag(o, 'Learn');
-//                    objRemoveTag(o, 'Teach');
-//
-//                    if (T == 'Learn') {
-//                        objAddTag(o, 'Learn');
-//                    } else if (T == 'Teach') {
-//                        objAddTag(o, 'Teach');
-//                    } else if (T == 'Do') {
-//                        objAddTag(o, 'Do');
-//                    } else if (T == 'DoLearn') {
-//                        objAddTag(o, 'Learn', 0.5);
-//                        objAddTag(o, 'Do', 0.5);
-//                    } else if (T == 'DoTeach') {
-//                        objAddTag(o, 'Teach', 0.5);
-//                        objAddTag(o, 'Do', 0.5);
-//                    }
-//
-//                    continue;
-//                }
-//
-//                objAddTag(o, T);
-            }
+            }			
+			
+			o.name = o.predicate + ': ' + currentTagName;
             o.object = currentTag;
 
             $N.pub(o, function (err) {
