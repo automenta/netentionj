@@ -1380,8 +1380,7 @@ div.objectView .metadataReplyButton {
 .WikiBrowser h1 {
     margin-top: 0;
 }
-.WikiBrowser a,
-.WikiBrowser a:visited {
+a.link, a.link:visited {
     border: 1px solid gray;
     padding: 1px;
     cursor: crosshair;
@@ -2210,7 +2209,7 @@ div.olControlZoom {
 .fractaldom_surface {
     background-image: url('lib/slateboxjs/cursors/grid_transparent.png');
 }
-.link {
+.edge {
     pointer-events: none;
 }
 .node text {

@@ -22,7 +22,7 @@ $.timeago.settings.strings = {
     numbers: []
 };
 $.ajaxSetup({
-  cache: true
+    cache: true
 });
 
 var stack_bottomleft = {"dir1": "right", "dir2": "up", "push": "top"};
@@ -36,19 +36,19 @@ var currentView = null;
 var Actions = [];
 var ActionMenu = {};
 
-var views = { };
+var views = {};
 
 
 
 function addView(v) {
-	views[v.id] = v;
-	
-	var viewButton = $('<button class="ViewControl ViewSelect btn btn-default"></button>')
-		.attr('id', v.id)
-		.attr('title', v.name)
-		.append($('<img/>').attr('src', v.icon))
-		.appendTo($('#ViewSelect'));
-		
+    views[v.id] = v;
+
+    var viewButton = $('<button class="ViewControl ViewSelect btn btn-default"></button>')
+            .attr('id', v.id)
+            .attr('title', v.name)
+            .append($('<img/>').attr('src', v.icon))
+            .appendTo($('#ViewSelect'));
+
 }
 
 
@@ -63,7 +63,7 @@ function loadCSS(url, med) {
                 href: url,
                 media: (med !== undefined) ? med : ""
             })
-    );
+            );
 }
 
 function loadJS(url) {
@@ -73,7 +73,7 @@ function loadJS(url) {
                 type: "text/javascript",
                 src: url
             })
-    );
+            );
 }
 
 
@@ -86,7 +86,7 @@ function addAction(a) {
         return;
     }
     if (!a.accepts) //{ 		console.error('addAction missing accepts: ' + a); 	return; 	}
-        a.accepts = function() {
+        a.accepts = function () {
             return false;
         }
 
@@ -101,7 +101,7 @@ function newContextMenu(s, excludeEmptyMenus, clickCallback) {
 
     var u = newEle('ul').addClass('ActionMenu');
 
-    _.each(ActionMenu, function(v, k) {
+    _.each(ActionMenu, function (v, k) {
         var menu = k;
         var submenu = newEle('li').append(newEle('a').html(menu));
         var subcontents = newEle('ul').addClass('ActonMenuSubContents');
@@ -109,7 +109,7 @@ function newContextMenu(s, excludeEmptyMenus, clickCallback) {
 
         var added = 0;
 
-        _.each(v, function(vv) {
+        _.each(v, function (vv) {
             var a = newEle('a').html(vv.name);
 
             if (vv.description)
@@ -118,9 +118,9 @@ function newContextMenu(s, excludeEmptyMenus, clickCallback) {
             var accepts = vv.accepts(s);
 
             if (accepts) {
-                var clickFunction = function() {
+                var clickFunction = function () {
                     if (vv.run) {
-                        later(function() {
+                        later(function () {
                             var result = vv.run(s);
                             if (result)
                                 notify(result);
@@ -161,16 +161,16 @@ function newContextMenu(s, excludeEmptyMenus, clickCallback) {
     return u;
 }
 
-var refreshActionContext = _.throttle(function() {
-    later(function() {
+var refreshActionContext = _.throttle(function () {
+    later(function () {
         var s = [];
 
         //get selected items from .ObjectSelection
-        $('input.ObjectSelection:checked').each(function(index) {
+        $('input.ObjectSelection:checked').each(function (index) {
             var aoid = $(this).parent().parent().attr('xid') ||
-                        $(this).parent().parent().parent().attr('xid') ||
-                        $(this).parent().parent().parent().parent().attr('xid');
-            
+                    $(this).parent().parent().parent().attr('xid') ||
+                    $(this).parent().parent().parent().parent().attr('xid');
+
             if (aoid) {
                 var o = $N.getObject(aoid);
                 if (o)
@@ -198,9 +198,9 @@ var refreshActionContext = _.throttle(function() {
         var selectedLabel = $('<div style="float:right"><i>' + s.length + ' selected. </i></div>');
 
         var clearButton = $('<button>Clear</button>');
-        clearButton.click(function() {
-            later(function() {
-                $('input.ObjectSelection:checked').each(function(index) {
+        clearButton.click(function () {
+            later(function () {
+                $('input.ObjectSelection:checked').each(function (index) {
                     $(this).prop('checked', false);
                 });
                 refreshActionContext();
@@ -217,15 +217,15 @@ var refreshActionContext = _.throttle(function() {
 
 
 function updateBrand() {
-	var avatarURL;
+    var avatarURL;
     if (!$N.myself()) {
         avatarURL = configuration.defaultAvatarIcon;
-	}
-	else {
-		$('.brand').attr('alt',$N.myself().name);
-    	avatarURL = getAvatarURL($N.myself());
-	}
-	
+    }
+    else {
+        $('.brand').attr('alt', $N.myself().name);
+        avatarURL = getAvatarURL($N.myself());
+    }
+
     $('#avatar-img').attr('src', avatarURL);
     $('#toggle-img').attr('src', avatarURL);
 }
@@ -244,15 +244,15 @@ function setViewLock(b) {
     if (b) {
         $('#viewpause').hide();
         $('#viewplay').show();
-        
+
         $('#ViewUpdates').show();
         $('#ViewUpdates').html('');
-        $('#ViewUpdates').append(newEle('button').html('Update').click(function() {
-            later(function() {
-                _updateView(true);            
-                updateViewLock(0);                
+        $('#ViewUpdates').append(newEle('button').html('Update').click(function () {
+            later(function () {
+                _updateView(true);
+                updateViewLock(0);
             });
-        }).hide());        
+        }).hide());
     }
     else {
         $('#viewpause').show();
@@ -264,9 +264,9 @@ function setViewLock(b) {
 }
 
 function updateViewLock(n) {
-    if (n!==undefined)
+    if (n !== undefined)
         viewUpdatesBuffered = n;
-    
+
     if (viewUpdatesBuffered > 0) {
         $('#ViewUpdates button').html(viewUpdatesBuffered + ' updates').show();
     }
@@ -284,8 +284,8 @@ function _updateView(force) {
         force = true;
         _forceNextView = false;
     }
-	
-    
+
+
     updateBrand();
     renderFocus(true);
 
@@ -336,14 +336,9 @@ function _updateView(force) {
         if (currentView.stop)
             currentView.stop();
     }
-        
-    vw.detach();
-    later(function() {
-        vw.remove();
-    });
 
-    lastView = view;    
-    
+    lastView = view;
+
     $('#ViewOptions').empty();
     $('#ViewMenu').empty();
 
@@ -351,24 +346,9 @@ function _updateView(force) {
     $('#MainMenu a').removeClass('ViewActive');
     $('#' + view).addClass('ViewActive');
 
-    var v = newDiv('View').appendTo($('body'));
 
+    setView(view);
 
-	
-    function indent() {
-        v.addClass('overthrow view-indented');
-        updateIndent($('#MainMenu').is(":visible"));
-    }
-
-	if (views[view]) {
-		indent();
-		currentView = views[view].start(v);
-	}
-	else {
-		v.html('Unknown view: ' + view);
-		currentView = null;
-	}
-        
 
     if (configuration.device == configuration.MOBILE) {
         //auto-hide the menu
@@ -385,17 +365,44 @@ function _updateView(force) {
 
 }
 
+function setView(view, param) {
+
+    function indent() {
+        v.addClass('overthrow view-indented');
+        updateIndent($('#MainMenu').is(":visible"));
+    }
+
+	var vw = $('#View');	
+    vw.detach();
+    later(function () {
+        vw.remove();
+    });
+
+	
+    var v = newDiv('View').appendTo($('body'));
+
+    if (views[view]) {
+        indent();
+        currentView = views[view].start(v, param);
+    }
+    else {
+        v.html('Unknown view: ' + view);
+        currentView = null;
+    }
+	$N.set('currentView', view, {trigger:false});
+
+}
 
 function initKeyboard() {
     var views = [];
-    $('.ViewSelect').each(function(x) {
+    $('.ViewSelect').each(function (x) {
         views.push($(this).attr('id'));
     });
 
     for (var i = 0; i < views.length; i++) {
-        var f = function(I) {
-            jwerty.key('ctrl+' + (1 + I), function() {
-                later(function() {
+        var f = function (I) {
+            jwerty.key('ctrl+' + (1 + I), function () {
+                later(function () {
                     $N.set('currentView', views[I]);
                     updateViewControls();
                 });
@@ -405,7 +412,7 @@ function initKeyboard() {
         f(i);
     }
 
-    var viewDelta = function(delta) {
+    var viewDelta = function (delta) {
         var currentIndex = _.indexOf(views, $N.get('currentView'));
         var nextIndex = currentIndex + delta;
 
@@ -414,22 +421,22 @@ function initKeyboard() {
         if (nextIndex >= views.length)
             nextIndex = 0;
 
-        later(function() {
+        later(function () {
             $N.set('currentView', views[nextIndex]);
             updateViewControls();
         });
     };
 
 
-    jwerty.key('esc', function() {
+    jwerty.key('esc', function () {
         toggleAvatarMenu();
         return false;
     });
-    jwerty.key('ctrl+[', function() {
+    jwerty.key('ctrl+[', function () {
         viewDelta(-1);
         return false;
     });
-    jwerty.key('ctrl+]', function() {
+    jwerty.key('ctrl+]', function () {
         viewDelta(+1);
         return false;
     });
@@ -440,14 +447,14 @@ function viewRead(urlstring) {
 
     var f = objNew();
 
-    _.each(urls, function(u) {
+    _.each(urls, function (u) {
         var x = objNew();
         x.id = 'read:' + u;
         x.name = u;
         x.addTag(x.id);
         f.addTag(x.id);
 
-        $.get(u, function(h) {
+        $.get(u, function (h) {
             var ext = u.split('.');
             var type = 'html';
             if (ext.length > 1) {
@@ -460,7 +467,7 @@ function viewRead(urlstring) {
 
             x.add(type, h);
             $N.notice(x);
-        }).error(function(e) {
+        }).error(function (e) {
             x.addDescription('Error Loading', JSON.stringify(e));
             $N.notice(x);
         });
@@ -484,12 +491,12 @@ function setTheme(t) {
     if (!_.contains(_.keys(themes), t))
         t = configuration.defaultTheme;
 
-	/*
-    var oldTheme = $N.get('theme');
-    if (oldTheme !== t) {
-        $N.save('theme', t);
-    }
-	*/
+    /*
+     var oldTheme = $N.get('theme');
+     if (oldTheme !== t) {
+     $N.save('theme', t);
+     }
+     */
 
     $('.themecss').remove();
 
@@ -517,7 +524,7 @@ function setTheme(t) {
 
 
 function popupAboutDialog() {
-    $.get('/about.html', function(d) {
+    $.get('/about.html', function (d) {
         var p = newPopup('About');
         p.html(d);
     });
@@ -528,29 +535,29 @@ function popupAboutDialog() {
 
 var _reflowView;
 function reflowView() {
-	var viewWidth;
-	if (!$('#FocusEditWrap').is(':visible')) {
-		viewWidth = '100%';
-	}
-	else {		
-		var vw = $(window).width() - $('#FocusEditWrap').width() - 12;
-		viewWidth = vw + 'px';
-	}
-	
-	$('#View').css('width', viewWidth);
-	
+    var viewWidth;
+    if (!$('#FocusEditWrap').is(':visible')) {
+        viewWidth = '100%';
+    }
+    else {
+        var vw = $(window).width() - $('#FocusEditWrap').width() - 12;
+        viewWidth = vw + 'px';
+    }
+
+    $('#View').css('width', viewWidth);
+
     if (!_reflowView) {
-        _reflowView = _.debounce(function() {
-            later(function() {			
+        _reflowView = _.debounce(function () {
+            later(function () {
                 $('#View').freetile({
-                    callback: function() {
+                    callback: function () {
                         $('#View').css('height', '100%');
                     }
-                });                
-            });    
+                });
+            });
         }, configuration ? configuration.viewUpdateTime[configuration.device][1] : 200);
     }
-    
+
     if ($('#View .tiled').length > 0) {
         _reflowView();
     }
@@ -575,19 +582,19 @@ function whenResized() {
 
 $('#NotificationArea').html('Loading...');
 
-$(document).ready(function() {
-    if ((identity()===ID_UNKNOWN) && (configuration.requireIdentity)) {
+$(document).ready(function () {
+    if ((identity() === ID_UNKNOWN) && (configuration.requireIdentity)) {
         window.location = '/login';
     }
 
     if (!configuration.enableAnonymous)
         $('#AnonymousLoginButton').hide();
-    
+
     var themeSelect = $('<select/>');
     for (var k in themes) {
         themeSelect.append($('<option id="' + k + '">' + themes[k] + '</option>'));
     }
-    themeSelect.change(function(e) {
+    themeSelect.change(function (e) {
         var t = $(this).children(":selected").attr("id");
         setTheme(t);
         return false;
@@ -601,36 +608,36 @@ $(document).ready(function() {
 
 
     if ($('title').html().length === 0)
-    $('title').html(configuration.siteName);
-		
+        $('title').html(configuration.siteName);
+
     $('#loginLogo').attr('src', configuration.loginLogo);
     if (configuration.favicon)
         $('#favicon').attr('href', configuration.favicon);
 
-	$('.ViewSelect').hide();
+    $('.ViewSelect').hide();
     var conviews = configuration.views;
     for (var i = 0; i < conviews.length; i++) {
         var c = conviews[i];
         $('#' + c + '.ViewControl').show();
     }
 
-    $('#openid-open').click(function() {
+    $('#openid-open').click(function () {
         $('#password-login').hide();
         $('#openid-login').fadeIn();
     });
-    $('#password-open').click(function() {
+    $('#password-open').click(function () {
         $('#openid-login').hide();
         $('#password-login').fadeIn();
     });
-    
-    
-    $('#password-login-login').click(function() {
+
+
+    $('#password-login-login').click(function () {
         var u = $('#login_email').val();
         var ph = hashpassword($('#login_password').val());
-        
+
         $('#password-login-status').html('Authorizing...');
-        
-        $.post('/login', { username: u, password: ph }, function(r) {
+
+        $.post('/login', {username: u, password: ph}, function (r) {
             if (!r) {
                 window.location.reload();
             }
@@ -645,7 +652,7 @@ $(document).ready(function() {
 
     function newLoginButton() {
         var lb = $('<button>Login</button>');
-        lb.click(function() {
+        lb.click(function () {
             $('#LoadingSplash').show();
         });
         return lb;
@@ -667,25 +674,29 @@ $(document).ready(function() {
     }
 
     //add tooltips
-    $('.ViewControl').each(function(x) {
+    $('.ViewControl').each(function (x) {
         var ti = $(this).attr('title');
         if (ti && ti.length > 0) {
             $(this).prepend(newEle('span').html(ti));
-            $(this).attr('title','');
+            $(this).attr('title', '');
         }
     });
 
-    $('#viewplay').mousedown(function() {
+    $('#viewplay').mousedown(function () {
         notify({title: 'Live', text: 'Updates will appear automatically', delay: 1000});
-		later(function() {  setViewLock(false);   });
+        later(function () {
+            setViewLock(false);
+        });
     });
-    $('#viewpause').mousedown(function() {        
+    $('#viewpause').mousedown(function () {
         notify({title: 'Paused', text: 'Updates will be queued', delay: 1000});
-		later(function() {  setViewLock(true);   });
+        later(function () {
+            setViewLock(true);
+        });
     });
 
     $('#close-menu').button();
-    $("#ViewSelect .ViewSelect").mousedown(function() {
+    $("#ViewSelect .ViewSelect").mousedown(function () {
         var v = $(this);
         var vi = v.attr('id');
         $N.router.navigate(vi, {trigger: false});
@@ -693,7 +704,7 @@ $(document).ready(function() {
         $N.set('currentView', vi);
     });
 
-    $('#about-toggle').click(function() {
+    $('#about-toggle').click(function () {
         $('#about-netention').fadeIn();
     });
 
@@ -711,7 +722,9 @@ function updateIndent(viewmenushown) {
     reflowView();
 }
 
-function toggleAvatarMenu() {    showAvatarMenu(!$('#MainMenu').is(':visible'));  }
+function toggleAvatarMenu() {
+    showAvatarMenu(!$('#MainMenu').is(':visible'));
+}
 
 function showAvatarMenu(b) {
     var vm = $('#MainMenu');
@@ -732,7 +745,7 @@ function showAvatarMenu(b) {
 }
 
 
-  
+
 
 
 
@@ -742,7 +755,7 @@ function showAvatarMenu(b) {
 
 //http://stackoverflow.com/questions/918792/use-jquery-to-change-an-html-tag
 $.extend({
-    replaceTag: function(currentElem, newTagObj, keepProps) {
+    replaceTag: function (currentElem, newTagObj, keepProps) {
         var $currentElem = $(currentElem);
         var i, $newTag = $(newTagObj).clone();
         if (keepProps) {//{{{
@@ -758,15 +771,15 @@ $.extend({
 });
 
 function newBootstrapPanel(heading, content) {
-	var panel = newDiv().addClass('panel panel-default');
-	var panelContent = newDiv().addClass('panel-body').append(content);
-	if (heading) {
-		var panelHeading = $('<div class="panel-heading"></div>').append(heading);
-		panel.append(panelHeading);
-	}
-	panel.append(panelContent);		
+    var panel = newDiv().addClass('panel panel-default');
+    var panelContent = newDiv().addClass('panel-body').append(content);
+    if (heading) {
+        var panelHeading = $('<div class="panel-heading"></div>').append(heading);
+        panel.append(panelHeading);
+    }
+    panel.append(panelContent);
 
-	return panel;
+    return panel;
 }
 
 
@@ -774,21 +787,21 @@ function newBootstrapPanel(heading, content) {
 //Global Prototype Modifications
 
 $.fn.extend({
-    replaceTag: function(newTagObj, keepProps) {
-        this.each(function() {
+    replaceTag: function (newTagObj, keepProps) {
+        this.each(function () {
             jQuery.replaceTag(this, newTagObj, keepProps);
         });
     }
 });
 
 
-String.prototype.lpad = function(padString, length) {
+String.prototype.lpad = function (padString, length) {
     var str = this;
     while (str.length < length)
         str = padString + str;
     return str;
 }
-String.prototype.endsWith = function(suffix) {
+String.prototype.endsWith = function (suffix) {
     return this.indexOf(suffix, this.length - suffix.length) !== -1;
 };
 
@@ -850,22 +863,22 @@ function testGC(f) {
     if (f) {
         return;
     }
-    
+
     if ($N.get('currentView') == 'forum') {
         $N.set('currentView', 'browse');
     }
     else {
-        $N.set('currentView', 'forum');        
+        $N.set('currentView', 'forum');
     }
-         
+
     setTimeout(testGC, 1000);
 }
 function getMemory() {
     var p = window.performance.memory;
     return {
-        heapLimit: p.jsHeapSizeLimit/(1024*1024),
-        usedHeap: p.usedJSHeapSize/(1024*1024),
-        totalHeap: p.totalJSHeapSize/(1024*1024)
+        heapLimit: p.jsHeapSizeLimit / (1024 * 1024),
+        usedHeap: p.usedJSHeapSize / (1024 * 1024),
+        totalHeap: p.totalJSHeapSize / (1024 * 1024)
     };
 }
 

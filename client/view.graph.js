@@ -400,7 +400,7 @@ addView({
 			force.stop();
 
 			svg.selectAll('.node').remove();
-			svg.selectAll('.link').remove();
+			svg.selectAll('.edge').remove();
 
 			var nodeTags = { };
 
@@ -738,10 +738,10 @@ addView({
 
 				node = svg.selectAll('.node').data(nodes).enter().append('g').attr('class', 'node');
 
-				var link = svg.selectAll('.link')
+				var link = svg.selectAll('.edge')
 					.data(edges)
 					.enter().append('line')
-					.attr('class', 'link')
+					.attr('class', 'edge')
 					.attr('marker-end', function(l) {
 						if (l.style)
 							if (l.style.undirected)

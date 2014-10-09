@@ -120,6 +120,7 @@ function newWikiBrowser(onTagAdded, options) {
                 var t = $(this);
                 var h = t.attr('href');
                 t.attr('href', '#');
+				t.addClass('link');
                 if (h) {
                     if (h.indexOf('/wiki') == 0) {
                         var target = h.substring(6);

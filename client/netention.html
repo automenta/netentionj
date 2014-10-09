@@ -342,6 +342,7 @@
 
 
             @import url("netention.css");
+            @import url("netention.anim.css");
         </style>
         
         <div id="theme"></div>
@@ -373,7 +374,10 @@
                 'user/:userid': 'user',
                 ':view': 'view',
                 ':view/tag/:tag': 'viewTag',
-                'read/*url': 'read'
+                'read/*url': 'read',
+                
+                'wiki/:page': 'wiki',
+                'wiki/search/:query': 'wikisearch'
                         //"search/:query/:page":  "query"   // #search/kiwis/p7
             },
             me: function() {
@@ -394,6 +398,12 @@
                     });
                 }
             },
+            wiki: function (page) {
+                setView('wiki', { target: page, search: false} );                
+            },
+            wikisearch: function (query) {
+                setView('wiki', { target: query, search: false} );
+            },            
             view: function(view) {
                 $N.set('currentView', view);                
             },

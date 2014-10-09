@@ -2,7 +2,7 @@ addView({
     id: 'wiki',
     name: 'Wiki',
     icon: 'icon/view.wiki.svg',
-    start: function(v) {
+    start: function(v, param) {
         var onWikiTagAdded = function(tagURI, e) {
             
             if (!$N.object[tagURI]) {
@@ -22,7 +22,15 @@ addView({
         
         var wiki = newWikiBrowser(onWikiTagAdded);
         
-        wiki.gotoTag(configuration.wikiStartPage, false);
+		if (!param) {			
+        	wiki.gotoTag(configuration.wikiStartPage, false);
+		}
+		else {
+			var search = param.search;
+			var target = param.target;
+			wiki.gotoTag(target, search);
+		}
+		
         
         var frame = newDiv().attr('class', 'SelfView');
         frame.append(wiki);
