@@ -62,7 +62,7 @@ Animation Extras
   pointer-events: none;
   content: '';
   position: absolute;
-  border: #e1e1e1 solid 3px;
+  border: #e1e1e1 solid 2px;
   top: -46px;
   right: -46px;
   bottom: -46px;

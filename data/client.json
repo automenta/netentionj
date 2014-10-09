@@ -3,14 +3,13 @@
 		
         "initialView": "wall",
 
-		"avatarMenuDisplayInitially": true,
 		"focusEditDisplayStartup": false,
         "favicon": null,
         "loginLogo": "/theme/login-logo.png",
         "defaultAvatarIcon": "/theme/default-avatar.jpg",
         "wikiStartPage": "Portal:Current_events",
         "showPlanOnSelfPage": true,
-        "defaultTheme": "_bootswatch.cerulean",
+        "defaultTheme": "bootswatch.cerulean",
         "maxStartupObjects": 8192,
         "defaultMapMode2D": true,
         "mapDefaultLocation": [40.44, -80.0],

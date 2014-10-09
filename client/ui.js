@@ -429,10 +429,10 @@ function initKeyboard() {
     };
 
 
-    jwerty.key('esc', function () {
+    /*jwerty.key('esc', function () {
         toggleAvatarMenu();
         return false;
-    });
+    });*/
     jwerty.key('ctrl+[', function () {
         viewDelta(-1);
         return false;
@@ -492,34 +492,11 @@ function setTheme(t) {
     if (!_.contains(_.keys(themes), t))
         t = configuration.defaultTheme;
 
-    /*
-     var oldTheme = $N.get('theme');
-     if (oldTheme !== t) {
-     $N.save('theme', t);
-     }
-     */
-
     $('.themecss').remove();
 
-    var themeURL;
-    var inverse = false;
-    if (t[0] == '_') {
-        t = t.substring(1);
-        themeURL = 'theme/' + t + '.css';
-        if (t === 'Dark')
-            inverse = true;
-    }
-    else {
-        themeURL = 'lib/jquery-ui/1.10.4/themes/' + t + '/jquery-ui.min.css';
-        if (t === 'ui-darkness')
-            inverse = true;
-    }
+    var themeURL = 'theme/' + t + '.css';
 
     $('#theme').append('<link class="themecss" href="' + themeURL + '" type="text/css" rel="stylesheet"/>');
-    if (inverse) {
-        $('#theme').append('<link class="themecss" href="/theme/black-background.css" type="text/css" rel="stylesheet"/>');
-    }
-
 }
 
 
@@ -602,8 +579,9 @@ $(document).ready(function () {
     });
 
     var langSelect = ('<select id="uilanguage"><option>English</option><option>Español</option> <option>Français</option><option>Русский</option><option>עברית</option><option>العربية</option><option>हिन्दी; हिंदी</option><option>中文(简体)</option><option>日本語</option></select>');
-    $('#OptionsMenu ul').prepend(newEle('li').append(themeSelect), newEle('li').append(langSelect));
-
+    //$('#OptionsMenu ul')
+	$('#AvatarDropdown').prepend(newEle('li').append(themeSelect), newEle('li').append(langSelect));
+	
     $(window).resize(whenResized);
     whenResized();
 
@@ -675,6 +653,7 @@ $(document).ready(function () {
     }
 
     //add tooltips
+	/*
     $('.ViewControl').each(function (x) {
         var ti = $(this).attr('title');
         if (ti && ti.length > 0) {
@@ -682,6 +661,7 @@ $(document).ready(function () {
             $(this).attr('title', '');
         }
     });
+	*/
 
     $('#viewplay').mousedown(function () {
         notify({title: 'Live', text: 'Updates will appear automatically', delay: 1000});
@@ -723,6 +703,7 @@ function updateIndent(viewmenushown) {
     reflowView();
 }
 
+/*
 function toggleAvatarMenu() {
     showAvatarMenu(!$('#MainMenu').is(':visible'));
 }
@@ -744,7 +725,7 @@ function showAvatarMenu(b) {
         updateIndent(true);
     }
 }
-
+*/
 
 
 

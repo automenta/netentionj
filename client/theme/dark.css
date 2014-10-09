@@ -1,4 +1,4 @@
-@import url('rainbow_menu.css');
+@import url('bootswatch.darkly.css');
 
 
 body {
@@ -9,8 +9,8 @@ body {
     color: #ddd;
 }
 
-.panel {
-	background-color: rgba(10,10,10, 0.5);
+.panel, .dropdown-menu {
+	background-color: rgba(10,10,10, 0.75);
 }
 
 a, a:visited, .ui-state-active a, .ui-state-active a:link, .ui-state-active a:visited, .ui-state-focus a, .ui-state-focus a:link, .ui-state-focus a:visited {
@@ -19,6 +19,10 @@ a, a:visited, .ui-state-active a, .ui-state-active a:link, .ui-state-active a:vi
 a:hover {
     color: #FFF !important;
 }
+select {
+	background-color: #555;
+}
+
 .navbar-default .navbar-brand {
 	color: #FFF;
 }

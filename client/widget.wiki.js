@@ -15,13 +15,13 @@ function newWikiBrowser(onTagAdded, options) {
 
     var b = newDiv();
 
-    var header = newDiv();
-    header.addClass('WikiBrowserHeader');
+    var menu = newDiv();
+    menu.addClass('WikiBrowserHeader');
     
 
     //var backButton = $('<button disabled><i class="fa fa-arrow-left"></i></button>');    
     
-    var searchInput = $('<input _placeholder="Search Wikipedia"/>');
+    var searchInput = $('<input placeholder="Search"/>');
     var searchInputButton = $('<button><i class="fa fa-play"></i></button>');
     searchInput.keyup(function(event) {
         if (event.keyCode == 13)
@@ -30,12 +30,12 @@ function newWikiBrowser(onTagAdded, options) {
     searchInputButton.click(function() {
         b.gotoTag(searchInput.val(), true);
     });
-    header.append('<button disabled title="Bookmark"><i class="fa fa-star"></i></button>');
-    header.append('<button disabled><i class="fa fa-refresh"></i></button>');
-    header.append(searchInput);
-    header.append(searchInputButton);
+    menu.append('<button disabled title="Bookmark"><i class="fa fa-star"></i></button>');
+    menu.append('<button disabled><i class="fa fa-refresh"></i></button>');
+    menu.append(searchInput);
+    menu.append(searchInputButton);
 
-    b.append(header);
+    b.append(menu);
 
     var br = $('<div/>');
     br.addClass('WikiBrowser');
@@ -54,7 +54,12 @@ function newWikiBrowser(onTagAdded, options) {
 		return t;
 	}
 	
+	b.menu = menu;
+	
     b.gotoTag = function(t, search) {
+		if (!t)
+			return;
+		
         loading();        		
 		
 		currentTag = t = b.wikipage(t);
@@ -103,6 +108,7 @@ function newWikiBrowser(onTagAdded, options) {
 			br.find('.noprint').remove();
 			br.find('.editlink').remove();
 			br.find('.thumbcaption .magnify').remove();
+			br.find('.mw-editsection').remove();
 			
 //            if (extractContent) {
 //                //br.find('head').remove();
@@ -159,7 +165,21 @@ function newWikiBrowser(onTagAdded, options) {
                 var h = t.attr('href');				
 				
                 if (h) {					
-                    if (h.indexOf('/wiki') == 0) {
+					if (h[0] == '#') {
+						//override anchor link because this page already uses an anchor for routing
+						t.attr('href', '#');
+												
+						if ($(h).first()) {
+							var target = h + '';
+							t.click(function() {
+								var te = $(target).first();
+								$('html,body,#View').animate({
+									scrollTop: (te.offset().top)-($('#View').offset().top)
+								},500);
+							});
+						}
+					}
+                    else if (h.indexOf('/wiki') == 0) {
 						if (h.indexOf('/wiki/File:')==-1) {
 
 							t.attr({

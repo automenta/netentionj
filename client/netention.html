@@ -78,19 +78,36 @@
 
         <div id="AlertConsole"></div>
         
-        <a id="AvatarButtonMini" style="display:none;" class="pulse grow-inward"><img id="toggle-img" title="Click here to expand the control panel"  alt="toggle menu button" src="icon/netention-button.png" /></a>
+        <!--<a id="AvatarButtonMini" style="display:none;"><img id="toggle-img" title="Click here to expand the control panel"  alt="toggle menu button" src="icon/netention-button.png" /></a>-->
 
         <div id="ActionMenuWrapper"></div>
-        <div id="AvatarButton" class="ui-corner-br shadow" style="display:none;">
-            <img alt="brand" id="avatar-img" class="ui-corner-br" alt="avatar image" src="icon/load.gif" />
-        </div>
+        
 
-        <nav id="MainMenu" style="display:none; width: 100%" class="container-fluid navbar navbar-default" role="navigation">
+        <nav id="MainMenu" style="display:none; width: 100%" class="container-fluid navbar-default" role="navigation">
             <!-- <li class="viz"><a class="ui-button" id="time" title="Timeline" href="#"><b class="icon-time"></b><span class="display-menu-collapse">Timeline</span></a></li> -->
             <!-- <li><button id="FocusToggleButton" title="Toggle Fullsize" ><i class="icon-resize-full"></i></button></li> -->
             <!-- <li><button id='slides'  title="Slides"><i class="icon-play"></i></button></li> -->
 
-            <div class="section" style="padding-left: 47px;">&nbsp;</div>
+			<button type="button" class="ViewControl btn btn-default dropdown-toggle" data-toggle="dropdown">
+				<img alt="brand" id="avatar-img" class="ui-corner-br" alt="avatar image" src="icon/load.gif" />
+			</button>
+			<ul id="AvatarDropdown" class="dropdown-menu" role="menu">
+            
+				<div id="OptionsMenu" class="btn-group">
+                	<div id="NotificationList" style="float: left" class="ViewControl"></div>
+            	</div>
+				
+				<li id="ConnectionList" class="divider"></li>
+				<li class="divider"></li>
+				<li><a href="#">Reconnect</a></li>
+				<li><a href="#">Disconnect All</a></li>
+				<li class="divider"></li>
+				<li><a id="ToggleChatButton" class="ViewControl"><img src="icon/view.chat.svg">Chat</a></li>
+				<li><a id="EditProfileButton" class="ViewControl"><img src="icon/view.browse.svg">Edit My Profile</a></li>
+				<li><a id="SelectProfileButton" class="ViewControl"><img src="icon/view.share.svg">Change Identity...</a></li>
+				<li><a href="/login" class="websocket ViewControl"><i class="fa fa-sign-in fa-3x"></i> Login</a></li>
+				<li><a href="/logout" class="websocket ViewControl"><i class="fa fa-sign-in fa-3x"></i> Logout</a></li>
+			</ul>
 
             <div class="btn-group" style="float:left">
                 <button id="AddContentButton" title="New..." type="button" class="ViewControl btn btn-default"><img src="icon/plus.transparent.svg"/></button>
@@ -111,7 +128,7 @@
             </div>			
 
 
-            <button id="FocusClearButton" title="Clear Focus" type="button" class="ViewControl btn btn-default"><i class="fa fa-times-circle-o fa-2x"></i></button>
+            <button id="FocusClearButton" style="display:none" title="Clear Focus" type="button" class="ViewControl btn btn-default"><i class="fa fa-times-circle-o fa-2x"></i></button>
             <button id="FocusEditToggleButton" title="Focus" type="button" class="ViewControl btn btn-default" data-toggle="button"><i class="fa fa-search fa-2x"></i></button>
 
             <button id="viewplay" class="ViewControl btn btn-default" title="Live Mode"><i class="fa fa-play fa-2x"></i></button>
@@ -153,27 +170,6 @@
             -->
 
 
-            <div id="OptionsMenu" class="btn-group">
-
-                <div id="NotificationList" style="float: left" class="ViewControl"></div>
-
-                <button type="button" class="ViewControl btn btn-default dropdown-toggle" data-toggle="dropdown"  style="float: right">
-                    <i class="fa fa-random fa-2x"></i>&nbsp;&nbsp;<span class="caret"></span>
-                </button>
-                <ul class="dropdown-menu" role="menu">
-                    <li id="ConnectionList" class="divider"></li>
-                    <li class="divider"></li>
-                    <li><a href="#">Reconnect</a></li>
-                    <li><a href="#">Disconnect All</a></li>
-                    <li class="divider"></li>
-                    <li><a id="ToggleChatButton" class="ViewControl"><img src="icon/view.chat.svg">Chat</a></li>
-                    <li><a id="EditProfileButton" class="ViewControl"><img src="icon/view.browse.svg">Edit My Profile</a></li>
-                    <li><a id="SelectProfileButton" class="ViewControl"><img src="icon/view.share.svg">Change Identity...</a></li>
-                    <li><a href="/login" class="websocket ViewControl"><i class="fa fa-sign-in fa-3x"></i> Login</a></li>
-                    <li><a href="/logout" class="websocket ViewControl"><i class="fa fa-sign-in fa-3x"></i> Logout</a></li>
-                </ul>
-
-            </div>
 
         </nav>
 
@@ -510,31 +506,6 @@
                 setTheme($N.get('theme'));        
             });
 
-            /*
-            $('#MainMenu input').click(function(x) {
-                    var b = $(this);
-                    var v = b.attr('id');
-                    if ((b.attr('type') === 'text') || (b.attr('type') === 'checkbox'))
-                            return;
-                    $('#ViewControls').buttonset('refresh');
-                    $N.save('currentView', v);
-                    showAvatarMenu(false);
-            });
-            */
-
-            $('#AvatarButtonMini').click(function() {
-                    var vm = $('#MainMenu');
-                    var shown = vm.is(':visible');
-                    showAvatarMenu(!shown);
-            });
-            $('#close-menu').click(function() {
-                    var vm = $('#MainMenu');
-                    var shown = vm.is(':visible');
-                    showAvatarMenu(!shown);
-            });
-            $('#avatar-img').click(function() {
-                    showAvatarMenu(false);
-            });
 
 
             $('#AddContentButton').click(function() {
@@ -559,13 +530,6 @@
                 newPopupObjectView('User');
                 return false;
             })
-
-
-            $('#AvatarButton').hover(function() {
-                    $('#IdentityPopout').fadeIn();
-            }, function() {
-                    $('#IdentityPopout').fadeOut();    
-            });
 
             initFocusButtons();
 
@@ -594,11 +558,18 @@
 
         $N.once('session.start', function() { 
             console.log('Session start for: ', $N.id());
-                        
-            $N.saveAll();
+            
+			
+			//init main menu
+			$('#MainMenu').fadeIn();
+        	updateIndent(true);			
             updateBrand(); //TODO use backbone Model instead of global function
-
             updateViewLock(0);
+			if (configuration.device == configuration.DESKTOP)
+				$('.ViewControl').addClass('pulse');
+			
+			
+            $N.saveAll();
 
 
 
@@ -614,10 +585,10 @@
 
             $('#NotificationArea').remove();
 
-            if (configuration.avatarMenuDisplayInitially)
-                    showAvatarMenu(true);
-            else
-                    showAvatarMenu(false);
+            
+        	
+        	
+			
 
             later(function() {
                     notify({

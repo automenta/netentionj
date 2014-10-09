@@ -60,6 +60,10 @@ addView({
         wiki.gotoTag = function (page, search) {
             wiki._gotoTag(page, search);
         };
+		
+		var wikimenu = wiki.menu;
+		wikimenu.detach();
+		$('#ViewMenu').append(wikimenu);
 
         frame.onChange = function () {
             //update user summary?
