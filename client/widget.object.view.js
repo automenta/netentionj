@@ -87,7 +87,7 @@ objectView.info = {
         //Name
         if (showName) {
 
-            var haxn = newEle('div').addClass('TitleLine').appendTo(d);
+            var haxn = newEle('div').appendTo(d);
             if (startMinimized)
                 haxn.click(toggleMaxMin);
 
@@ -97,7 +97,7 @@ objectView.info = {
             if (!nameClickable) {
                 haxn.append(xxn);
             } else {
-                haxn.append(newEle('a').html(xxn).click(function (e) {
+                haxn.append(newEle('a').addClass('link pulse outline-inward').html(xxn).click(function (e) {
                     if ((xauthor === $N.id()) && (titleClickMode === 'edit'))
                         newPopupObjectEdit(xid, true);
                     else if (typeof (titleClickMode) === 'function') {

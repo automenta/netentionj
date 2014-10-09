@@ -383,10 +383,10 @@ function newObjectEdit(ix, editable) {
 
             var addButtons = newEle('span').appendTo(menuWrap);
 
-            var whatButton = $('<button title="What?"><i class="fa fa-plus-square"/></button>').click(function() {
+            var whatButton = $('<button title="What?"><i class="fa fa-plus-square"/></button>').click(function(e) {
 				var p;
 				var taggerOptions;
-					p = newPopup('Select Tags', true, true);
+					p = newPopup('Select Tags', e);
 					taggerOptions = [];
 
 				var tagger = newTagger(taggerOptions, function(t) {

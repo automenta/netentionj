@@ -68,7 +68,7 @@ function newWikiBrowser(onTagAdded, options) {
         }
 
         function newPopupButton(target) {
-            var p = $('<a href="#" title="Tag">+</a>');
+            var p = $('<a href="#" class="link pulse outline-inward">+</a>');
             p.click(function(e) {
                 if (onTagAdded)
                     onTagAdded('dbpedia.org/resource/' + target, e);
@@ -93,7 +93,12 @@ function newWikiBrowser(onTagAdded, options) {
 
             if (b.onURL)
                 b.onURL('dbpedia.org/resource/' + currentTag);
-            
+
+			
+			
+			//remove useless content
+			br.find('#coordinates').remove();
+			
 //            if (extractContent) {
 //                //br.find('head').remove();
 //                //br.find('script').remove();
@@ -119,8 +124,12 @@ function newWikiBrowser(onTagAdded, options) {
             br.find('a').each(function() {
                 var t = $(this);
                 var h = t.attr('href');
-                t.attr('href', '#');
-				t.addClass('link');
+				
+				t.attr({
+					'title': null,
+					'href': '#'
+				}).addClass('link pulse outline-inward');
+				
                 if (h) {
                     if (h.indexOf('/wiki') == 0) {
                         var target = h.substring(6);

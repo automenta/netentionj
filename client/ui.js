@@ -367,6 +367,8 @@ function _updateView(force) {
 
 function setView(view, param) {
 
+	$N.set('currentView', view, {trigger:false});
+
     function indent() {
         v.addClass('overthrow view-indented');
         updateIndent($('#MainMenu').is(":visible"));
@@ -389,7 +391,6 @@ function setView(view, param) {
         v.html('Unknown view: ' + view);
         currentView = null;
     }
-	$N.set('currentView', view, {trigger:false});
 
 }
 

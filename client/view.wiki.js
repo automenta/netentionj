@@ -22,13 +22,15 @@ addView({
         
         var wiki = newWikiBrowser(onWikiTagAdded);
         
+		wiki._gotoTag = wiki.gotoTag; //HACK
+		
 		if (!param) {			
         	wiki.gotoTag(configuration.wikiStartPage, false);
 		}
 		else {
 			var search = param.search;
 			var target = param.target;
-			wiki.gotoTag(target, search);
+			wiki._gotoTag(target, search);
 		}
 		
         
@@ -39,9 +41,8 @@ addView({
 
         wiki.onURL = function (u) {
             console.log('uri=' + u);
-            uri = u;
         };
-        wiki._gotoTag = wiki.gotoTag; //HACK
+        
         wiki.gotoTag = function (page, search) {
             var r;
             if (search) {
