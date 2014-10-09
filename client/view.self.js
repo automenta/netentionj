@@ -4,7 +4,7 @@ addView({
 	icon: 'icon/view.us.svg',
 	start: function(v) {
 
-		var panel = newDiv().addClass('User ViewPage panel panel-default').appendTo(v);
+		var panel = newDiv().addClass('User ViewPage panel-default').appendTo(v);
 		var panelHeading = $('<div class="panel-heading"></div>').appendTo(panel);
 
 		panelHeading.append('<br/>');

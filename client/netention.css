@@ -14,12 +14,23 @@ body {
 .ui-autocomplete {
 	z-index: 5000 !important;
 }
-a,
-a:visited {
+a, a:visited {
 	cursor: pointer;
 }
+
+a.link,
+a.link:visited {
+	border: 1px solid rgba(127, 127, 127, 0.25);
+	padding: 1px;
+	cursor: crosshair;
+	font-weight: bold;
+}
+
 select {
 	height: 2em;
+}
+.navbar {
+	border: none !important;
 }
 .ui-dialog-content {
 	clear: both;
@@ -36,6 +47,8 @@ select {
 	padding-left: 1px !important;
 	padding-right: 1px !important;
 }
+
+
 /* @group Blink */
 
 .blink {
@@ -1312,9 +1325,6 @@ div.objectView .metadataReplyButton {
 .SelfMeta button {
 	font-size: 150%;
 }
-.ui-dialog-content .WikiBrowser-REMOVED {
-	max-height: 400px;
-}
 .ui-dialog {
 	padding: 0 !important;
 }
@@ -1325,41 +1335,6 @@ div.objectView .metadataReplyButton {
 .ui-widget {
 	font-family: inherit !important;
 	font-size: inherit !important;
-}
-.WikiBrowser {
-	clear: both;
-	background-color: white;
-	color: black;
-	padding: 1em;
-}
-.WikiBrowser h1 {
-	margin-top: 0;
-}
-a.link,
-a.link:visited {
-	border: 1px solid rgba(127, 127, 127, 0.25);
-	padding: 1px;
-	cursor: crosshair;
-	font-weight: bold;
-}
-.WikiBrowser .hlist li {
-	display: inline;
-	white-space: nowrap;
-}
-.WikiBrowser .hlist {
-	margin-bottom: 2em !important;
-}
-.WikiBrowser td {
-	background: none !important;
-}
-.WikiTagSave {
-	margin-top: 5px;
-	font-size: 150%;
-}
-.WikiBrowserHeader {
-	float: center;
-	text-align: center;
-	padding: 0.5em;
 }
 #BioText {
 	border: 1px solid gray;
@@ -2436,23 +2411,28 @@ table.dataTable.hover tbody tr.even:hover,
 table.dataTable.display tbody tr:hover,
 table.dataTable.display tbody tr.odd:hover,
 table.dataTable.display tbody tr.even:hover {
-	background-color: rgba(255, 255, 255, 0.15);
+	background-color: rgba(255, 255, 255, 0.15) !important;
 }
 table.dataTable.row-border tbody th,
 table.dataTable.row-border tbody td,
 table.dataTable.display tbody th,
 table.dataTable.display tbody td {
-	background-color: rgba(225, 225, 225, 0.15);
+	background-color: rgba(225, 225, 225, 0.15) !important;
 }
 table.dataTable.stripe tbody tr.odd,
 table.dataTable.display tbody tr.odd {
-	background-color: rgba(225, 225, 225, 0.15);
+	background-color: rgba(225, 225, 225, 0.15) !important;
 }
+table.dataTable .sorting_1 {
+	background-color: transparent; !important;
+	font-weight: bold !important;
+}
+.dataTables_wrapper { color: inherit !important; }
+
 #AlertConsole {
 	font-size: 80%;
 	line-height: 100%;
-	max-height: 35%;
-	max-width: 35%;
+
 	overflow: hidden;
 	z-index: 100;
 	font-family: monospace;

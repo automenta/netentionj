@@ -13,9 +13,7 @@ body {
     background-color: #149bdf;
 	color: white;
 }
-#MainMenu a {
-	color: white;
-}
+
 .ui-widget-content {
     background: rgba(225,225,225,0.8);
 }

@@ -1,3 +1,31 @@
+.WikiBrowser {
+	clear: both;
+	padding: 1em;
+}
+.WikiBrowser h1 {
+	margin-top: 0;
+}
+
+.WikiBrowser .hlist li {
+	display: inline;
+	white-space: nowrap;
+}
+.WikiBrowser .hlist {
+	margin-bottom: 2em !important;
+}
+
+.WikiTagSave {
+	margin-top: 5px;
+	font-size: 150%;
+}
+.WikiBrowserHeader {
+	float: center;
+	text-align: center;
+	padding: 0.5em;
+}
+
+
+/*
 
 @import url("netention.css");
 @import url("lib/bootstrap/bootstrap.min.css");
@@ -83,3 +111,4 @@ body {
 .item {
     clear: both;
 }
+*/

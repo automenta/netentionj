@@ -91,7 +91,7 @@ function newWikiBrowser(onTagAdded, options) {
             br.empty().append(d);
             var metaele = br.find('#_meta');
             var metadata = JSON.parse(metaele.text());
-            metaele.empty();            
+            metaele.remove();            
 
             var url = metadata.url;
             currentTag = url.substring(url.lastIndexOf('/')+1, url.length);
@@ -103,12 +103,13 @@ function newWikiBrowser(onTagAdded, options) {
 			var pageTitle = heading.text();
 			
 			//remove useless content
-			br.find('#coordinates').remove();
-			br.find('.ambox').remove();
-			br.find('.noprint').remove();
-			br.find('.editlink').remove();
-			br.find('.thumbcaption .magnify').remove();
-			br.find('.mw-editsection').remove();
+			_.each(
+				['#coordinates', '.ambox', '.noprint', '.editlink', 
+				 '.thumbcaption .magnify', '.mw-editsection', 'siteNotice'], 
+				
+				function(x) {  br.find(x).remove();	}
+			);
+									
 			
 //            if (extractContent) {
 //                //br.find('head').remove();

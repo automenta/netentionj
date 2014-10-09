@@ -21,7 +21,26 @@ a:hover {
 }
 select {
 	background-color: #555;
+	border: none;
 }
+.btn-default { color: gray; }
+
+
+
+/* graph */
+.node text { 	fill: white; }
+.edge { stroke: gray; }
+
+
+
+/* wiki overrides for dark themes */
+.WikiBrowser td, .WikiBrowser tr, .WikiBrowser table, .WikiBrowser div {
+	background: none !important;
+	color: inherit !important;	
+	padding: 0.5em !important;
+}
+
+
 
 .navbar-default .navbar-brand {
 	color: #FFF;
