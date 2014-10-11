@@ -582,18 +582,37 @@
             //WebSockets Event Bus
             if (bus) {
                 $N.on('pub', function(x) {
-                    bus.publish('publish', x );
+                    bus.publish('publish', x);
                 });
-
+                
+                
                 bus.registerHandler('say', publicHandler = function (message) {
                     try {
                         //notify(JSON.parse(message));
-                        notify(message);
+                        notify(message);                        
                     }
                     catch (e) {
                         console.log(message);
                     }
                 });  
+                bus.registerHandler('publish', function(message) {
+                    var now = Date.now();
+                    var created = message.modifiedAt || message.createdAt;
+                    var latency = now - created;
+
+                    //TODO different message according to scope
+                    //TODO limit title length
+
+                    if (message.author == $N.id()) {
+                        notify({title: message.name, text: 'Shared: ' + message.id + ' (' + latency + 'ms)'});
+                    }
+                    else {
+                        notify(
+                           {title: message.name, 
+                            text: 'New: ' + message.id + ' by ' + $N.label(message.author) + ' (' + latency + 'ms)'
+                        } );
+                    }
+                });
             }
 
 
