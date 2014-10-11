@@ -127,9 +127,11 @@ public class Core extends EventEmitter {
         return sb.toString();
     }
 
-    public static Map<String, Object> jsonMap(final String json) {
-        
+    public static Map<String, Object> jsonMap(final String json) {        
         return defaultJSONParser.parseMap(json);        
+    }
+    public static List jsonList(final String json) {        
+        return defaultJSONParser.parseList(Object.class, json);
     }
 
     public Network net;
@@ -336,7 +338,7 @@ public class Core extends EventEmitter {
     }
 
     public Edge addEdge(Vertex sv, Vertex ov, String predicate) {
-        System.out.println("  +: " + sv.toString() + " " + predicate + " " + ov.toString());
+        //System.out.println("  +: " + sv.toString() + " " + predicate + " " + ov.toString());
         Edge e = graph.addEdge(null, sv, ov, predicate);
         return e;
     }
@@ -350,7 +352,7 @@ public class Core extends EventEmitter {
         }
     }
 
-    public Vertex vertex(String uri, boolean createIfNonExist) {
+    public Vertex vertex(String uri, final boolean createIfNonExist) {        
         for (Object v : graph.getVertices("i", uri)) {
             if (v != null) {
                 return (Vertex) v;
@@ -368,7 +370,6 @@ public class Core extends EventEmitter {
     public void addObjects(Iterable<NObject> N) {
         removeObjects(N);
         for (final NObject n : N) {
-            System.out.println("Adding object: " + n);
             
             Vertex v = vertex(n.id, true);
             
@@ -383,21 +384,9 @@ public class Core extends EventEmitter {
                     Vertex p = vertex(s, true);
                     uniqueEdge(v, p, "is");
                 }
-            } else if (n instanceof NObject) {
-                NObject no = (NObject)n;
-                
-                //TODO use tag weights
-                for (String t : no.getTags().keySet()) {
-                    Vertex p = vertex(t, true);
-                    uniqueEdge(v, p, "is");
-                }
-                if (no.name!=null) v.setProperty("name", no.name);
-                //no.createdAt
-                if ((no.author!=null) && (no.author!=no.id)) {
-                    //TODO create link
-
-                }
             }
+            
+            n.toVertex(this, v);
         }
         graph.commit();
     }
@@ -519,24 +508,30 @@ public class Core extends EventEmitter {
 //        
 //        return data.values().stream();
 //    }
-     public Stream<Vertex> objectStreamByTag(final String tagID) {
+     public Stream<Vertex> vertexTagStream(final String tagID) {
          Vertex v = vertex(tagID, false);
-         return stream(v.getEdges(Direction.IN, "is").spliterator(), false).map(e -> e.getVertex(Direction.OUT));
+         return stream(v.getEdges(Direction.IN, "tag").spliterator(), false).map(e -> e.getVertex(Direction.OUT));
      }
-     public Stream<Vertex> objectStreamByAuthor(final String author) {
+     public Stream<Vertex> vertexAuthorStream(final String author) {
          Vertex v = vertex(author, false);
         if (v == null)
             return Stream.empty();
-        return Stream.concat(Stream.of(v), stream(v.getEdges(Direction.OUT, "has").spliterator(), false).map(e -> e.getVertex(Direction.OUT)));
+        return Stream.concat(Stream.of(v), stream(v.getEdges(Direction.OUT, "author").spliterator(), false).map(e -> e.getVertex(Direction.OUT)));
      }
      
-     public Stream<Vertex> objectStreamNewest(double secondsAgo, int max) {
+     public Stream<Vertex> vertexNewestStream(double secondsAgo, int max) {
          long now = System.currentTimeMillis();
         long then = (long)(now - (secondsAgo * 1000.0));
         Iterable<Vertex> v = graph.query().interval("modifiedAt", then, now).limit(max).vertices();
         return stream(v.spliterator(), false);
     }
     
+    public Stream<Vertex> vertexStream() {
+        return stream(graph.getVertices().spliterator(), false);
+    }
+
+    
+     
 //    public Stream<NObject> objectStreamByTagAndAuthor(final String tagID, final String author) {
 
 //        return objectStream().filter(o -> (o.author == author && o.hasTag(tagID)));
@@ -555,8 +550,8 @@ public class Core extends EventEmitter {
      public NObject newUser(String id) {
         NObject n = new NObject(id, "Anonymous");
         n.author = n.id;
-        n.tag(Tag.User);
-        n.tag(Tag.Human);
+        n.value(Tag.User);
+        n.value(Tag.Human);
         n.value("@", new SpacePoint(40, -80));
         add(n);
         return n;
@@ -588,12 +583,17 @@ public class Core extends EventEmitter {
 //        myself = user;
 //        session.put(Session_MYSELF, user.id);
 //    }
-     public void remove(String nobjectID) {
-//        data.remove(nobjectID);
+     public boolean remove(String objID) {
+        Vertex v = vertex(objID, false);
+        if (v!=null) {
+            v.remove();
+            return true;
+        }
+        return false;
      }
      
-     public void remove(NObject x) {
-        remove(x.id);
+     public boolean remove(NObject x) {
+        return remove(x.id);
     }
 
     /**
@@ -672,7 +672,7 @@ public class Core extends EventEmitter {
 
             if ((o.isClass()) || (o.isProperty())) {
 
-                for (String tag : o.tags.keySet()) {
+                for (String tag : o.getTags().keySet()) {
                     
                     if (tag.equals("tag")) {
                         continue;
@@ -699,6 +699,20 @@ public class Core extends EventEmitter {
         o.put("property", property.values());
         o.put("class", nclass.values());
         return Json.encode(o);
+    }
+
+    public Vertex vertex(String id) {
+        return vertex(id, false);
+    }
+
+    public long vertexCount() {
+        return vertexStream().count();
+    }
+
+    public NObject object(String id) {
+        Vertex v = vertex(id);
+        if (v == null) return null;
+        return NObject.fromVertex(v);
     }
 
 

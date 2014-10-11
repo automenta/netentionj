@@ -146,7 +146,7 @@ public class WebServer  {
             @Override public void handle(HttpServerRequest req) {
                 String tag = req.params().get("tag");                
                 req.response().end( 
-                    Json.encode(core.objectStreamByTag(tag).map(v -> core.getObject(v)).collect(toList())
+                    Json.encode(core.vertexTagStream(tag).map(v -> core.getObject(v)).collect(toList())
                 ));
                 //core.commit();
         }})
@@ -156,7 +156,7 @@ public class WebServer  {
             @Override public void handle(HttpServerRequest req) {
                 String author = req.params().get("author");
                 req.response().end( 
-                    Json.encode(core.objectStreamByAuthor(author).map(v -> core.getObject(v)).collect(toList())
+                    Json.encode(core.vertexAuthorStream(author).map(v -> core.getObject(v)).collect(toList())
                 ));
                 //core.commit();
         }})
@@ -167,7 +167,7 @@ public class WebServer  {
                 //TODO
                 int num = Integer.valueOf(req.params().get("num"));
                 req.response().end( 
-                    Json.encode( core.objectStreamNewest(60*60*24*7*2, num).map(v -> core.getObject(v)).collect(toList() )
+                    Json.encode( core.vertexNewestStream(60*60*24*7*2, num).map(v -> core.getObject(v)).collect(toList() )
                 ));
                 //core.commit();
         }})

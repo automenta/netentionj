@@ -1,7 +1,10 @@
 Agent Defense Model
 ===================
 
-Who it Benefits
+Models a set of entities: X1, X2, ... Xn
+
+
+What X Benefits
 ---------------
  * Humanity
  * Species (Animal / Plant / Extraterrestrial)
@@ -13,8 +16,8 @@ Who it Benefits
  * Cosmic order
 
 
-Has / Needs / Wants | Avoids
--------------------------------
+Has / Needs / Wants | Avoids of X
+---------------------------------
  * Existence of ??
  * Money to ??
   * Profit
@@ -56,15 +59,15 @@ Has / Needs / Wants | Avoids
    * ..
 
 
-Judgment
---------
+Judgment of X
+-------------
  * Threat
  * Neutral
  * Ally
 
 
-Goal
-----
+Goal of X
+---------
  * Improve
  * Promote
  * Delete

@@ -20,6 +20,6 @@ public enum Tag {
     
     Web, 
     
-    tag, property
+    nclass, property
            
 }

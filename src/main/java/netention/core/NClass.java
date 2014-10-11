@@ -6,7 +6,7 @@
 
 package netention.core;
 
-import com.google.common.base.Predicate;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,45 +22,42 @@ public class NClass extends NObject {
         return new NClass(sysTag.name(), sysTag.name());
     }
     
-    public Set<String> extend = new HashSet();
-    public String description;
+    @Deprecated public String description;
+    transient public Set<String> extend = new HashSet();
 
     protected NClass(String id) {
         this(id, id);
     }
-    
-    protected NClass(String id, String name) {
-        this(id, name, (String[])null);
-    }
-
-    public NClass(String id, String name, String... extend) {
-        super(id, name);
-        
-
-        addDefaultTags();
-        
-        if (extend!=null) {
-            for (String e : extend)
-                this.extend.add(e);
-        }
-        
-    }
-    
-    protected void addDefaultTags() {
-        //add(Tag.tag.toString(), 1.0);        
-    }
         
     public NClass(String id, String name, List<String> extend) {
-        this(id, name, (String)null);
+        this(id, name);
         
         if (extend!=null) {
             for (String c : extend) {
-                extend.add(c.trim());
-                c = c.trim();
-                if (c.length() == 0) continue;
-                tag(c, 1.0);            
+                extend(c);
             }
         }
+    }
+
+    public NClass(String id, String name, String... extend) {
+        super(id, name);        
+
+        value(Tag.nclass.toString(), 1.0);        
+        
+        if (extend!=null) {
+            for (String e : extend) {
+                extend(e);
+            }
+        }
+        
+    }
+    
+    protected void extend(String className) {
+        className = className.trim();
+        if (className.length() == 0) return;
+        
+        this.extend.add(className.trim());
+        value(className, 1.0);        
     }
     
     public void mergeFrom(NClass c) {
@@ -70,6 +67,5 @@ public class NClass extends NObject {
     public Set<String> getExtend() {
         return extend;
     }
-
     
 }
