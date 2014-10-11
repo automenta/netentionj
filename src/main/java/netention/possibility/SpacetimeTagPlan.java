@@ -424,7 +424,7 @@ public class SpacetimeTagPlan {
                     double strength = point[i];
                     if (strength > minPossibilityTagStrength) {
                         String tag = mapping.get(i);
-                        p.add(tag, strength);
+                        p.tag(tag, strength);
                     }
                 }
             }                            

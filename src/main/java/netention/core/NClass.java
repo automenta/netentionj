@@ -7,6 +7,7 @@
 package netention.core;
 
 import com.google.common.base.Predicate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -21,6 +22,7 @@ public class NClass extends NObject {
         return new NClass(sysTag.name(), sysTag.name());
     }
     
+    public Set<String> extend = new HashSet();
     public String description;
 
     protected NClass(String id) {
@@ -28,16 +30,19 @@ public class NClass extends NObject {
     }
     
     protected NClass(String id, String name) {
-        this(id, name, (String)null);
+        this(id, name, (String[])null);
     }
 
-    public NClass(String id, String name, String extend) {
-        super(name, id);
+    public NClass(String id, String name, String... extend) {
+        super(id, name);
         
 
         addDefaultTags();
-        if (extend!=null)
-            add(extend, 1.0);
+        
+        if (extend!=null) {
+            for (String e : extend)
+                this.extend.add(e);
+        }
         
     }
     
@@ -50,9 +55,10 @@ public class NClass extends NObject {
         
         if (extend!=null) {
             for (String c : extend) {
+                extend.add(c.trim());
                 c = c.trim();
                 if (c.length() == 0) continue;
-                add(c, 1.0);            
+                tag(c, 1.0);            
             }
         }
     }
@@ -62,11 +68,7 @@ public class NClass extends NObject {
     }
 
     public Set<String> getExtend() {
-        return getTags(new Predicate<String>() {
-            @Override public boolean apply(String t) {
-                return (!t.equals(Tag.tag.toString()));
-            }
-        });
+        return extend;
     }
 
     

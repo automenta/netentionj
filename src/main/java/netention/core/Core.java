@@ -18,6 +18,7 @@ import com.tinkerpop.blueprints.KeyIndexableGraph;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.gremlin.java.GremlinPipeline;
 import com.tinkerpop.pipes.PipeFunction;
 import com.tinkerpop.pipes.branch.LoopPipe;
@@ -35,10 +36,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import static java.util.stream.StreamSupport.stream;
 import javafx.application.Platform;
-import static netention.core.Core.uuid;
 import netention.p2p.Listener;
 import netention.p2p.Network;
 import org.apache.commons.math3.stat.Frequency;
+import org.boon.json.JsonParserAndMapper;
+import org.boon.json.JsonParserFactory;
 import org.vertx.java.core.json.impl.Json;
 
 /**
@@ -46,10 +48,88 @@ import org.vertx.java.core.json.impl.Json;
  */
 public class Core extends EventEmitter {
 
+    final static JsonParserAndMapper defaultJSONParser = new JsonParserFactory().createLaxParser();    
+
     static final Pattern primitiveRegEx = Pattern.compile("/^(class|property|boolean|text|html|integer|real|url|object|spacepoint|timepoint|timerange|sketch|markdown|image|tagcloud|chat)$/");
 
     public static boolean isPrimitive(final String s) {
         return primitiveRegEx.matcher(s).matches();
+    }
+
+    public static TransactionalGraph newMemoryGraph() {
+        return new OrientGraph("memory:test");
+    }
+
+    /**
+     * normalize a URL by removing http://
+     */
+    public static String u(final String url) {
+        if (url.startsWith("http://")) {
+            return url.substring(7);
+        }
+        return url;
+    }
+
+    public static Frequency tokenBag(String x, int minLength, int maxTokenLength) {
+        String[] tokens = tokenize(x);
+        Frequency f = new Frequency();
+        for (String t : tokens) {
+            if (t == null) {
+                continue;
+            }
+            if (t.length() < minLength) {
+                continue;
+            }
+            if (t.length() > maxTokenLength) {
+                continue;
+            }
+            t = t.toLowerCase();
+            f.addValue(t);
+        }
+        return f;
+    }
+
+    public static String[] tokenize(String value) {
+        String v = value.replaceAll(",", " \uFFEB ").
+                replaceAll("\\.", " \uFFED").
+                replaceAll("\\!", " \uFFED"). //TODO alternate char
+                replaceAll("\\?", " \uFFED") //TODO alternate char
+                ;
+        return v.split(" ");
+    }
+
+    public static String uuid() {
+        //Mongo _id = 12 bytes (BSON) = Math.pow(2, 12*8) = 7.922816251426434e+28 permutations
+        //UUID = 128 bit = Math.pow(2, 128) = 3.402823669209385e+38 permutations
+        
+        //RFC 2396 - Allowed characters in a URI - http://www.ietf.org/rfc/rfc2396.txt
+        //		removing all that would confuse jquery
+        //var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz-_.!~*\'()";
+        //var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz-_";
+        
+        //TODO recalculate this
+        //70 possible chars
+        //	21 chars = 5.58545864083284e+38 ( > UUID) permutations
+        //		if we allow author+objectID >= 21 then we can guarantee approximate sparseness as UUID spec
+        //			so we should choose 11 character Nobject UUID length
+        
+        //TODO recalculate, removed the '-' which affects some query selectors if - is first
+        final String chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz_";
+        final int numDiffChars = chars.length();
+        
+        final int string_length = 11;
+        StringBuilder sb = new StringBuilder(string_length);
+        for (int i = 0; i < string_length; i++) {
+            int p = (int)Math.floor( Math.random() * numDiffChars );
+            char c = chars.charAt(p);
+            sb.append(c);
+        }
+        return sb.toString();
+    }
+
+    public static Map<String, Object> jsonMap(final String json) {
+        
+        return defaultJSONParser.parseMap(json);        
     }
 
     public Network net;
@@ -57,6 +137,34 @@ public class Core extends EventEmitter {
     //https://github.com/thinkaurelius/titan/blob/c958ad2a2bafd305a33655347fef17138ee75088/titan-test/src/main/java/com/thinkaurelius/titan/graphdb/TitanIndexTest.java
     //public final TitanGraph graph;
     TransactionalGraph graph;
+
+
+    final Map<String, NProperty> property = new HashMap();
+    final Map<String, NClass> nclass = new HashMap();
+
+    private NObject myself;
+
+    
+    /** new Memory-only Core */
+    public Core() {
+        this(newMemoryGraph());
+    }
+
+    public Core(TransactionalGraph db) {
+        
+        this.graph = db;
+        
+        ensureIndex("i", Vertex.class);
+        ensureIndex("modifiedAt", Vertex.class);
+        
+//
+//                TitanManagement mgmt = graph.getManagementSystem();
+//        if (!mgmt.containsGraphIndex("i")) {
+//            PropertyKey name = mgmt.makePropertyKey("i").dataType(String.class).cardinality(Cardinality.SINGLE).make();
+//            TitanGraphIndex namei = mgmt.buildIndex("i",Vertex.class).addKey(name).unique().buildCompositeIndex();
+//            mgmt.commit();
+//        }        
+    }
 
     public Map<String, Object> getObject(final Vertex v) {
         return getObject(v, Collections.EMPTY_SET);
@@ -152,28 +260,8 @@ public class Core extends EventEmitter {
     public synchronized void commit() {
         graph.commit();
     }
-
-
-    public static class SaveEvent {
-
-        public final NObject object;
-
-        public SaveEvent(NObject object) {
-            this.object = object;
-        }
-    }
-
-    public static class NetworkUpdateEvent {
-
-    }
-
-    final Map<String, NProperty> property = new HashMap();
-    final Map<String, NClass> nclass = new HashMap();
-
-    private NObject myself;
-
     
-    public void ensureIndex(String property, Class c) {
+    protected void ensureIndex(String property, Class c) {
         
         if (!((KeyIndexableGraph) graph).getIndexedKeys(c).contains(property)) {
             ((KeyIndexableGraph) graph).createKeyIndex(property, c, new Parameter("type", "UNIQUE"));
@@ -181,22 +269,6 @@ public class Core extends EventEmitter {
         
     }
     
-    public Core(TransactionalGraph db) {
-
-        this.graph = db;
-
-        ensureIndex("i", Vertex.class);
-        ensureIndex("modifiedAt", Vertex.class);
-
-//                
-//                TitanManagement mgmt = graph.getManagementSystem();
-//        if (!mgmt.containsGraphIndex("i")) {
-//            PropertyKey name = mgmt.makePropertyKey("i").dataType(String.class).cardinality(Cardinality.SINGLE).make();
-//            TitanGraphIndex namei = mgmt.buildIndex("i",Vertex.class).addKey(name).unique().buildCompositeIndex();
-//            mgmt.commit();
-//        }        
-    }
-
     public void addRDF(Model rdf, String topic) {
         topic = u(topic);
 
@@ -215,16 +287,16 @@ public class Core extends EventEmitter {
                 case "www.w3.org/1999/02/22-rdf-syntax-ns#type":
                 case "www.w3.org/2000/01/rdf-schema#label":
                     break;
-                /*case "http://www.w3.org/2002/07/owl#sameAs":
-                 if (!subj.getURI().equals(topic))
-                 continue;
-                 break;*/
-                /*case "http://dbpedia.org/ontology/division":
-                 case "http://dbpedia.org/ontology/subdivision":
-                 case "http://dbpedia.org/ontology/subdivisio":
-                 if (!subj.getURI().equals(topic))
-                 continue;
-                 break;*/
+                    /*case "http://www.w3.org/2002/07/owl#sameAs":
+                    if (!subj.getURI().equals(topic))
+                    continue;
+                    break;*/
+                    /*case "http://dbpedia.org/ontology/division":
+                    case "http://dbpedia.org/ontology/subdivision":
+                    case "http://dbpedia.org/ontology/subdivisio":
+                    if (!subj.getURI().equals(topic))
+                    continue;
+                    break;*/
                 default:
                     //System.out.println("  -: " + ps + " " + obj.toString() + " (ignored)");
                     continue;
@@ -269,16 +341,6 @@ public class Core extends EventEmitter {
         return e;
     }
 
-    /**
-     * normalize a URL by removing http://
-     */
-    public static String u(final String url) {
-        if (url.startsWith("http://")) {
-            return url.substring(7);
-        }
-        return url;
-    }
-
     public void printGraph() {
         for (Vertex v : (Iterable<Vertex>) graph.getVertices()) {
             System.out.println(v.toString() + " " + v.getProperty("i"));
@@ -304,8 +366,7 @@ public class Core extends EventEmitter {
     }
 
     public void addObjects(Iterable<NObject> N) {
-        //TODO existing old copies of objects first
-        
+        removeObjects(N);
         for (final NObject n : N) {
             System.out.println("Adding object: " + n);
             
@@ -324,7 +385,9 @@ public class Core extends EventEmitter {
                 }
             } else if (n instanceof NObject) {
                 NObject no = (NObject)n;
-                for (String t : no.getTags()) {
+                
+                //TODO use tag weights
+                for (String t : no.getTags().keySet()) {
                     Vertex p = vertex(t, true);
                     uniqueEdge(v, p, "is");
                 }
@@ -338,75 +401,83 @@ public class Core extends EventEmitter {
         }
         graph.commit();
     }
+    
+    public void removeObjects(Iterable<NObject> N) {
+        for (final NObject n : N) {
+            
+        }
+    }
 
-    public void addObject(NObject... N) {
+
+    public void add(NObject... N) {        
         addObjects(Arrays.asList(N));
     }
 
+    public void remove(NObject... n) {
+        removeObjects(Arrays.asList(n));
+    }
+    
     /**
      * eigenvector centrality
-     */
-    public Map<Vertex, Number> centrality(final int iterations, Vertex start) {
-        Map<Vertex, Number> map = new HashMap();
-
-        new GremlinPipeline<Vertex, Vertex>(graph.getVertices()).start(start).as("x").both().groupCount(map).loop("x",
-                new PipeFunction<LoopPipe.LoopBundle<Vertex>, Boolean>() {
-
-                    int c = 0;
-
-                    @Override
-                    public Boolean compute(LoopPipe.LoopBundle<Vertex> a) {
-                        return (c++ < iterations);
-                    }
+     */    public Map<Vertex, Number> centrality(final int iterations, Vertex start) {
+         Map<Vertex, Number> map = new HashMap();
+         
+         new GremlinPipeline<Vertex, Vertex>(graph.getVertices()).start(start).as("x").both().groupCount(map).loop("x",
+                 new PipeFunction<LoopPipe.LoopBundle<Vertex>, Boolean>() {
+                     
+                     int c = 0;
+                     
+                     @Override
+                     public Boolean compute(LoopPipe.LoopBundle<Vertex> a) {
+                         return (c++ < iterations);
+                     }
                 }).iterate();
 
-        return map;
-
-        //out(label);
-        /*
+         return map;
+         
+         //out(label);
+         /*
          m = [:]; c = 0;
          g.V.as('x').out.groupCount(m).loop('x'){c++ < 1000}
          m.sort{-it.value}
          */
-    }
-
-    public Core online(int listenPort) throws IOException, UnknownHostException, SocketException, InterruptedException {
-        net = new Network(listenPort);
-        net.listen("obj.", new Listener() {
-            @Override
-            public void handleMessage(String topic, String message) {
-                System.err.println("recv: " + message);
-            }
-        });
-
-        //net.getConfiguration().setBehindFirewall(true);                
-        System.out.println("Server started listening to ");
-        System.out.println("Accessible to outside networks at ");
+     }
+     
+     public Core online(int listenPort) throws IOException, UnknownHostException, SocketException, InterruptedException {
+         net = new Network(listenPort);
+         net.listen("obj.", new Listener() {
+             @Override
+             public void handleMessage(String topic, String message) {
+                 System.err.println("recv: " + message);
+             }
+         });
+         
+         //net.getConfiguration().setBehindFirewall(true);
+         System.out.println("Server started listening to ");
+         System.out.println("Accessible to outside networks at ");
 
         return this;
     }
 
-    protected void broadcastSelf() {
-        if (myself != null) {
+     protected void broadcastSelf() {
+         if (myself != null) {
             Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
                     broadcast(myself);
                 }
             });
-        }
-    }
-
-    public void connect(String host, int port) throws UnknownHostException {
-        net.connect(host, port);
-    }
-
-    /*public Core offline() {
-        
+         }
+     }
+     public void connect(String host, int port) throws UnknownHostException {
+         net.connect(host, port);
+     }
+     
+     /*public Core offline() {
      return this;
      }*/
-    public Iterable<NObject> netValues() {
-        return Collections.EMPTY_LIST;
+     public Iterable<NObject> netValues() {
+         return Collections.EMPTY_LIST;
 //        
 //        //dht.storageLayer().checkTimeout();
 //        return Iterables.filter(Iterables.transform(dht.storageLayer().get().values(), 
@@ -418,7 +489,7 @@ public class Core extends EventEmitter {
 //                            NObject n = (NObject)o;
 //                            
 //                            if (data.containsKey(n.id))
-//                                return null;                                
+//                                return null;
 //                            
 //                            /*System.out.println("net value: " + f.object() + " " + f.object().getClass() + " " + data.containsKey(n.id));*/
 //                            return n;
@@ -440,6 +511,7 @@ public class Core extends EventEmitter {
     }
 
 //    public Stream<NObject> objectStream() {
+
 ////        if (net!=null) {
 ////            //return Stream.concat(data.values().stream(), netValues());
 ////            return data.values().stream();
@@ -447,26 +519,26 @@ public class Core extends EventEmitter {
 //        
 //        return data.values().stream();
 //    }
-    public Stream<Vertex> objectStreamByTag(final String tagID) {
-        Vertex v = vertex(tagID, false);
-        return stream(v.getEdges(Direction.IN, "is").spliterator(), false).map(e -> e.getVertex(Direction.OUT));
-    }
-
-    public Stream<Vertex> objectStreamByAuthor(final String author) {
-        Vertex v = vertex(author, false);
+     public Stream<Vertex> objectStreamByTag(final String tagID) {
+         Vertex v = vertex(tagID, false);
+         return stream(v.getEdges(Direction.IN, "is").spliterator(), false).map(e -> e.getVertex(Direction.OUT));
+     }
+     public Stream<Vertex> objectStreamByAuthor(final String author) {
+         Vertex v = vertex(author, false);
         if (v == null)
             return Stream.empty();
         return Stream.concat(Stream.of(v), stream(v.getEdges(Direction.OUT, "has").spliterator(), false).map(e -> e.getVertex(Direction.OUT)));
-    }
-
-    public Stream<Vertex> objectStreamNewest(double secondsAgo, int max) {
-        long now = System.currentTimeMillis();
+     }
+     
+     public Stream<Vertex> objectStreamNewest(double secondsAgo, int max) {
+         long now = System.currentTimeMillis();
         long then = (long)(now - (secondsAgo * 1000.0));
         Iterable<Vertex> v = graph.query().interval("modifiedAt", then, now).limit(max).vertices();
         return stream(v.spliterator(), false);
     }
     
 //    public Stream<NObject> objectStreamByTagAndAuthor(final String tagID, final String author) {
+
 //        return objectStream().filter(o -> (o.author == author && o.hasTag(tagID)));
 //    }
 //    
@@ -480,28 +552,28 @@ public class Core extends EventEmitter {
 //    public List<NObject> getSubjects() {
 //        return userStream().collect(Collectors.toList());
 //    }
-    public NObject newUser(String id) {
-        NObject n = new NObject("Anonymous", id);
+     public NObject newUser(String id) {
+        NObject n = new NObject(id, "Anonymous");
         n.author = n.id;
-        n.add(Tag.User);
-        n.add(Tag.Human);
-        n.add("@", new SpacePoint(40, -80));
-        addObject(n);
+        n.tag(Tag.User);
+        n.tag(Tag.Human);
+        n.value("@", new SpacePoint(40, -80));
+        add(n);
         return n;
     }
 
     /**
      * creates a new anonymous object, but doesn't publish it yet
      */
-    public NObject newAnonymousObject(String name) {
-        NObject n = new NObject(name);
-        return n;
-    }
-
-    /**
-     * creates a new object (with author = myself), but doesn't publish it yet
-     */
-    public NObject newObject(String name) {
+     public NObject newAnonymousObject(String name) {
+         NObject n = new NObject(name);
+         return n;
+     }
+     
+     /**
+      * creates a new object (with author = myself), but doesn't publish it yet
+      */
+     public NObject newObject(String name) {
         if (myself == null) {
             throw new RuntimeException("Unidentified; can not create new object");
         }
@@ -516,42 +588,42 @@ public class Core extends EventEmitter {
 //        myself = user;
 //        session.put(Session_MYSELF, user.id);
 //    }
-    public void remove(String nobjectID) {
+     public void remove(String nobjectID) {
 //        data.remove(nobjectID);
-    }
-
-    public void remove(NObject x) {
+     }
+     
+     public void remove(NObject x) {
         remove(x.id);
     }
 
     /**
      * save nobject to database
      */
-    public void save(NObject x) {
+     public void save(NObject x) {
 //        NObject removed = data.put(x.id, x);        
 //        index(removed, x);
 //        
 //        //emit(SaveEvent.class, x);
-    }
-
-    /**
-     * batch save nobject to database
+     }
+     
+     /**
+      * batch save nobject to database
      */
-    public void save(Iterable<NObject> y) {
+     public void save(Iterable<NObject> y) {
 //        for (NObject x : y) {
 //            NObject removed = data.put(x.id, x);
 //            index(removed, x);
 //        }            
 //        //emit(SaveEvent.class, null);
-    }
-
-    public void broadcast(NObject x) {
-        broadcast(x, false);
-    }
-
-    public synchronized void broadcast(NObject x, boolean block) {
-        if (net != null) {
-            System.err.println("broadcasting " + x);
+     }
+     
+     public void broadcast(NObject x) {
+         broadcast(x, false);
+     }
+     
+     public synchronized void broadcast(NObject x, boolean block) {
+         if (net != null) {
+             System.err.println("broadcasting " + x);
             net.send("obj0", x.toStringDetailed());
 //            try {
 //                
@@ -560,11 +632,11 @@ public class Core extends EventEmitter {
 //            catch (IOException e) {
 //                System.err.println("publish: " + e);
 //            }
-        }
-    }
-
-    /**
-     * save to database and publish in DHT
+         }
+     }
+     
+     /**
+      * save to database and publish in DHT
      */
     public void publish(NObject x, boolean block) {
         save(x);
@@ -579,12 +651,12 @@ public class Core extends EventEmitter {
     }
 
     /*
-     public int getNetID() {
-     if (net == null)
-     return -1;
-     return net.
-     }
-     */
+    public int getNetID() {
+    if (net == null)
+    return -1;
+    return net.
+    }
+    */
     public NObject getMyself() {
         return myself;
     }
@@ -600,14 +672,14 @@ public class Core extends EventEmitter {
 
             if ((o.isClass()) || (o.isProperty())) {
 
-                for (Map.Entry<String, Object> e : o.value.entries()) {
-                    String superclass = e.getKey();
-                    if (superclass.equals("tag")) {
+                for (String tag : o.tags.keySet()) {
+                    
+                    if (tag.equals("tag")) {
                         continue;
                     }
 
-                    if (nclass.get(superclass) == null) {
-                        save(new NClass(superclass));
+                    if (nclass.get(tag) == null) {
+                        save(new NClass(tag));
                     }
 
                 }
@@ -616,34 +688,6 @@ public class Core extends EventEmitter {
 
         }
 
-    }
-
-    public static Frequency tokenBag(String x, int minLength, int maxTokenLength) {
-        String[] tokens = tokenize(x);
-        Frequency f = new Frequency();
-        for (String t : tokens) {
-            if (t == null) {
-                continue;
-            }
-            if (t.length() < minLength) {
-                continue;
-            }
-            if (t.length() > maxTokenLength) {
-                continue;
-            }
-            t = t.toLowerCase();
-            f.addValue(t);
-        }
-        return f;
-    }
-
-    public static String[] tokenize(String value) {
-        String v = value.replaceAll(",", " \uFFEB ").
-                replaceAll("\\.", " \uFFED").
-                replaceAll("\\!", " \uFFED"). //TODO alternate char
-                replaceAll("\\?", " \uFFED") //TODO alternate char
-                ;
-        return v.split(" ");
     }
 
     public Stream<NClass> classStreamRoots() {
@@ -657,32 +701,17 @@ public class Core extends EventEmitter {
         return Json.encode(o);
     }
 
-    public static String uuid() {
-        //Mongo _id = 12 bytes (BSON) = Math.pow(2, 12*8) = 7.922816251426434e+28 permutations
-        //UUID = 128 bit = Math.pow(2, 128) = 3.402823669209385e+38 permutations
 
-        //RFC 2396 - Allowed characters in a URI - http://www.ietf.org/rfc/rfc2396.txt
-        //		removing all that would confuse jquery
-        //var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz-_.!~*\'()";
-        //var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz-_";
 
-        //TODO recalculate this
-        //70 possible chars
-        //	21 chars = 5.58545864083284e+38 ( > UUID) permutations
-        //		if we allow author+objectID >= 21 then we can guarantee approximate sparseness as UUID spec
-        //			so we should choose 11 character Nobject UUID length
+    public static class SaveEvent {
 
-        //TODO recalculate, removed the '-' which affects some query selectors if - is first
-        final String chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz_";
-        final int numDiffChars = chars.length();
-        
-        final int string_length = 11;
-        StringBuilder sb = new StringBuilder(string_length);
-        for (int i = 0; i < string_length; i++) {
-            int p = (int)Math.floor( Math.random() * numDiffChars );
-            char c = chars.charAt(p);
-            sb.append(c);
+        public final NObject object;
+
+        public SaveEvent(NObject object) {
+            this.object = object;
         }
-        return sb.toString();
+    }
+
+    public static class NetworkUpdateEvent {
     }
 }

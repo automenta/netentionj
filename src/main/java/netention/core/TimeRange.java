@@ -22,9 +22,9 @@ public class TimeRange {
         this.to = to;
     }
     
-    public static TimeRange get(NObject n) {
-        return n.firstValue(TimeRange.class);
-    }
+//    public static TimeRange get(NObject n) {
+//        return n.firstValue(TimeRange.class);
+//    }
 
     public long duration() { return to-from; }
     

@@ -14,9 +14,9 @@ public class TimePoint {
         this.at = t;
     }
 
-    public static TimePoint get(NObject n) {   
-        return n.firstValue(TimePoint.class);
-    }
+//    public static TimePoint get(NObject n) {   
+//        return n.firstValue(TimePoint.class);
+//    }
 
     public String toString() {
         return new Date(at).toString();
