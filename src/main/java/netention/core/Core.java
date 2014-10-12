@@ -56,8 +56,7 @@ public class Core extends EventEmitter {
         switch (s) {
             case "class":
             case "property":
-            case "in":
-            case "out":
+            case "g":
             case "boolean":
             case "text":
             case "html":
@@ -167,8 +166,6 @@ public class Core extends EventEmitter {
     final Map<String, NProperty> property = new HashMap();
     final Map<String, NClass> nclass = new HashMap();
 
-    private NObject myself;
-
     
     /** new Memory-only Core */
     public Core() {
@@ -197,6 +194,10 @@ public class Core extends EventEmitter {
     }
 
     public Map<String, Object> getObject(final Vertex v, Set<String> propertyExclude) {
+        return object(v.getProperty("i")).toJSONMap();
+    }
+    
+    public Map<String, Object> getObject2(final Vertex v, Set<String> propertyExclude) {
 
         Map<String, Object> r = new HashMap();
 
@@ -383,7 +384,6 @@ public class Core extends EventEmitter {
         if (createIfNonExist) {
             Vertex v = graph.addVertex(null);
             v.setProperty("i", uri);
-            commit();
             return v;
         }
         return null;
@@ -472,16 +472,6 @@ public class Core extends EventEmitter {
         return this;
     }
 
-     protected void broadcastSelf() {
-         if (myself != null) {
-            Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    broadcast(myself);
-                }
-            });
-         }
-     }
      public void connect(String host, int port) throws UnknownHostException {
          net.connect(host, port);
      }
@@ -575,8 +565,7 @@ public class Core extends EventEmitter {
         NObject n = new NObject(id, "Anonymous");
         n.author = n.id;
         n.value("User");
-        n.value("Human");
-        n.value("@", new SpacePoint(40, -80));
+        n.value("Human");        
         add(n);
         return n;
     }
@@ -592,13 +581,9 @@ public class Core extends EventEmitter {
      /**
       * creates a new object (with author = myself), but doesn't publish it yet
       */
-     public NObject newObject(String name) {
-        if (myself == null) {
-            throw new RuntimeException("Unidentified; can not create new object");
-        }
-
+     public NObject newObject(String author, String name) {
         NObject n = new NObject(name);
-        n.author = myself.id;
+        n.author = author;
         return n;
     }
 
@@ -688,9 +673,6 @@ public class Core extends EventEmitter {
     return net.
     }
     */
-    public NObject getMyself() {
-        return myself;
-    }
 
     protected void index(NObject previous, NObject o) {
         if (previous != null) {

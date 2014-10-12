@@ -38,7 +38,7 @@ function newTagger(options, onFinished, tagRestrictions, maxTags) {
         b.hide();
 
     var tagsCombo = $('<span></span>').attr('id', 'tagsCombo').addClass('well well-sm');
-    tagsCombo.update = function() {
+    tagsCombo.update = function () {
         tagsCombo.empty();
         if (tags.length === 0) {
             tagsCombo.hide();
@@ -78,7 +78,7 @@ function newTagger(options, onFinished, tagRestrictions, maxTags) {
     }
 
     function loadBrowser(w) {
-        later(function() {
+        later(function () {
             currentBrowser = w(onTagAdded, selected);
             t.html(currentBrowser);
         });
@@ -90,7 +90,7 @@ function newTagger(options, onFinished, tagRestrictions, maxTags) {
     function addOption(label, browserFunction) {
         var b = $('<button type="button">' + label + '</button>')
                 .appendTo(selectBar)
-                .click(function() {
+                .click(function () {
                     loadBrowser(browserFunction);
                 });
         modeFunctions.push(browserFunction);
@@ -109,7 +109,7 @@ function newTagger(options, onFinished, tagRestrictions, maxTags) {
         if (!Array.isArray(tagRestrictions))
             tagRestrictions = [tagRestrictions];
 
-        _.each(tagRestrictions, function(t) {
+        _.each(tagRestrictions, function (t) {
             if (t === 'Object') {
                 addOption('Object', newObjectSelector(null));
             }
@@ -127,7 +127,7 @@ function newTagger(options, onFinished, tagRestrictions, maxTags) {
         tagsCombo.update();
         saveBar.append(tagsCombo);
 
-        clearButton.click(function() {
+        clearButton.click(function () {
             if (tags.length)
                 if (confirm('Clear selected tags?')) {
                     tags = [];
@@ -137,7 +137,7 @@ function newTagger(options, onFinished, tagRestrictions, maxTags) {
         saveBar.append(clearButton);
 
         if (maxTags !== 1) {
-            b.click(function() {
+            b.click(function () {
                 onFinished(tags);
             }).appendTo(saveBar);
         }
@@ -148,7 +148,7 @@ function newTagger(options, onFinished, tagRestrictions, maxTags) {
 
 
     if (headerTarget === undefined) {
-        later(function() {
+        later(function () {
             d.parent().before(selectBar);
         });
     }
@@ -177,7 +177,7 @@ function newNullBrowser() {
 function newEmotionBrowser() {
     var e = newDiv();
     var i = $('<img src="/icon/plutchik_emotion_wheel.svg"/>');
-    i.click(function() {
+    i.click(function () {
         alert('Not available yet.');
     });
     e.append(i);
@@ -186,7 +186,7 @@ function newEmotionBrowser() {
 function newBodyBrowser() {
     var e = newDiv();
     var i = $('<img src="/icon/human_body_chart.jpg"/>');
-    i.click(function() {
+    i.click(function () {
         alert('Not available yet.');
     });
     e.append(i);
@@ -195,7 +195,7 @@ function newBodyBrowser() {
 function newNeedsBrowser() {
     var e = newDiv();
     var i = $('<img src="/icon/resiliencemaps.org.simple_critical_infrastructure.png"/>');
-    i.click(function() {
+    i.click(function () {
         alert('Not available yet.');
     });
     e.append(i);
@@ -210,14 +210,14 @@ function newTreeBrowser(onTagAdded, selected) {
 
     var prefix = 'S_';
 
-    var _onTagAddedFunc = function() {
+    var _onTagAddedFunc = function () {
         onTagAdded($(this).attr('id').substring(prefix.length));
     };
 
-    later(function() {
+    later(function () {
         newTagTree({
             target: e,
-            newTagDiv: function(id, content) {
+            newTagDiv: function (id, content) {
                 var ti = getTagIcon(id) || defaultIcons.unknown;
 
                 return {
@@ -225,8 +225,8 @@ function newTreeBrowser(onTagAdded, selected) {
                             content + '</button>'
                 };
             },
-            onCreated: function() {
-                e.find('.TagChoice').each(function(x) {
+            onCreated: function () {
+                e.find('.TagChoice').each(function (x) {
                     $(this).click(_onTagAddedFunc);
                 });
             }
@@ -298,7 +298,7 @@ function newTagTree(param) {
 
         if (!_.isEmpty(children)) {
             b.children = [];
-            _.each(children, function(c, cid) {
+            _.each(children, function (c, cid) {
                 subtree(b.children, c);
             });
         }
@@ -322,13 +322,13 @@ function newTagTree(param) {
         if (others.length === 0)
             return;
 
-        others.forEach(function(c) {
+        others.forEach(function (c) {
             subtree(otherFolder.children, c);
         });
         root.push(otherFolder);
     }
 
-    _.each($N.classRoot, function(c, cid) {
+    _.each($N.classRoot, function (c, cid) {
         subtree(T, c);
     });
 
@@ -339,7 +339,7 @@ function newTagTree(param) {
 
     tree.appendTo(a);
 
-    later(function() {
+    later(function () {
         //a.hide();
         a.tree({
             data: T,
@@ -374,12 +374,12 @@ function newObjectSelector(T) {
     var maxDisplayedObjects = 64;
     var updatePeriodMS = 300;
 
-    return function(onTagAdded, selected) {
+    return function (onTagAdded, selected) {
         var e = newDiv();
         var keywordFilter = null;
 
         var keywordInput = $('<input type="text" placeholder="Keywords"/>');
-        keywordInput.bind('propertychange keyup input paste', function() {
+        keywordInput.bind('propertychange keyup input paste', function () {
             keywordFilter = keywordInput.val().toLowerCase();
             if (keywordFilter.length === 0)
                 keywordFilter = null;
@@ -396,7 +396,7 @@ function newObjectSelector(T) {
 
             var tl = T ? $N.objectsWithTag(T, false) : _.keys($N.objects());
             if (keywordFilter) {
-                tl = _.filter(tl, function(x) {
+                tl = _.filter(tl, function (x) {
                     var O = $N.object[x];
                     if (O.name)
                         return (O.name.toLowerCase().indexOf(keywordFilter) !== -1);
@@ -409,11 +409,11 @@ function newObjectSelector(T) {
                 d.append('Only displaying the first ' + ol.length + ' objects.  Please narrow the query.<br/><br/>');
             }
 
-            _.each(ol, function(o) {
+            _.each(ol, function (o) {
                 var O = $N.getObject(o);
                 var s = newObjectView(O, {
                     showActionPopupButton: false,
-                    titleClickMode: function(x) {
+                    titleClickMode: function (x) {
                         onTagAdded(x);
                     }
                 });
@@ -431,32 +431,37 @@ function newObjectSelector(T) {
 
 
 function newTagBarSaveButton(s, prototag, tagBar, onSave) {
-	var currentTag = prototag.id;
-	var currentTagName = prototag.name;
-	
+    var currentTag = prototag.id;
+    var currentTagName = prototag.name;
+
     var saveButton = $('<button class="btn btn-success" title="Save"><i class="fa fa-floppy-o"></i></button>').click(function () {
-        if (currentTag == null) {
+        if (currentTag === null) {
             alert('Choose a wikitag.');
             return;
         }
 
         var selTags = _.keys(tagBar.selected);
-		
+
         if (selTags.length > 0) {
             var id = uuid();
             var o = objNew(id, currentTag);
-			
-            o.author = $N.id();
-			o.subject = saveButton.subj || o.author;
 
-            o.predicate = [];
+            o.author = $N.id();
+            
+            var subject = saveButton.subj || o.author;
+            var object =  currentTag;
+
+            var ee = { };
+            var predicates = [];
             for (var i = 0; i < selTags.length; i++) {
-                var T = selTags[i];
-                o.predicate.push(T);
-            }			
-			
-			o.name = o.predicate + ': ' + currentTagName;
-            o.object = currentTag;
+                var predicate = selTags[i];
+                ee[predicate] = [ object ];
+                predicates.push(predicate);
+            }
+            
+            o.value = { "in": ee };
+            
+            o.name = predicates + ': ' + currentTagName;            
 
             $N.pub(o, function (err) {
                 notify({
@@ -478,51 +483,50 @@ function newTagBarSaveButton(s, prototag, tagBar, onSave) {
             alert('Choose 1 or more tags to combine with the wikitag.');
         }
     });
-	
-	saveButton.subject = function(s) {
-		saveButton.subj = s;
-	};
-	
+
+    saveButton.subject = function (s) {
+        saveButton.subj = s;
+    };
+
     return saveButton;
 }
 
 function newTagToggleButton(t, selection) {
-	var l = $(newEle('li'));
-	
-	var b = newTagButton(t, function() {
-		b.checked = !b.checked;
+    var l = $(newEle('li'));
 
-		if (b.checked) {
-			selection[t] = true;
-			l.addClass('active');			
-		}
-		else {
-			delete selection[t];
-			l.removeClass('active');
-		}
-		
-	}).addClass('TagToggleButton btn-s').appendTo(l);
-	
-	b.checked = false;		
-    
-	return l;
+    var b = newTagButton(t, function () {
+        b.checked = !b.checked;
+
+        if (b.checked) {
+            selection[t] = true;
+            l.addClass('active');
+        }
+        else {
+            delete selection[t];
+            l.removeClass('active');
+        }
+
+    }).addClass('TagToggleButton btn-s').appendTo(l);
+
+    b.checked = false;
+
+    return l;
 }
 
 /** speed-dial selector for predicates of a relation to an object */
 function newTagBar(s, object) {
     var tagBar = newDiv();
-	var s = { };
-	tagBar.selected = s;
+    var s = {};
+    tagBar.selected = s;
 
-	return tagBar.append(
-		newEle('p').append($('<ul class="nav nav-pills"/>').append(
-			newTagToggleButton('Learn', s),
-			newTagToggleButton('Do', s),
-			newTagToggleButton('Teach', s))),
-
-		newEle('p').append($('<ul class="nav nav-pills"/>').append(
-			newTagToggleButton('Can', s),
-			newTagToggleButton('Need', s),
-			newTagToggleButton('Not', s))));
+    return tagBar.append(
+            newEle('p').append($('<ul class="nav nav-pills"/>').append(
+            newTagToggleButton('Learn', s),
+            newTagToggleButton('Do', s),
+            newTagToggleButton('Teach', s))),
+            newEle('p').append($('<ul class="nav nav-pills"/>').append(
+            newTagToggleButton('Can', s),
+            newTagToggleButton('Need', s),
+            newTagToggleButton('Not', s))));
 }
 

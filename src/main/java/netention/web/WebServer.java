@@ -200,9 +200,7 @@ public class WebServer  {
                 String id = req.params().get("id");
                 
                 req.response().end( 
-                        Json.encode(
-                                core.getObject(id)
-                        ) 
+                        core.object(id).toJSON()
                 );
         }})
                 

@@ -3,13 +3,13 @@
 function openSelectProfileModal(title) {
     if (!title)
         title = 'Profiles';
-    
+
     console.log('Selecting profile');
-    
+
     //var d = newPopup(title, {width: '450px', modal: true});
-    
+
     $('#LoadingSplash').show();
-    
+
     var s;
     var ident = identity();
     if (ident == ID_AUTHENTICATED) {
@@ -21,13 +21,13 @@ function openSelectProfileModal(title) {
     else {
         s = 'Unidentified';
     }
-    
+
     $('#LoadingSplashTitle').html(
             (configuration.connection == 'static') ?
             '' :
             s
             );
-    
+
     $('#LoadingSplashTitle').append(
             (configuration.connection == 'static') ?
             '' :
@@ -89,18 +89,19 @@ function newProfileWidget() {
         }
     }
 
-	if (identity() === ID_UNKNOWN) {
-		$('#LoadingSplashTitle').html('<a href="/login">Login</a>');
-	}
+    if (identity() === ID_UNKNOWN) {
+        $('#LoadingSplashTitle').html('<a href="/login">Login</a>');
+    }
     else if (c === 0) {
-        d.empty().append(newNewProfileWidget(function(user) {
+        d.empty().append(newNewProfileWidget(function (user) {
+            $N.pub(user);
             become(user);
             closeDialog();
         }));
     }
     else {
 
-        okButton.click(function() {
+        okButton.click(function () {
             var id = selector.val();
             if (id) {
                 become($N.getObject(id));
@@ -108,7 +109,7 @@ function newProfileWidget() {
             }
         });
 
-        deleteButton.click(function() {
+        deleteButton.click(function () {
             if (confirm('Permanently delete?')) {
                 $N.deleteSelf(selector.val());
                 closeDialog();
@@ -117,9 +118,9 @@ function newProfileWidget() {
 
 
         var newButton = $('<button>New Profile...</button>');
-        newButton.click(function() {
+        newButton.click(function () {
             newButton.hide();
-            d.append(newNewProfileWidget(function(user) {
+            d.append(newNewProfileWidget(function (user) {
                 become(user);
                 closeDialog();
             }));
@@ -168,11 +169,11 @@ function newNewProfileWidget(whenFinished) {
     var location = configuration.mapDefaultLocation;
 
     var lmap;
-    later(function() {
+    later(function () {
         lmap = initLocationChooserMap('SelfMap', location, 7, true);
     });
 
-    locEnabled.change(function() {
+    locEnabled.change(function () {
         locationEnabled = locEnabled.is(':checked');
         if (locationEnabled) {
             cm.show();
@@ -183,7 +184,7 @@ function newNewProfileWidget(whenFinished) {
     });
 
 
-    createButton.click(function() {
+    createButton.click(function () {
         var name = nameField.val();
         if (name.length == 0) {
             alert('Enter a name');
@@ -191,7 +192,7 @@ function newNewProfileWidget(whenFinished) {
         }
         var email = emailField.val();
 
-		var o = $N.newUser(name);
+        var o = $N.newUser(name);
 
         if (extraProperties) {
             for (var i = 0; i < extraProperties.length; i++) {
@@ -223,12 +224,12 @@ function newRosterWidget(full) {
 
     var wasAttached = false;
 
-    var updateRosterDisplay = function() {
+    var updateRosterDisplay = function () {
 
         var attached = d.closest(document.documentElement).length > 0;
         if ((!attached) && (wasAttached)) {
-           $N.off('change:roster', this);
-           return;
+            $N.off('change:roster', this);
+            return;
         }
         else {
             wasAttached = true;
@@ -239,26 +240,26 @@ function newRosterWidget(full) {
         if (!r)
             return;
 
-        _.keys(r).forEach(function(uid) {
+        _.keys(r).forEach(function (uid) {
             var U = $N.instance[uid];
             if (U) {
                 if ((full && (uid != $N.id())) || (!full)) {
                     var a = newAvatarImage(U).appendTo(d);
-                    a.click(function(e) {
+                    a.click(function (e) {
                         newPopupObjectView(U, e);
                     });
                     if (full && configuration.webrtc && (uid != $N.id())) {
                         var webrtc = r[uid];
                         if (Array.isArray(webrtc)) {
                             a.css('padding-left', '1.85em');
-                            webrtc.forEach(function(i) {
+                            webrtc.forEach(function (i) {
                                 newEle('button').html('&gt;').attr('title', 'Private Call ' + i).data('webrtc', [uid, i])
-                                    .click(function() {
-                                        var w = $(this).data('webrtc');
-                                        newWebRTCCall(w[1]);
-                                        return false;
-                                    })
-                                    .appendTo(a);
+                                        .click(function () {
+                                            var w = $(this).data('webrtc');
+                                            newWebRTCCall(w[1]);
+                                            return false;
+                                        })
+                                        .appendTo(a);
                             });
                         }
                     }
@@ -270,7 +271,7 @@ function newRosterWidget(full) {
 
     $N.on('change:roster', updateRosterDisplay);
 
-    d.destroy = function() {
+    d.destroy = function () {
         $N.off('change:roster', updateRosterDisplay);
     };
 

@@ -547,7 +547,7 @@
                 
 			
 			//setup default view if none already created by router
-			if ($('#View').children().length === 0)
+            if ($('#View').children().length === 0)
             	updateView();
 
             $('#NotificationArea').remove();
@@ -582,7 +582,7 @@
             //WebSockets Event Bus
             if (bus) {
                 $N.on('pub', function(x) {
-                    bus.publish('publish', x);
+                    bus.publish('publish', objCompact(x));
                 });
                 
                 

@@ -12,6 +12,8 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -51,8 +53,13 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
         NObject n = new NObject(id, name);
 
         n.setAuthor((String)v.getProperty("a"));
-        n.createdAt = (Long)v.getProperty("createdAt");
-        n.modifiedAt = (Long)v.getProperty("modifiedAt");
+        
+        Long cAt = (Long)v.getProperty("createdAt");
+        if (cAt!=null) n.createdAt = cAt.longValue();
+        
+        Long mAt = (Long)v.getProperty("modifiedAt");
+        if (mAt!=null) n.modifiedAt = mAt.longValue();
+        else n.modifiedAt = n.createdAt;
         
         //String valueJSON = (String)v.getProperty("v");
         List va = (List)v.getProperty("v");
@@ -99,29 +106,48 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
             Object val = values.get(property);
             vl.add( Lists.newArrayList(property, val) );            
             
-            if (property.equals("in")) {
-                Map edgeIndex = (Map)val;                
-                for (Object pred : edgeIndex.keySet()) {                     
-                    String predicate = (String)pred;
-                    for (Object subj : (List)edgeIndex.get(predicate)) {
-                        Edge e = c.uniqueEdge(c.vertex((String)subj, true), v, predicate);
-                        e.setProperty("i", v.getProperty("i"));
-                    }
-                }
-            }
-            else if (property.equals("out")) {
-                Map edgeIndex = (Map)val;                
-                for (Object pred : edgeIndex.keySet()) {                     
-                    String predicate = (String)pred;
-                    for (Object obj : (List)edgeIndex.get(predicate)) {
-                        Edge e = c.uniqueEdge(v, c.vertex((String)obj, true), predicate);
-                        e.setProperty("i", v.getProperty("i"));
-                    }
+            if (property.equals("g")) {
+                //graph edges
+                for (Object e: (List)val) {
+                    List triple = (List)e;
+                    Collection<String> subjs = getTripleComponent(triple.get(0));
+                    Collection<String> preds = getTripleComponent(triple.get(1));
+                    Collection<String> objs = getTripleComponent(triple.get(2));
+                    
+                    //check how many edges will be created and disallow if > limit
+                    
+                    for (String s : subjs)
+                        for (String p : preds)
+                            for (String o : objs) {
+                                Edge edge = c.uniqueEdge(c.vertex(s, true), c.vertex(o, true), p);
+                                edge.setProperty("i", v.getProperty("i"));
+                            }
+                                
                 }                
             }
             
         }
         v.setProperty("v", vl);
+    }
+    
+    private List<String> getTripleComponent(Object x) {
+        List<String> ls;
+        if (x instanceof String) {
+            String v = (String)x;
+            if (v.equals("_")) v = id;
+            ls = Collections.singletonList(v);
+        }
+        else if (x instanceof List) {
+            ls = new ArrayList(((List)x).size());
+            for (Object o : (List)x) {
+                String v = (String)o;
+                if (v.equals("_")) v = id;
+                ls.add(v);
+            }
+        }
+        else
+            ls = Collections.emptyList();
+        return ls;
     }
     
     public static NObject fromJSON(String json) {
@@ -167,7 +193,8 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
         
         return n;
     }
-    public String toJSON() {        
+    
+    public Map<String, Object> toJSONMap() {
         Map<String,Object> h = new HashMap();
         h.put("i", id);
         if (name!=null) h.put("i", name);
@@ -176,8 +203,11 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
         if (modifiedAt!=createdAt)
             h.put("m", modifiedAt);
         h.put("v", values);
-        
-        return Json.encode(h);
+        return h;        
+    }
+    
+    public String toJSON() {                
+        return Json.encode(toJSONMap());
     }
 
     
@@ -354,6 +384,7 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
         
         return true;
     }
+
     
 
     

@@ -952,7 +952,7 @@ var Ontology = function(db, tagInclude, target) {
         that.dgraphInOut = {};
 
         that.tagged = {};  //index of object tags
-        that.reply = {}; //index of objects with a replyTo
+        //that.reply = {}; //index of objects with a replyTo
 
         that.instance = {};
         that.property = {};
@@ -1244,15 +1244,17 @@ var Ontology = function(db, tagInclude, target) {
             }
 
             //HACK prevent useless error message until we fix .reply behavior
-            try {
+            /*try {
                 x.reply = {};
-            } catch (e) { }
+            } catch (e) { }*/
 
             //replies to this object: search known objects with replyTo
-            for (var k in that.reply) {
-                var v = that.reply[k];
-                if (v.replyTo.indexOf(x.id) !== -1)
-                    x.reply[k] = v;
+            if (that.reply) {
+                for (var k in that.reply) {
+                    var v = that.reply[k];
+                    if (v.replyTo.indexOf(x.id) !== -1)
+                        x.reply[k] = v;
+                }
             }
 
             //this object's replies to other object
@@ -1520,7 +1522,8 @@ var Ontology = function(db, tagInclude, target) {
                 }
             }
             delete x.reply;
-            delete that.reply[x.id];
+            if ((x.id) && (that.reply))
+                delete that.reply[x.id];
 
             var tags = that.getTags(x);
             for (var i = 0; i < tags.length; i++) {
@@ -2338,6 +2341,9 @@ function objExpand(o) {
             o.subject = o.author;
         }
     }
+    
+    //if (o.reply && (_.keys(o.reply).length === 0))
+    //    delete o.reply;
 
     if (!o.value)
         return o;
