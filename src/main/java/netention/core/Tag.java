@@ -12,13 +12,13 @@ package netention.core;
  */
 public enum Tag {
     
-    Human, User,
+    /*Human, User,
     
     Learn, Do, Teach,
     
     Can, Need, Not,
     
-    Web, 
+    Web, */
     
     nclass, property
            

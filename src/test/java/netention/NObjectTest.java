@@ -56,12 +56,22 @@ public class NObjectTest {
         assertTrue("Vertex -> Author tag edge", c.vertex(n.author).getEdges(Direction.IN,"tag").iterator().hasNext());
         assertTrue("Author -> Vertex author edge", c.vertex(n.author).getEdges(Direction.OUT,"author").iterator().hasNext());
         assertTrue("Edge inexistence", !c.vertex(n.author).getEdges(Direction.OUT,"non_existing").iterator().hasNext());                
+                
         assertEquals(2, c.vertexCount());
+        
+        
         c.remove(n);        
         
         assertTrue("Vertex removal", c.vertex(n.id)==null);        
     }
     
+    
+    @Test public void testNObjectJSON() throws Exception {
+        NObject n = NObject.fromJSON(oSimple);
+        String j = n.toJSON();
+        NObject m = NObject.fromJSON(j);
+        assertEquals(m, n);        
+    }
     
     String oValue =
         "{" +
@@ -75,6 +85,8 @@ public class NObjectTest {
     @Test public void testNObjectValue() throws Exception {
         Core c = new Core();
         new NOntology(c);
+        assertTrue(!Core.isPrimitive("Geometry"));
+        assertTrue(Core.isPrimitive("html"));
         
         
         assertTrue( c.vertex("Geometry") != null);
@@ -82,13 +94,60 @@ public class NObjectTest {
         
         
         NObject n = NObject.fromJSON(oValue);        
-        System.out.println(n.toStringDetailed());
         
         assertTrue(n.getTags().containsKey("Geometry"));
-        assertTrue(n.getTags().containsKey("length"));
-        assertTrue(!Core.isPrimitive("Geometry"));
-        assertTrue(Core.isPrimitive("html"));
+        assertTrue(n.getTags().containsKey("length"));        
+        assertTrue(!n.getTags().containsKey("html")); //"do not consider primitive as a tag"
         
-        assertTrue("do not consider primitive as a tag", !n.getTags().containsKey("html"));
+        c.add(n);
+        
+        assertTrue(c.vertex(n.id)!=null);
+        
+        NObject m = c.object(n.id);                
+        
+        assertTrue(n.equals(m));
+        assertTrue(m.equals(n));
+        
     }
+
+
+    String oGraph =
+        "{" +
+            "i: anotherID," +
+            "a: theAuthor," +
+            "c: 0," +
+            "m: 1," +
+            "v: {" +
+            "in: { rel1: [ 'theID' ]  }," +
+            "out: { rel2: [ 'theID' ]  }" +
+            "}" +
+        "}";
+    
+    @Test public void testNObjectEdges() throws Exception {
+        Core c = new Core();
+        
+        NObject x = NObject.fromJSON(oGraph);
+        NObject y = NObject.fromJSON(oSimple);
+        
+        c.add(x, y);
+        
+        assertTrue("add: edge: x rel1 y", 
+                c.vertex(x.id).getEdges(Direction.IN, "rel1").iterator().hasNext());
+        assertTrue("add: edge: y rel2 x", 
+                c.vertex(x.id).getEdges(Direction.OUT, "rel2").iterator().hasNext());
+        
+        c.remove(x);
+                
+        
+        assertTrue("remove: edge x rel1 y", 
+                !c.vertex(y.id).getEdges(Direction.IN, "rel1").iterator().hasNext());
+        assertTrue("remove: edge x rel1 y", 
+                !c.vertex(y.id).getEdges(Direction.OUT, "rel1").iterator().hasNext());
+        assertTrue("remove: edge y rel2 x", 
+                !c.vertex(y.id).getEdges(Direction.IN, "rel2").iterator().hasNext());
+        assertTrue("remove: edge y rel2 x", 
+                !c.vertex(y.id).getEdges(Direction.OUT, "rel2").iterator().hasNext());
+        
+    }
+
 }

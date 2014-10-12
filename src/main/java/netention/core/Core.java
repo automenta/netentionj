@@ -50,10 +50,33 @@ public class Core extends EventEmitter {
 
     final static JsonParserAndMapper defaultJSONParser = new JsonParserFactory().createLaxParser();    
 
-    static final Pattern primitiveRegEx = Pattern.compile("/^(class|property|boolean|text|html|integer|real|url|object|spacepoint|timepoint|timerange|sketch|markdown|image|tagcloud|chat)$/");
+    static final Pattern primitiveRegEx = Pattern.compile("/^()$/");
 
     public static boolean isPrimitive(final String s) {
-        return primitiveRegEx.matcher(s).matches();
+        switch (s) {
+            case "class":
+            case "property":
+            case "in":
+            case "out":
+            case "boolean":
+            case "text":
+            case "html":
+            case "integer":
+            case "real":
+            case "url":
+            case "object":
+            case "spacepoint":
+            case "timepoint":
+            case "timerange":
+            case "sketch":
+            case "markdown":
+            case "image":
+            case "tagcloud":
+            case "chat":                
+                return true;
+            default:
+                return false;
+        }
     }
 
     public static TransactionalGraph newMemoryGraph() {
@@ -156,8 +179,9 @@ public class Core extends EventEmitter {
         
         this.graph = db;
         
-        ensureIndex("i", Vertex.class);
-        ensureIndex("modifiedAt", Vertex.class);
+        ensureIndex("i", Vertex.class, new Parameter("type", "UNIQUE"));
+        ensureIndex("modifiedAt", Vertex.class, new Parameter("class", "Long"));
+        ensureIndex("i", Edge.class, new Parameter("class", "String"));
         
 //
 //                TitanManagement mgmt = graph.getManagementSystem();
@@ -263,12 +287,10 @@ public class Core extends EventEmitter {
         graph.commit();
     }
     
-    protected void ensureIndex(String property, Class c) {
-        
+    protected void ensureIndex(String property, Class c, Parameter p) {        
         if (!((KeyIndexableGraph) graph).getIndexedKeys(c).contains(property)) {
-            ((KeyIndexableGraph) graph).createKeyIndex(property, c, new Parameter("type", "UNIQUE"));
+            ((KeyIndexableGraph) graph).createKeyIndex(property, c, p);
         }
-        
     }
     
     public void addRDF(Model rdf, String topic) {
@@ -359,7 +381,7 @@ public class Core extends EventEmitter {
             }
         }
         if (createIfNonExist) {
-            Vertex v = graph.addVertex(uri);
+            Vertex v = graph.addVertex(null);
             v.setProperty("i", uri);
             commit();
             return v;
@@ -373,10 +395,13 @@ public class Core extends EventEmitter {
             
             Vertex v = vertex(n.id, true);
             
+            n.toVertex(this, v);
+
             if (n instanceof NProperty) {
                 NProperty np = (NProperty) n;
                 property.put(np.id, np);
                 //TODO add to graph?
+                continue;
             } else if (n instanceof NClass) {
                 NClass nc = (NClass) n;
                 nclass.put(nc.id, nc);
@@ -386,7 +411,6 @@ public class Core extends EventEmitter {
                 }
             }
             
-            n.toVertex(this, v);
         }
         graph.commit();
     }
@@ -550,8 +574,8 @@ public class Core extends EventEmitter {
      public NObject newUser(String id) {
         NObject n = new NObject(id, "Anonymous");
         n.author = n.id;
-        n.value(Tag.User);
-        n.value(Tag.Human);
+        n.value("User");
+        n.value("Human");
         n.value("@", new SpacePoint(40, -80));
         add(n);
         return n;
@@ -587,8 +611,15 @@ public class Core extends EventEmitter {
         Vertex v = vertex(objID, false);
         if (v!=null) {
             v.remove();
+            for (Edge e : graph.getEdges("i", objID)) {
+                if (e!=null)
+                    e.remove();
+            }
+
+            commit();
             return true;
         }
+                
         return false;
      }
      

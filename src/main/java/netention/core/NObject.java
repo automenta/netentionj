@@ -18,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.boon.core.value.ValueMap;
+import org.vertx.java.core.json.impl.Json;
 
 /**
  *
@@ -46,8 +47,13 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
         String id = (String)v.getProperty("i");
         String name = (String)v.getProperty("n");
         
+        
         NObject n = new NObject(id, name);
 
+        n.setAuthor((String)v.getProperty("a"));
+        n.createdAt = (Long)v.getProperty("createdAt");
+        n.modifiedAt = (Long)v.getProperty("modifiedAt");
+        
         //String valueJSON = (String)v.getProperty("v");
         List va = (List)v.getProperty("v");
         if (va!=null) {
@@ -65,7 +71,11 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
     
     public void toVertex(Core c, Vertex v) {
                 
-        if (name!=null) v.setProperty("name", name);
+        
+        if (name!=null) v.setProperty("n", name);
+        if (author!=null) v.setProperty("a", author);
+        v.setProperty("createdAt", new Long(createdAt));
+        v.setProperty("modifiedAt", new Long(modifiedAt));
         
         //TODO use tag weights
         //TODO use entryset
@@ -85,9 +95,31 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
 
         //TODO use entryset
         List vl = new ArrayList(values.size());
-        for (String pred : values.keySet()) {
-            Object val = values.get(pred);
-            vl.add( Lists.newArrayList(pred, val) );            
+        for (String property : values.keySet()) {
+            Object val = values.get(property);
+            vl.add( Lists.newArrayList(property, val) );            
+            
+            if (property.equals("in")) {
+                Map edgeIndex = (Map)val;                
+                for (Object pred : edgeIndex.keySet()) {                     
+                    String predicate = (String)pred;
+                    for (Object subj : (List)edgeIndex.get(predicate)) {
+                        Edge e = c.uniqueEdge(c.vertex((String)subj, true), v, predicate);
+                        e.setProperty("i", v.getProperty("i"));
+                    }
+                }
+            }
+            else if (property.equals("out")) {
+                Map edgeIndex = (Map)val;                
+                for (Object pred : edgeIndex.keySet()) {                     
+                    String predicate = (String)pred;
+                    for (Object obj : (List)edgeIndex.get(predicate)) {
+                        Edge e = c.uniqueEdge(v, c.vertex((String)obj, true), predicate);
+                        e.setProperty("i", v.getProperty("i"));
+                    }
+                }                
+            }
+            
         }
         v.setProperty("v", vl);
     }
@@ -115,6 +147,9 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
             //TODO parse hex or base64 long's
             n.modifiedAt = Long.parseLong(j.get("m").toString());
         }
+        else {
+            n.modifiedAt = n.createdAt;
+        }
 
         if (j.containsKey("v")) {
             
@@ -132,9 +167,17 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
         
         return n;
     }
-    public String toJSON() {
-        //TODO
-        return "";
+    public String toJSON() {        
+        Map<String,Object> h = new HashMap();
+        h.put("i", id);
+        if (name!=null) h.put("i", name);
+        if (author!=null) h.put("a", author);
+        h.put("c", createdAt);
+        if (modifiedAt!=createdAt)
+            h.put("m", modifiedAt);
+        h.put("v", values);
+        
+        return Json.encode(h);
     }
 
     
@@ -243,12 +286,13 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
     }
 
     public void setAuthor(String newAuthorID) {
-        if (author!=null)
+        if (this.author!=null)
             tags.remove(author);
         
         this.author = newAuthorID;
-        
-        tags.put(this.author, 1.0);
+    
+        if (this.author!=null)
+            tags.put(this.author, 1.0);
     }
 
 
@@ -278,6 +322,40 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
     public void value(Tag tag) {
         value(tag.toString(), 1.0);
     }
+
+    protected static boolean e(String a, String b) {
+        if ((a == null) && (b == null)) return true;
+        if (a == null) return false;
+        if (b == null) return false;
+        return (a.equals(b));
+    }
+    
+    @Override
+    public boolean equals(Object n) {
+        
+        if (!(n instanceof NObject)) return false;
+        
+        NObject x = (NObject)n;
+        
+        if (!e(id, x.id))
+            return false;        
+        if (!e(name, x.name))
+            return false;
+        if (!e(author, x.author))
+            return false;
+        if (x.createdAt != createdAt)
+            return false;
+        if (x.modifiedAt != modifiedAt)
+            return false;
+
+        //TODO compare values
+        if (!x.values.equals(values))
+            return false;
+        
+        return true;
+    }
+    
+
     
     
 }
