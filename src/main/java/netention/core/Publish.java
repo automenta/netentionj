@@ -61,85 +61,90 @@ public class Publish implements Handler<Message> {
     
     public boolean publish(String nobjectJSON) {
         
+  
+        //TODO authorize
         
-        Map m = Json.decodeValue(nobjectJSON, Map.class);
-        Object pred;
+        NObject incoming = NObject.fromJSON(nobjectJSON);
+        core.add(incoming);
         
-        String id = (String) m.get("id");
-        String author = (String) m.get("author");
+        core.printGraph();
         
-        //Create Edge
-        if ((pred = m.get("predicate"))!=null) {
-            
-            long createdAt = (long) m.get("createdAt");            
-            String subj = (String)m.get("subject");
-            String obj = (String)m.get("object");
-            if ((subj!=null) && (obj!=null)) {
-                if (pred instanceof List) {
-                    List<String> l = (List)pred;
-                    
-                    Vertex sv = core.vertex(subj, true);
-                    sv.setProperty("type", "user");
-                    
-                    Vertex ov = core.vertex(obj, true);                    
-                    
-                    for (String p : l) {                        
-                        Edge e = core.uniqueEdge(sv, ov, p);
-                        e.setProperty("author", author);
-                        e.setProperty("createdAt", createdAt);
-                    }
-                    
-                    core.commit();
-
-                }
-            }
-        }
-        //Add/Set NObject
-        else {
-            //set vertex value
-            ///System.out.println("Setting vertex: " + m);
-            
-            
-            Vertex sv = core.vertex(id, true);
-            
-            final String[] rootFields =  { "name", "geolocation", "createdAt", "modifiedAt", "author", "scope" };
-            for (String r : rootFields) {
-                Object v = m.get(r);
-                if (v!=null) {                    
-                    if (v instanceof Number) {
-                        
-                    }
-                    else if (v instanceof String) {
-                        
-                    }
-                    //other primitive types supported by the graph database
-                    else {
-                        v = v.toString();
-                    }
-                    sv.setProperty(r, v);
-                }
-            }
-            //TODO remove existing non-specified edges
-            
-            Object value = m.get("value");
-            if ((value!=null) && (value instanceof List)) {
-                List valList = (List)value;
-                for (Map<String,Object> l : (List<Map<String,Object>>)valList) {
-                    
-                    Object tagID = l.get("id");
-
-                    if (tagID!=null) {
-                        //create inherit edge                    
-                        core.uniqueEdge(sv, core.vertex(tagID.toString(), true), "is");
-                    }
-                }
-            }
-            
-            core.commit();
-            
-        }
-        
-        bus.publish(Bus.INTEREST, id);
+        //bus.publish(Bus.INTEREST, incoming.id);
         return true;
+        
+//        String id = (String) m.get("i");
+//        String author = (String) m.get("a");
+        
+//        //Create Edge
+//        if ((pred = m.get("predicate"))!=null) {
+//            
+//            long createdAt = (long) m.get("createdAt");            
+//            String subj = (String)m.get("subject");
+//            String obj = (String)m.get("object");
+//            if ((subj!=null) && (obj!=null)) {
+//                if (pred instanceof List) {
+//                    List<String> l = (List)pred;
+//                    
+//                    Vertex sv = core.vertex(subj, true);
+//                    sv.setProperty("type", "user");
+//                    
+//                    Vertex ov = core.vertex(obj, true);                    
+//                    
+//                    for (String p : l) {                        
+//                        Edge e = core.uniqueEdge(sv, ov, p);
+//                        e.setProperty("author", author);
+//                        e.setProperty("createdAt", createdAt);
+//                    }
+//                    
+//                    core.commit();
+//
+//                }
+//            }
+//        }
+//        //Add/Set NObject
+//        else {
+//            //set vertex value
+//            ///System.out.println("Setting vertex: " + m);
+//            
+//            
+//            Vertex sv = core.vertex(id, true);
+//            
+//            final String[] rootFields =  { "name", "geolocation", "createdAt", "modifiedAt", "author", "scope" };
+//            for (String r : rootFields) {
+//                Object v = m.get(r);
+//                if (v!=null) {                    
+//                    if (v instanceof Number) {
+//                        
+//                    }
+//                    else if (v instanceof String) {
+//                        
+//                    }
+//                    //other primitive types supported by the graph database
+//                    else {
+//                        v = v.toString();
+//                    }
+//                    sv.setProperty(r, v);
+//                }
+//            }
+//            //TODO remove existing non-specified edges
+//            
+//            Object value = m.get("value");
+//            if ((value!=null) && (value instanceof List)) {
+//                List valList = (List)value;
+//                for (Map<String,Object> l : (List<Map<String,Object>>)valList) {
+//                    
+//                    Object tagID = l.get("id");
+//
+//                    if (tagID!=null) {
+//                        //create inherit edge                    
+//                        core.uniqueEdge(sv, core.vertex(tagID.toString(), true), "is");
+//                    }
+//                }
+//            }
+//            
+//            core.commit();
+//            
+//        }
+        
     }
 }

@@ -451,15 +451,13 @@ function newTagBarSaveButton(s, prototag, tagBar, onSave) {
             var subject = saveButton.subj || o.author;
             var object =  currentTag;
 
-            var ee = { };
             var predicates = [];
             for (var i = 0; i < selTags.length; i++) {
                 var predicate = selTags[i];
-                ee[predicate] = [ object ];
                 predicates.push(predicate);
             }
             
-            o.value = { "in": ee };
+            o.value = { "g": [[subject, predicates, object ]] };
             
             o.name = predicates + ': ' + currentTagName;            
 
@@ -479,6 +477,7 @@ function newTagBarSaveButton(s, prototag, tagBar, onSave) {
 
             if (onSave)
                 onSave();
+            
         } else {
             alert('Choose 1 or more tags to combine with the wikitag.');
         }

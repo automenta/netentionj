@@ -148,8 +148,8 @@ public class WebServer  {
                 req.response().end( 
                     Json.encode(core.vertexTagStream(tag).map(v -> core.getObject(v)).collect(toList())
                 ));
-                //core.commit();
         }})
+                
                 
         //TODO use streaming HTTP response
         .get("/object/author/:author/json", new Handler<HttpServerRequest>() {
@@ -158,7 +158,6 @@ public class WebServer  {
                 req.response().end( 
                     Json.encode(core.vertexAuthorStream(author).map(v -> core.getObject(v)).collect(toList())
                 ));
-                //core.commit();
         }})
                 
         //TODO use streaming HTTP response
@@ -199,9 +198,15 @@ public class WebServer  {
             @Override public void handle(HttpServerRequest req) {
                 String id = req.params().get("id");
                 
-                req.response().end( 
-                        core.object(id).toJSON()
-                );
+                NObject obj = core.obj(id);
+                if (obj!=null) {
+                    req.response().end( 
+                            obj.toJSON()
+                    );
+                }
+                else {
+                    req.response().setStatusCode(404);
+                }
         }})
                 
         //TODO Realm parameter: https://github.com/mozilla/persona/pull/3854        

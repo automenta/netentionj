@@ -35,7 +35,6 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import static java.util.stream.StreamSupport.stream;
-import javafx.application.Platform;
 import netention.p2p.Listener;
 import netention.p2p.Network;
 import org.apache.commons.math3.stat.Frequency;
@@ -194,7 +193,7 @@ public class Core extends EventEmitter {
     }
 
     public Map<String, Object> getObject(final Vertex v, Set<String> propertyExclude) {
-        return object(v.getProperty("i")).toJSONMap();
+        return obj(v.getProperty("i")).toJSONMap();
     }
     
     public Map<String, Object> getObject2(final Vertex v, Set<String> propertyExclude) {
@@ -344,11 +343,15 @@ public class Core extends EventEmitter {
 
     }
 
+    public Edge uniqueEdge(Vertex from, Vertex to, String predicate) {
+        return uniqueEdge(from, to, predicate, null);
+    }
+    
     /**
      * removes any existing edges between the two vertices, then adds it
      */
-    public Edge uniqueEdge(Vertex from, Vertex to, String predicate) {
-        Iterable<Edge> existing = from.getEdges(Direction.OUT, predicate);
+    public Edge uniqueEdge(Vertex from, Vertex to, String predicate, String origin) {
+        /*Iterable<Edge> existing = from.getEdges(Direction.OUT, predicate);
         for (Edge e : existing) {
             if (e.getVertex(Direction.IN).equals(to)) {
                 //System.out.println(predicate + " existing edge: " + e + " " + e.getLabel() + " " + e.getProperty("i"));
@@ -356,8 +359,11 @@ public class Core extends EventEmitter {
                 //TODO set any updated properties
                 return e;
             }
-        }
-        return addEdge(from, to, predicate);
+        }*/
+        Edge e = addEdge(from, to, predicate);
+        if (origin!=null)
+            e.setProperty("i", origin);
+        return e;
     }
 
     public Edge addEdge(Vertex sv, Vertex ov, String predicate) {
@@ -524,12 +530,13 @@ public class Core extends EventEmitter {
 //    }
      public Stream<Vertex> vertexTagStream(final String tagID) {
          Vertex v = vertex(tagID, false);
-         return stream(v.getEdges(Direction.IN, "tag").spliterator(), false).map(e -> e.getVertex(Direction.OUT));
+         if (v == null) return Stream.empty();
+         
+         return stream(v.getEdges(Direction.OUT, "tag").spliterator(), false).map(e -> e.getVertex(Direction.IN));
      }
      public Stream<Vertex> vertexAuthorStream(final String author) {
-         Vertex v = vertex(author, false);
-        if (v == null)
-            return Stream.empty();
+        Vertex v = vertex(author, false);
+        if (v == null) return Stream.empty();
         return Stream.concat(Stream.of(v), stream(v.getEdges(Direction.OUT, "author").spliterator(), false).map(e -> e.getVertex(Direction.OUT)));
      }
      
@@ -722,10 +729,11 @@ public class Core extends EventEmitter {
         return vertexStream().count();
     }
 
-    public NObject object(String id) {
+    public NObject obj(String id) {
         Vertex v = vertex(id);
         if (v == null) return null;
         return NObject.fromVertex(v);
+        
     }
 
 

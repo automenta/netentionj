@@ -37,7 +37,8 @@ public class NOntology {
     //temporary fix for boon
     static { System.setProperty ( "java.version", "1.8" ); }
 
-             
+    
+    
     public NOntology(Core c) throws Exception {
         ArrayList<NObject> toAdd = new ArrayList();
 

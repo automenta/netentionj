@@ -7,7 +7,6 @@
 package netention.core;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.collect.Lists;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import java.io.Serializable;
@@ -62,14 +61,12 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
         else n.modifiedAt = n.createdAt;
         
         //String valueJSON = (String)v.getProperty("v");
-        List va = (List)v.getProperty("v");
+        Map va = (Map)v.getProperty("v");
         if (va!=null) {
             //List va = Core.jsonList(valueJSON);
-            for (Object o : va) {
-                List ev = (List)o;
-                String predicate = (String)ev.get(0);
-                Object pv = ev.get(1);
-                n.value(predicate, pv);
+            for (Object property : va.keySet()) {                            
+                Object pv = va.get(property);
+                n.value((String)property, pv);
             }
         }
         
@@ -84,32 +81,27 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
         v.setProperty("createdAt", new Long(createdAt));
         v.setProperty("modifiedAt", new Long(modifiedAt));
         
-        //TODO use tag weights
-        //TODO use entryset
-        for (String t : tags.keySet()) {
-            Vertex p = c.vertex(t, true);
-            Edge e = c.uniqueEdge(v, p, "tag");
-            e.setProperty("strength", tags.get(t));
-        }
         
         
         //TODO createdAt, modifiedAt, ..
         
         if ((author!=null) && (author!=id)) {
-            c.uniqueEdge(c.vertex(author, true), v, "author");
+            c.uniqueEdge(c.vertex(author, true), v, "author", id);
         }
         
 
         //TODO use entryset
-        List vl = new ArrayList(values.size());
         for (String property : values.keySet()) {
             Object val = values.get(property);
-            vl.add( Lists.newArrayList(property, val) );            
             
             if (property.equals("g")) {
                 //graph edges
-                for (Object e: (List)val) {
-                    List triple = (List)e;
+                
+                
+                for (Object e: (List)val) {                    
+                    
+                    List triple = Core.jsonList(e.toString());
+                    
                     Collection<String> subjs = getTripleComponent(triple.get(0));
                     Collection<String> preds = getTripleComponent(triple.get(1));
                     Collection<String> objs = getTripleComponent(triple.get(2));
@@ -121,13 +113,29 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
                             for (String o : objs) {
                                 Edge edge = c.uniqueEdge(c.vertex(s, true), c.vertex(o, true), p);
                                 edge.setProperty("i", v.getProperty("i"));
+                                
+                                tags.put(s, 1d);
+                                tags.put(o, 1d);
+                                tags.put(p, 1d);
                             }
                                 
                 }                
             }
             
         }
-        v.setProperty("v", vl);
+
+        //TODO use tag weights
+        //TODO use entryset
+        for (String t : tags.keySet()) {
+            Vertex p = c.vertex(t, true);
+            Edge e = c.uniqueEdge(p, v, "tag", id);
+            double strength = tags.get(t);
+            if (strength!=1.0)
+                e.setProperty("strength", tags.get(t));
+        }
+
+        
+        v.setProperty("v", values);
     }
     
     private List<String> getTripleComponent(Object x) {
@@ -172,6 +180,8 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
         if (j.containsKey("m")) {
             //TODO parse hex or base64 long's
             n.modifiedAt = Long.parseLong(j.get("m").toString());
+            if (n.modifiedAt == 0)
+                n.modifiedAt = n.createdAt;
         }
         else {
             n.modifiedAt = n.createdAt;
@@ -187,17 +197,18 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
                 }
             }
             else {
-                //TODO allow both lists and maps            
+                //TODO allow both lists and maps ?
             }            
         }
         
         return n;
     }
     
+    
     public Map<String, Object> toJSONMap() {
         Map<String,Object> h = new HashMap();
         h.put("i", id);
-        if (name!=null) h.put("i", name);
+        if (name!=null) h.put("n", name);
         if (author!=null) h.put("a", author);
         h.put("c", createdAt);
         if (modifiedAt!=createdAt)

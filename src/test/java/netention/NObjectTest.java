@@ -90,7 +90,7 @@ public class NObjectTest {
         
         
         assertTrue( c.vertex("Geometry") != null);
-        assertTrue( c.object("Geometry").isClass() );
+        assertTrue( c.obj("Geometry").isClass() );
         
         
         NObject n = NObject.fromJSON(oValue);        
@@ -103,7 +103,7 @@ public class NObjectTest {
         
         assertTrue(c.vertex(n.id)!=null);
         
-        NObject m = c.object(n.id);                
+        NObject m = c.obj(n.id);                
         
         assertTrue(n.equals(m));
         assertTrue(m.equals(n));
