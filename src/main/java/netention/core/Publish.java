@@ -65,9 +65,7 @@ public class Publish implements Handler<Message> {
         //TODO authorize
         
         NObject incoming = NObject.fromJSON(nobjectJSON);
-        core.add(incoming);
-        
-        core.printGraph();
+        core.add(incoming);                
         
         //bus.publish(Bus.INTEREST, incoming.id);
         return true;

@@ -298,7 +298,7 @@ objectView.links = {
             }
         });
 
-        var c = $.getJSON('/object/' + encodeURIComponent(id) + '/context/json', function (context) {
+        var c = $.getJSON('/object/' + encodeURIComponent(id) + '/centrality/json', function (context) {
             var items = [];
             var ctx = context.context;
             for (var k in ctx) {

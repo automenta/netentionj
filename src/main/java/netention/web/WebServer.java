@@ -3,9 +3,11 @@ package netention.web;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
+import com.tinkerpop.blueprints.KeyIndexableGraph;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
 import io.netty.handler.codec.http.Cookie;
 import io.netty.handler.codec.http.CookieDecoder;
 import io.netty.handler.codec.http.DefaultCookie;
@@ -19,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -171,11 +172,11 @@ public class WebServer  {
                 //core.commit();
         }})
                 
-        .get("/object/:id/context/json", new Handler<HttpServerRequest>() {
+        .get("/object/:id/centrality/json", new Handler<HttpServerRequest>() {
             @Override public void handle(HttpServerRequest req) {                
                 try {                    
                     req.response().end(
-                            Json.encode( new Activity.ContextGraph(core, 
+                            Json.encode( new Activity.ObjectCentrality(core, 
                                     URLDecoder.decode(req.params().get("id"),"UTF8")
                             ) )
                     );
@@ -196,18 +197,15 @@ public class WebServer  {
                 
         .get("/object/:id/json", new Handler<HttpServerRequest>() {
             @Override public void handle(HttpServerRequest req) {
-                String id = req.params().get("id");
-                
+                String id = req.params().get("id");                
                 NObject obj = core.obj(id);
-                if (obj!=null) {
-                    req.response().end( 
-                            obj.toJSON()
-                    );
-                }
-                else {
+                if (obj!=null) 
+                    req.response().end(  obj.toJSON() );                
+                else
                     req.response().setStatusCode(404);
-                }
-        }})
+            } 
+        })
+
                 
         //TODO Realm parameter: https://github.com/mozilla/persona/pull/3854        
         .post("/login/persona", new MozillaPersonaHandler(options.host, options.port, this))
@@ -273,7 +271,7 @@ public class WebServer  {
         String optionsPath = args.length > 0 ? args[0] : "options.json";        
         Options options = Options.load(optionsPath);
 
-        TransactionalGraph g;
+        KeyIndexableGraph g;
         String dbPath = options.databasePath;
         if ((dbPath!=null) && (dbPath.startsWith("orientdb:"))) {
             String orientPath = dbPath.substring("orientdb:".length());
@@ -281,11 +279,12 @@ public class WebServer  {
             g = new OrientGraph(orientPath);
         }
         else {
-            g = new OrientGraph("orientdb:memory:test");
-            System.err.println("Using OrientDB in-memory database.  Changes will not be saved");
+            g = new TinkerGraph();
+            //g = new OrientGraph("orientdb:memory:test", false);
+            System.err.println("Using in-memory database.  Changes will not be saved");
         }
                 
-        Core core = new Core((TransactionalGraph)g);
+        Core core = new Core(g);
         new NOntology(core);
         //new SchemaOrg(core);
         new WebServer(core, options);

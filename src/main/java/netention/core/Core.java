@@ -18,17 +18,17 @@ import com.tinkerpop.blueprints.KeyIndexableGraph;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
 import com.tinkerpop.gremlin.java.GremlinPipeline;
 import com.tinkerpop.pipes.PipeFunction;
 import com.tinkerpop.pipes.branch.LoopPipe;
 import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -77,8 +77,8 @@ public class Core extends EventEmitter {
         }
     }
 
-    public static TransactionalGraph newMemoryGraph() {
-        return new OrientGraph("memory:test");
+    public static KeyIndexableGraph newMemoryGraph() {
+        return new TinkerGraph();
     }
 
     /**
@@ -159,7 +159,7 @@ public class Core extends EventEmitter {
 
     //https://github.com/thinkaurelius/titan/blob/c958ad2a2bafd305a33655347fef17138ee75088/titan-test/src/main/java/com/thinkaurelius/titan/graphdb/TitanIndexTest.java
     //public final TitanGraph graph;
-    TransactionalGraph graph;
+    KeyIndexableGraph graph;
 
 
     final Map<String, NProperty> property = new HashMap();
@@ -171,13 +171,15 @@ public class Core extends EventEmitter {
         this(newMemoryGraph());
     }
 
-    public Core(TransactionalGraph db) {
+    public Core(KeyIndexableGraph db) {
         
         this.graph = db;
+        
         
         ensureIndex("i", Vertex.class, new Parameter("type", "UNIQUE"));
         ensureIndex("modifiedAt", Vertex.class, new Parameter("class", "Long"));
         ensureIndex("i", Edge.class, new Parameter("class", "String"));
+        commit();
         
 //
 //                TitanManagement mgmt = graph.getManagementSystem();
@@ -196,7 +198,7 @@ public class Core extends EventEmitter {
         return obj(v.getProperty("i")).toJSONMap();
     }
     
-    public Map<String, Object> getObject2(final Vertex v, Set<String> propertyExclude) {
+    public Map<String, Object> getObjectContext(final Vertex v, Set<String> propertyExclude) {
 
         Map<String, Object> r = new HashMap();
 
@@ -207,13 +209,14 @@ public class Core extends EventEmitter {
         }
 
         Iterable<Edge> outs = v.getEdges(Direction.OUT);
-        Map<String, List<String>> outMap = new HashMap();
+        Map<String, Set<String>> outMap = new HashMap();
         for (Edge e : outs) {
+            System.out.println(v.getProperty("i") + " _out_ " + e.getLabel() + " " + e.getVertex(Direction.IN).getProperty("i") + " " + e.getVertex(Direction.OUT).getProperty("i"));
             String edge = e.getLabel();
             String uri = e.getVertex(Direction.IN).getProperty("i");
-            List<String> uris = outMap.get(edge);
+            Set<String> uris = outMap.get(edge);
             if (uris == null) {
-                uris = new ArrayList();
+                uris = new HashSet();
                 outMap.put(edge, uris);
             }
             uris.add(uri);
@@ -223,13 +226,14 @@ public class Core extends EventEmitter {
         }
 
         Iterable<Edge> ins = v.getEdges(Direction.IN);
-        Map<String, List<String>> inMap = new HashMap();
+        Map<String, Set<String>> inMap = new HashMap();
         for (Edge e : ins) {
+            System.out.println(v.getProperty("i") + " _in_ " + e.getLabel() + " " + e.getVertex(Direction.IN).getProperty("i") + " " + e.getVertex(Direction.OUT).getProperty("i"));
             String edge = e.getLabel();
             String uri = e.getVertex(Direction.OUT).getProperty("i");
-            List<String> uris = inMap.get(edge);
+            Set<String> uris = inMap.get(edge);
             if (uris == null) {
-                uris = new ArrayList();
+                uris = new HashSet();
                 inMap.put(edge, uris);
             }
             uris.add(uri);
@@ -250,8 +254,7 @@ public class Core extends EventEmitter {
             h.put("error", objId + " not found");
             return h;
         }
-        Map<String, Object> r = getObject(v);
-        graph.commit();
+        Map<String, Object> r = getObject(v);        
 
         return r;
     }
@@ -284,7 +287,8 @@ public class Core extends EventEmitter {
     }
 
     public synchronized void commit() {
-        graph.commit();
+        if (graph instanceof TransactionalGraph)
+            ((TransactionalGraph)graph).commit();
     }
     
     protected void ensureIndex(String property, Class c, Parameter p) {        
@@ -339,7 +343,7 @@ public class Core extends EventEmitter {
             }
 
         }
-        graph.commit();
+        commit();
 
     }
 
@@ -418,7 +422,7 @@ public class Core extends EventEmitter {
             }
             
         }
-        graph.commit();
+        commit();
     }
     
     public void removeObjects(Iterable<NObject> N) {

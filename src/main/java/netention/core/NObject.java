@@ -99,7 +99,7 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
                 
                 
                 for (Object e: (List)val) {                    
-                    
+                            
                     List triple = Core.jsonList(e.toString());
                     
                     Collection<String> subjs = getTripleComponent(triple.get(0));

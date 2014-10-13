@@ -50,6 +50,8 @@ public class Activity  implements Handler<Message> {
         
     }
     
+    
+    //TODO rename to ObjectGraphContext
     public static class ActivityGraph {
         public final String uri;
         public final Map<String, Object> activity;
@@ -65,23 +67,23 @@ public class Activity  implements Handler<Message> {
                 v = core.vertex(uri, false);
 
             if (v!=null)
-                this.activity = core.getObject(v, excludeProperty);
+                this.activity = core.getObjectContext(v, excludeProperty);
             else
                 this.activity = Collections.EMPTY_MAP;
         }
         
     }
-    public static class ContextGraph {
+    public static class ObjectCentrality {
         public final String uri;
         public final Map<String, Integer> context;
         final double threshold = 0.01;
         final int iterations = 1600;
 
-        public ContextGraph(Core core, String uri) {
+        public ObjectCentrality(Core core, String uri) {
             this(core, uri, null);
         }
         
-        public ContextGraph(Core core, String uri, Vertex v) {
+        public ObjectCentrality(Core core, String uri, Vertex v) {
             this.uri = uri;
             
             if (v == null)
@@ -140,7 +142,7 @@ public class Activity  implements Handler<Message> {
             if (!ag.activity.isEmpty())
                 bus.publish(Bus.SAY, Json.encode(ag));
 
-            ContextGraph cg = new ContextGraph(core, id, v);
+            ObjectCentrality cg = new ObjectCentrality(core, id, v);
             if (!cg.context.isEmpty())
                 bus.publish(Bus.SAY, Json.encode(cg));
         }
