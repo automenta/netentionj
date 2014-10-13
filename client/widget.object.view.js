@@ -3,6 +3,7 @@
 var objectView = {};
 
 objectView.chat = {
+    id: 'chat',
     start: function (x, options) {
         return newChannelWidget(x.id);
     },
@@ -11,6 +12,7 @@ objectView.chat = {
 };
 
 objectView.info = {
+    id: 'info',
     start: function (x, options) {
 
         var depthRemaining = options.depthRemaining || 1;
@@ -229,6 +231,7 @@ objectView.info = {
 };
 
 objectView.value = {
+    id: 'value',
     start: function (id, options) {
         var x = newDiv();
         /*
@@ -251,6 +254,7 @@ objectView.value = {
 };
 
 objectView.links = {
+    id: 'links',
     start: function (o, options) {
         var id = o.id;
 

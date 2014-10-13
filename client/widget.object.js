@@ -1,6 +1,8 @@
 "use strict";
 
 
+var _tinymce = false; //whether it has been loaded
+
 function newPopupObjectEdit(n, p) {
     var e = newObjectEdit(n, true);
     var p = newPopup('Edit', p).append(e);
@@ -438,25 +440,29 @@ function newObjectEdit(ix, editable) {
         }
 
 
-    later(function() {
-        tinymce.init({
-            selector: "div#" + u,
-            schema: "html5",
-            //inline: true,
-            menubar: false,
-            statusbar: false,
-            resize: "both",
-            valid_elements: "+*[*]",
-            content_css: "lib/tinymce/plugins/rdface/css/rdface.css, lib/tinymce/plugins/rdface/schema_creator/schema_colors.css",
-            plugins: [
-                "advlist autolink lists link image charmap anchor",
-                "searchreplace visualblocks fullscreen",
-                "insertdatetime media table contextmenu paste rdface emoticons textcolor"
-            ],
-            toolbar: "rdfaceMain " /*rdfaceRun*/ + "link emoticons | styleselect forecolor bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent table image"
+    if (!_tinymce)
+        later(function() {
+
+
+            _tinymce = true;
+            tinymce.init({
+                selector: "div#" + u,
+                schema: "html5",
+                //inline: true,
+                menubar: false,
+                statusbar: false,
+                resize: "both",
+                valid_elements: "+*[*]",
+                content_css: "lib/tinymce/plugins/rdface/css/rdface.css, lib/tinymce/plugins/rdface/schema_creator/schema_colors.css",
+                plugins: [
+                    "advlist autolink lists link image charmap anchor",
+                    "searchreplace visualblocks fullscreen",
+                    "insertdatetime media table contextmenu paste rdface emoticons textcolor"
+                ],
+                toolbar: "rdfaceMain " /*rdfaceRun*/ + "link emoticons | styleselect forecolor bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent table image"
+            });
+
         });
-        
-    });
     
     return D;
 }
@@ -1232,22 +1238,43 @@ function newObjectView(x, options) {
         var tabNavs = $('<ul class="nav nav-tabs" role="tablist">').appendTo(d);
         var tabContent = $('<div class="tab-content">').appendTo(d);
 
-        function addTab(label, view, active) {
-            var tabid = uuid();
+        var _tabid = uuid();        
+        function addTab(label, view, active) {                            
+            var tabid = _tabid + '_' + view.id;
             
-            //TODO lazy start on tab shown rather than auto-create all
-            var content = view.start(x, options);
-            var t = $('<li><a href="#' + tabid + '" role="tab" data-toggle="tab">' + label + '</a></li>').appendTo(tabNavs);
-            var c = $('<div class="tab-pane" id="' + tabid + '"></div>').appendTo(tabContent).append(content);        
-            if (active) {
+            var a = $('<a href="#' + tabid + '" role="tab" data-toggle="tab">' + label + '</a>');
+            var t = $('<li></li>').append(a).appendTo(tabNavs);
+            var c = $('<div class="tab-pane" id="' + tabid + '"></div>').appendTo(tabContent);
+            a.data('view', view);
+            a.data('viewTarget', c);
+            /*if (active) {
                 c.addClass('active');
                 t.addClass('active');
-            }
+                c.append(view.start(x, options));
+            }*/
+                
         }
-        addTab(infoLabel, objectView.info, true);
+        if (options.tabs) {
+            _.each(options.tabs, function(tab) {
+                addTab(tab.label, tab.view);
+            });
+        }
+        
+        addTab(infoLabel, objectView.info);
         addTab('<i title="Chat" class="fa fa-smile-o"></i>', objectView.chat);
         addTab('<i title="Value" class="fa fa-line-chart"></i>', objectView.value);
         addTab('<i title="Links" class="fa fa-share-alt"></i>', objectView.links);
+        
+        tabNavs.on('shown.bs.tab', function (e) {
+            var active = e.target; // activated tab
+            //var previous = e.relatedTarget; // previous tab
+            var view = $(active).data('view');
+            $(active).data('viewTarget').html( view.start(x, options) );
+        });
+        
+        later(function() {
+            tabNavs.find('a:first').tab('show');
+        });
         
         tabNavs.append(newActionButtons());
     }

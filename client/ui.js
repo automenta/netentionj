@@ -43,7 +43,7 @@ var views = {};
 function addView(v) {
     views[v.id] = v;
 
-    var viewButton = $('<button class="ViewControl ViewSelect btn btn-default"></button>')
+    return $('<button class="ViewControl ViewSelect btn btn-default"></button>')
             .attr('id', v.id)
             .attr('title', v.name)
             .append($('<img/>').attr('src', v.icon))
