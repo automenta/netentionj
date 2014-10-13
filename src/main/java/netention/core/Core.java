@@ -29,10 +29,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import static java.util.stream.StreamSupport.stream;
 import netention.p2p.Listener;
@@ -40,6 +42,7 @@ import netention.p2p.Network;
 import org.apache.commons.math3.stat.Frequency;
 import org.boon.json.JsonParserAndMapper;
 import org.boon.json.JsonParserFactory;
+import org.vertx.java.core.http.HttpServerResponse;
 import org.vertx.java.core.json.impl.Json;
 
 /**
@@ -718,11 +721,38 @@ public class Core extends EventEmitter {
         return nclass.values().stream().filter(n -> n.getExtend().isEmpty());
     }
 
-    public String getOntologyJSON() {
+    
+    public String getOntologyJSON1() {
         Map<String, Object> o = new HashMap();
         o.put("property", property.values());
         o.put("class", nclass.values());
         return Json.encode(o);
+    }
+    public String getOntologyJSON() {
+        Map<String, Object> o = new HashMap();
+        o.put("property", property.values().stream().map(p -> p.toJSONMap()).collect(Collectors.toList()));
+        o.put("class", nclass.values().stream().map(p -> p.toJSONMap()).collect(Collectors.toList()));
+        return Json.encode(o);
+    }
+    
+    //untested:
+    public void writeOntologyJSON(HttpServerResponse r) {        
+        r.write("{ property: [");
+        
+        Iterator<NProperty> pi = property.values().iterator();
+        r.write(pi.next().toJSON());
+        while (pi.hasNext()) {
+            r.write(",");
+            r.write(pi.next().toJSON());
+        }        
+        r.write("], class: [");
+        Iterator<NClass> ci = nclass.values().iterator();
+        r.write(ci.next().toJSON());
+        while (ci.hasNext()) {
+            r.write(",");
+            r.write(ci.next().toJSON());
+        }        
+        r.write("]}");
     }
 
     public Vertex vertex(String id) {

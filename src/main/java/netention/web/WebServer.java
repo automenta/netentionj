@@ -4,7 +4,6 @@ import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import com.tinkerpop.blueprints.KeyIndexableGraph;
-import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
@@ -39,6 +38,7 @@ import org.boon.json.JsonParserFactory;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.VertxFactory;
+import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpServer;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.RouteMatcher;
@@ -139,6 +139,7 @@ public class WebServer  {
                 
         .get("/ontology.json", new Handler<HttpServerRequest>() {
             @Override public void handle(HttpServerRequest e) {                
+                //TODO cache as virtual static File with ETag                
                 e.response().end(core.getOntologyJSON());
         }})
                 
@@ -172,22 +173,11 @@ public class WebServer  {
                 //core.commit();
         }})
                 
-        .get("/object/:id/centrality/json", new Handler<HttpServerRequest>() {
-            @Override public void handle(HttpServerRequest req) {                
-                try {                    
-                    req.response().end(
-                            Json.encode( new Activity.ObjectCentrality(core, 
-                                    URLDecoder.decode(req.params().get("id"),"UTF8")
-                            ) )
-                    );
-                } catch (UnsupportedEncodingException ex) { req.response().end(ex.toString());  }
-            }            
-        })
         .get("/object/:id/activity/json", new Handler<HttpServerRequest>() {
             @Override public void handle(HttpServerRequest req) {                
                 try {                    
                     req.response().end(
-                            Json.encode( new Activity.ActivityGraph(core, 
+                            Json.encode( Activity.getActivity(core, 
                                     URLDecoder.decode(req.params().get("id"),"UTF8")
                             ) )
                     );

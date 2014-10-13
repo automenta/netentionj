@@ -142,6 +142,12 @@ public class StaticFileHandler implements Handler<HttpServerRequest> {
                 request.response().putHeader("Content-Type", contentType);
             }
         }
+        
+        //http://betterexplained.com/articles/how-to-optimize-your-site-with-http-caching/
+        request.response().putHeader("Cache-Control", "max-age=604800" /* 1 week */);        
+
+        
+        
 
         vertx.fileSystem().open(requestStr, null, true, false, false, new Handler<AsyncResult<AsyncFile>>() {
 
@@ -169,7 +175,7 @@ public class StaticFileHandler implements Handler<HttpServerRequest> {
     }
 
     private void sendFile(HttpServerRequest request, String requestStr, FileCacheInfo cacheInfo) {
-        request.response().putHeader("ETag", cacheInfo.etagsha1);
+        request.response().putHeader("ETag", cacheInfo.etagsha1);                
         request.response().sendFile(requestStr);
     }
 

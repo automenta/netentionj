@@ -26,6 +26,7 @@ import org.vertx.java.core.json.impl.Json;
  * @author me
  */
 public class NObject /*extends Value*/ implements Serializable, Comparable {
+
         
     public String id;
     public long createdAt;
@@ -210,10 +211,19 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
         h.put("i", id);
         if (name!=null) h.put("n", name);
         if (author!=null) h.put("a", author);
-        h.put("c", createdAt);
-        if (modifiedAt!=createdAt)
-            h.put("m", modifiedAt);
-        h.put("v", values);
+        
+        if (this instanceof NProperty) {
+            h.put("extend", ((NProperty)this).extend );
+        }
+        else if (this instanceof NClass) {
+            h.put("extend", ((NClass)this).extend);
+        }
+        else {
+            h.put("v", values);
+            h.put("c", createdAt);
+            if (modifiedAt!=createdAt)
+                h.put("m", modifiedAt);
+        }
         return h;        
     }
     

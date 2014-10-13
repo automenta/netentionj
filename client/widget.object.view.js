@@ -261,6 +261,10 @@ objectView.links = {
         var x = newDiv();
 
         var c = $.getJSON('/object/' + encodeURIComponent(id) + '/activity/json', function (activity) {
+            
+            if (activity === null)
+                return;
+            
             //x.append(JSON.stringify(activity));
 
             var n = []; // {"name":"Myriel","group":1},
@@ -300,11 +304,11 @@ objectView.links = {
             if (n.length > 1) {
                 x.append(newGraphChart({nodes: n, links: e}, 300, 300));
             }
-        });
-
-        var c = $.getJSON('/object/' + encodeURIComponent(id) + '/centrality/json', function (context) {
+            
+            
+            
             var items = [];
-            var ctx = context.context;
+            var ctx = activity.context;
             for (var k in ctx) {
                 items.push({name: k, value: ctx[k]});
             }
@@ -378,7 +382,7 @@ function newGraphChart(graph, width, height) {
             //.attr("class", "node")
             .attr("r", function(d) { return d.value; } )
             .style("fill", function (d) {
-                return color(d.group);
+                return color(d.name);
             })
             .call(force.drag);
 

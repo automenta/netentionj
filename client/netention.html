@@ -21,6 +21,16 @@
         <link rel="apple-touch-icon-precomposed" href="icon/apple-touch-icon-57-precomposed.png">
         <link id="favicon" rel="shortcut icon" href="icon/favicon.png">
         <style> #NotificationArea { font-family: Arial, sans; z-index: 5000;  position: fixed; font-size: 200%;  text-align:center; top: 25%; width: 100%; } </style>
+        <style type="text/css">
+            @import url("lib/bootstrap/bootstrap.min.css");
+            @import url("lib/fontawesome/css/font-awesome.min.css");
+
+            /*@import url('lib/jquery-ui/1.11.1/jquery-ui.css');*/
+            @import url('lib/jquery-ui/1.11.1/bootstrap/jquery-ui-1.10.3.theme.css');
+            @import url('lib/jquery-ui/1.11.1/bootstrap/jquery-ui-1.10.3.custom.css');
+
+        </style>
+        
     </head>
 
     <body>
@@ -285,14 +295,7 @@
         <script>
             $LAB.setGlobalDefaults({AllowDuplicates: false});
         </script>
-        <style type="text/css">
-            @import url("lib/bootstrap/bootstrap.min.css");
-            @import url("lib/fontawesome/css/font-awesome.min.css");
-
-            /*@import url('lib/jquery-ui/1.11.1/jquery-ui.css');*/
-            @import url('lib/jquery-ui/1.11.1/bootstrap/jquery-ui-1.10.3.theme.css');
-            @import url('lib/jquery-ui/1.11.1/bootstrap/jquery-ui-1.10.3.custom.css');
-
+        <style>
             /*@import url("lib/fractaldom/fractaldom.css");*/
 
             @import url("lib/leaflet/leaflet.css");
@@ -587,31 +590,39 @@
                 
                 
                 bus.registerHandler('say', publicHandler = function (message) {
+                    
                     try {
                         //notify(JSON.parse(message));
                         notify(message);                        
                     }
                     catch (e) {
-                        console.log(message);
+                        console.log(e + ': ' + message);
                     }
                 });  
                 bus.registerHandler('publish', function(message) {
                     var now = Date.now();
-                    var created = message.modifiedAt || message.createdAt;
+                    var created = message.m || message.c;
                     var latency = now - created;
-
+                    
                     //TODO different message according to scope
                     //TODO limit title length
 
-                    if (message.author == $N.id()) {
-                        notify({title: message.name, text: 'Shared: ' + message.id + ' (' + latency + 'ms)'});
+                    if (message.a) {
+
+                        if (message.a == $N.id()) {
+                            notify({title: message.n, text: 'Shared: ' + message.i + ' (' + latency + 'ms)'});
+                        }
+                        else {
+                            notify(
+                               {title: message.n, 
+                                text: 'New: ' + message.i + ' by ' + $N.label(message.a) + ' (' + latency + 'ms)'
+                            } );
+                        }
                     }
                     else {
-                        notify(
-                           {title: message.name, 
-                            text: 'New: ' + message.id + ' by ' + $N.label(message.author) + ' (' + latency + 'ms)'
-                        } );
+                        notify( JSON.stringify(message) );
                     }
+                    
                 });
             }
 

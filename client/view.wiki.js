@@ -51,7 +51,6 @@ addView({
         v.append(frame);
 
         wiki.onURL = function (u) {
-            console.log('uri=' + u);
 
             /*var r;
              if (search) {

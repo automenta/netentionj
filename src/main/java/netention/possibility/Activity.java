@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.Set;
 import netention.web.Bus;
 import netention.core.Core;
+import netention.possibility.Activity.ActivityGraph;
+import netention.possibility.Activity.ObjectCentrality;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.eventbus.Message;
@@ -37,7 +39,11 @@ import org.vertx.java.core.json.impl.Json;
 public class Activity  implements Handler<Message> {
     private final Core core;
     private final EventBus bus;
-    static final Set<String> excludeProperty = new HashSet(Arrays.asList("wikipedia_content"));
+    static final Set<String> excludeProperty = new HashSet(
+            Arrays.asList(
+               "wikipedia_content", "Thing", "nclass", "property"
+            )
+    );
         
     public Activity(Core c, EventBus b) {
 
@@ -115,11 +121,14 @@ public class Activity  implements Handler<Message> {
             if (max > 0) {
                 for (Map.Entry<Vertex, Number> n : m.entrySet()) {
                     String u = n.getKey().getProperty("i");
+ 
                     if (u!=null) {
-                        double vv = n.getValue().doubleValue();
-                        double pv = vv/total;
-                        if (pv >= threshold)
-                            c.put(u, (int)(pv*100.0));
+                        if (!excludeProperty.contains(u)) {
+                            double vv = n.getValue().doubleValue();
+                            double pv = vv/total;
+                            if (pv >= threshold)
+                                c.put(u, (int)(pv*100.0));
+                        }
                     }
                 }
             }
@@ -134,19 +143,33 @@ public class Activity  implements Handler<Message> {
         String id = e.body().toString();
                 
         //TODO avoid calling Core.vertex() twice by passing it as a parameter to both constructors
+       
         
+        Map<String,Object> x = getActivity(core, id);
+        if (x!=null)
+            bus.publish(Bus.SAY, Json.encode(x));
+        
+        
+    }    
+    
+    public static Map<String,Object> getActivity(Core core, String id) {
         Vertex v = core.vertex(id, false);
         if (v!=null) {
 
             ActivityGraph ag = new ActivityGraph(core, id, v);
-            if (!ag.activity.isEmpty())
-                bus.publish(Bus.SAY, Json.encode(ag));
-
             ObjectCentrality cg = new ObjectCentrality(core, id, v);
+            
+            if (ag.activity.isEmpty() && cg.context.isEmpty())
+                return null;
+            
+            Map<String,Object> x = new HashMap();
+            if (!ag.activity.isEmpty())
+                x.put("activity", ag.activity);
             if (!cg.context.isEmpty())
-                bus.publish(Bus.SAY, Json.encode(cg));
+                x.put("context", cg.context);
+            return x;
         }
-        
-    }    
-        
+        return null;
+    }
+    
 }

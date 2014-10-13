@@ -496,7 +496,7 @@ function setTheme(t) {
 
     var themeURL = 'theme/' + t + '.css';
 
-    $('#theme').append('<link class="themecss" href="' + themeURL + '" type="text/css" rel="stylesheet"/>');
+    $('head').append('<link class="themecss" href="' + themeURL + '" type="text/css" rel="stylesheet"/>');
 }
 
 
