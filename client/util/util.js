@@ -2135,6 +2135,8 @@ var compactObjectFields = [['removed', 'r'],
     ['name', 'n'],
     ['description', 'd'],
     ['replyTo', 'R'],
+    ['createdAt', 'c'],
+    ['modifiedAt', 'm'],
     ['expiresAt', 'x'],
     ['focus', 'f']];
 function renameFields(o, f, swap) {
@@ -2274,11 +2276,11 @@ function objExpand(o) {
     if (o.i && !o.id)
         o.id = o.i;
 
-    if (o.id !== undefined && o.i === undefined) {
+    //if (o.id !== undefined && o.i === undefined) {
         //console.error(o, ' already expanded');
         //console.log(new Error().stack);
-        return;
-    }
+                //     return;
+    //}
 
     renameObjectFields(o, true);
 
@@ -2312,6 +2314,7 @@ function objExpand(o) {
 
     return o;
 }
+
 exports.objExpand = objExpand;
 
 //returns full-text representation of an objectID

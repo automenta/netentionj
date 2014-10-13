@@ -32,6 +32,9 @@ select {
 .navbar {
 	border: none !important;
 }
+.ui-dialog {
+    overflow: visible !important;
+}
 .ui-dialog-content {
 	clear: both;
 }

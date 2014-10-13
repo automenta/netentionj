@@ -219,9 +219,10 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
             h.put("extend", ((NClass)this).extend);
         }
         else {
-            h.put("v", values);
+            if (values.size() > 0)
+                h.put("v", values);
             h.put("c", createdAt);
-            if (modifiedAt!=createdAt)
+            if ((modifiedAt!=createdAt) && (modifiedAt!=0))
                 h.put("m", modifiedAt);
         }
         return h;        

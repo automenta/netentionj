@@ -492,13 +492,15 @@ function netention(router) {
             var that = this;
 
             function n(y) {
+                
+                
                 if (!y) {
                     console.error('notice() null object');
                     return false;
                 }
 
-                if (!y.id)
-                    y = objExpand(y);
+                //if (!y.id)
+                y = objExpand(y);
 
                 if (!y.id) {
                     //console.error('notice() invalid object', y);
@@ -532,9 +534,12 @@ function netention(router) {
                     }
                 }
 
+                console.log('notice');
+                console.log(y);
+                
                 $N.add(y, undefined, noSave);
 
-                function objTagObjectToTag(x) {
+                /*function objTagObjectToTag(x) {
                     var p = {};
                     _.each(objValues(x, 'tagValueType'), function(v) {
                         var vv = v.split(':');
@@ -554,7 +559,7 @@ function netention(router) {
 
                 if (objHasTag(y, 'Tag')) {
                     that.add([objTagObjectToTag(y)]);
-                }
+                }*/
 
                 //add missing tags to ontology and index
                 //TODO guess type if it's property

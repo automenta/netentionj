@@ -1034,7 +1034,7 @@ function _objectViewEdit() {
 
 function _objectViewContext() {
     var that = $(this);
-    var xid = $(this).parent().parent().attr('xid');
+    var xid = $(this).parent().parent().parent().attr('xid');
     var x = $N.object[xid];
 
     //click the popup menu button again to disappear an existing menu

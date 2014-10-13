@@ -214,7 +214,7 @@ public class Core extends EventEmitter {
         Iterable<Edge> outs = v.getEdges(Direction.OUT);
         Map<String, Set<String>> outMap = new HashMap();
         for (Edge e : outs) {
-            System.out.println(v.getProperty("i") + " _out_ " + e.getLabel() + " " + e.getVertex(Direction.IN).getProperty("i") + " " + e.getVertex(Direction.OUT).getProperty("i"));
+            //System.out.println(v.getProperty("i") + " _out_ " + e.getLabel() + " " + e.getVertex(Direction.IN).getProperty("i") + " " + e.getVertex(Direction.OUT).getProperty("i"));
             String edge = e.getLabel();
             String uri = e.getVertex(Direction.IN).getProperty("i");
             Set<String> uris = outMap.get(edge);
@@ -231,7 +231,7 @@ public class Core extends EventEmitter {
         Iterable<Edge> ins = v.getEdges(Direction.IN);
         Map<String, Set<String>> inMap = new HashMap();
         for (Edge e : ins) {
-            System.out.println(v.getProperty("i") + " _in_ " + e.getLabel() + " " + e.getVertex(Direction.IN).getProperty("i") + " " + e.getVertex(Direction.OUT).getProperty("i"));
+            //System.out.println(v.getProperty("i") + " _in_ " + e.getLabel() + " " + e.getVertex(Direction.IN).getProperty("i") + " " + e.getVertex(Direction.OUT).getProperty("i"));
             String edge = e.getLabel();
             String uri = e.getVertex(Direction.OUT).getProperty("i");
             Set<String> uris = inMap.get(edge);
