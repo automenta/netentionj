@@ -980,12 +980,22 @@ function getTagIcon(t) {
                 return avurl;
         }
         
-        return defaultIcons.unknown;
+        return getUnknownTagIcon(t.id);
     } else {
-        return defaultIcons[t] || defaultIcons.unknown;
+        return defaultIcons[t] || getUnknownTagIcon(t);
     }
 }
 
+function getUnknownTagIcon(t) {
+    return getGravatarURL(t, 'identicon' /*'monsterid'*/);
+}
+
+
+
+function getGravatarURL(e, style) {
+    var h = MD5(e);
+    return 'http://www.gravatar.com/avatar/' + h + '?d=' + style;
+}
 
 function getAvatarURL(s, style) {
     if (!style)
@@ -1008,9 +1018,9 @@ function getAvatarURL(s, style) {
 
     if (s) {
         var e = objFirstValue(s, 'email');
-        var emailHash = e ? MD5(e) : (s.id ? MD5(s.id) : MD5(s.toString()));
-        return 'http://www.gravatar.com/avatar/' + emailHash + '?d=' + style;
+        return getGravatarURL(e || s.id || s, style);
     }
+    
     return configuration.defaultAvatarIcon;
 }
 

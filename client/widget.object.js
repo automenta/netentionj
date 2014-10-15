@@ -4,31 +4,18 @@
 var _tinymce = false; //whether it has been loaded
 
 function newPopupObjectEdit(n, p) {
-    var e = newObjectEdit(n, true);
-    var p = newPopup('Edit', p).append(e);
-
-	/*
-	var nameInput = e.find('.nameInput').detach();
-	//hack to make the text input functional above the dialog's original draggable title area
-	nameInput.css('z-index', '10').css('width', '90%').css('position', 'absolute').css('margin', '5px');
-	p.parent().prepend(nameInput);
-	p.draggable({ handle: ".ui-dialog-titlebar" });
-	*/
-    
-    
-
-    return e;
+    return newObjectEdit(n, true).appendTo( newPopup('Edit', p) );
 }
 
 function newPopupObjectView(obj, popupParam, objectViewParam) {
     var x;
-    if (typeof (obj) === 'string')
+    if (typeof(obj) === 'string')
         x = $N.object[obj];
     else
         x = obj;
 
     if (!x) {
-        console.log('Unknown object: ' + obj);
+        notify('Unknown object: ' + obj);
         return;
     }
 
@@ -41,12 +28,9 @@ function newPopupObjectView(obj, popupParam, objectViewParam) {
         };
     }
 
-    var p = newPopup(x.name, popupParam).append( 
+    return newPopup(x.name, popupParam).append( 
             newObjectView(x, objectViewParam).css('border', 'none') 
     );
-    
-
-    return p;
 }
 
 
@@ -440,29 +424,28 @@ function newObjectEdit(ix, editable) {
         }
 
 
-    if (!_tinymce)
-        later(function() {
-
-
-            _tinymce = true;
-            tinymce.init({
-                selector: "div#" + u,
-                schema: "html5",
-                //inline: true,
-                menubar: false,
-                statusbar: false,
-                resize: "both",
-                valid_elements: "+*[*]",
-                content_css: "lib/tinymce/plugins/rdface/css/rdface.css, lib/tinymce/plugins/rdface/schema_creator/schema_colors.css",
-                plugins: [
-                    "advlist autolink lists link image charmap anchor",
-                    "searchreplace visualblocks fullscreen",
-                    "insertdatetime media table contextmenu paste rdface emoticons textcolor"
-                ],
-                toolbar: "rdfaceMain " /*rdfaceRun*/ + "link emoticons | styleselect forecolor bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent table image"
-            });
-
-        });
+    var tmc = {
+        selector: "div#" + u,
+        schema: "html5",
+        //inline: true,
+        menubar: false,
+        statusbar: false,
+        resize: "both",
+        valid_elements: "+*[*]",
+        toolbar: "rdfaceMain " /*rdfaceRun*/ + "link emoticons | styleselect forecolor bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent table image"
+    };
+    if (!_tinymce) {
+        tmc.content_css = "lib/tinymce/plugins/rdface/css/rdface.css, lib/tinymce/plugins/rdface/schema_creator/schema_colors.css";
+        tmc.plugins = [
+                "advlist autolink lists link image charmap anchor",
+                "searchreplace visualblocks fullscreen",
+                "insertdatetime media table contextmenu paste rdface emoticons textcolor"
+        ]; 
+        _tinymce = true;
+    }    
+    later(function() {
+        tinymce.init(tmc);
+    });    
     
     return D;
 }
