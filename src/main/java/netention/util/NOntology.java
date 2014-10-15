@@ -59,7 +59,7 @@ public class NOntology {
             toAdd.add(np);
         }
         
-        c.addObjects(toAdd);
+        c.add(toAdd);
     }
     
     

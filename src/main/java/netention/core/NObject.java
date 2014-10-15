@@ -107,6 +107,12 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
                     Collection<String> preds = getTripleComponent(triple.get(1));
                     Collection<String> objs = getTripleComponent(triple.get(2));
                     
+                    double strength;
+                    if ((triple.size() > 3) && (triple.get(3) instanceof Number))
+                        strength = ((Number)triple.get(3)).doubleValue();
+                    else
+                        strength = 1;
+                    
                     //check how many edges will be created and disallow if > limit
                     
                     for (String s : subjs)
@@ -114,10 +120,11 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
                             for (String o : objs) {
                                 Edge edge = c.uniqueEdge(c.vertex(s, true), c.vertex(o, true), p);
                                 edge.setProperty("i", v.getProperty("i"));
+                                edge.setProperty("s", strength);
                                 
-                                tags.put(s, 1d);
-                                tags.put(o, 1d);
-                                tags.put(p, 1d);
+                                tags.put(s, strength);
+                                tags.put(o, strength);
+                                tags.put(p, strength);
                             }
                                 
                 }                

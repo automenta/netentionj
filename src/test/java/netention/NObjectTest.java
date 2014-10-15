@@ -157,4 +157,42 @@ public class NObjectTest {
         
     }
 
+    
+    String opGraph =
+        "{" +
+            "i: x," +
+            "a: a," +
+            "c: 0," +
+            "m: 1," +
+            "v: {" +
+              "g: [" +
+                "[ 'x', 'b', 'y', 0.5 ]," +
+                "[ 'x', ['d','e'], 'y', 0.25 ]" +
+              "]" + 
+            "}" +
+        "}";
+    
+    @Test public void testProportionalEdge() {
+        Core c = new Core();
+        
+        c.add( NObject.fromJSON(opGraph) );
+        
+        assertEquals("edge strength 0.5", 0.5,
+                c.vertex("x").getEdges(Direction.OUT, "b").iterator().next().getProperty("s"));
+        assertEquals("edge strength 0.25", 0.25,
+                c.vertex("x").getEdges(Direction.OUT, "d").iterator().next().getProperty("s"));
+        assertEquals("edge strength 0.25", 0.25,
+                c.vertex("x").getEdges(Direction.OUT, "e").iterator().next().getProperty("s"));
+        
+        
+        String opGraph2 = opGraph.replace("0.5", "1.0").replace("'d'", "'D'");
+        
+        //should replace the edge
+        c.add( NObject.fromJSON(opGraph2) );
+        assertEquals("edge strength replaced to 1.0", 1.0,
+                c.vertex("x").getEdges(Direction.OUT, "b").iterator().next().getProperty("s"));
+        assertEquals("edge changed", false,
+                c.vertex("x").getEdges(Direction.OUT, "d").iterator().hasNext());
+        
+    }
 }

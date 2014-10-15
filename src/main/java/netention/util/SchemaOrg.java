@@ -113,7 +113,7 @@ public class SchemaOrg {
         }
         reader.close();
         
-        core.addObjects(toAdd);
+        core.add(toAdd);
 
     }
     

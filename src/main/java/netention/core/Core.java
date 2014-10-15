@@ -402,8 +402,9 @@ public class Core extends EventEmitter {
         return null;
     }
 
-    public void addObjects(Iterable<NObject> N) {
-        removeObjects(N);
+    public void add(Iterable<NObject> N) {
+        remove(N);
+        
         for (final NObject n : N) {
             
             Vertex v = vertex(n.id, true);
@@ -428,24 +429,28 @@ public class Core extends EventEmitter {
         commit();
     }
     
-    public void removeObjects(Iterable<NObject> N) {
+    public void remove(Iterable<NObject> N) {
         for (final NObject n : N) {
-            
+            Vertex v = vertex(n.id, false);
+            if (v!=null)
+                graph.removeVertex( v );
         }
+        commit();
     }
 
 
     public void add(NObject... N) {        
-        addObjects(Arrays.asList(N));
+        add(Arrays.asList(N));
     }
 
     public void remove(NObject... n) {
-        removeObjects(Arrays.asList(n));
+        remove(Arrays.asList(n));
     }
     
     /**
      * eigenvector centrality
-     */    public Map<Vertex, Number> centrality(final int iterations, Vertex start) {
+     */    
+    public Map<Vertex, Number> centrality(final int iterations, Vertex start) {
          Map<Vertex, Number> map = new HashMap();
          
          new GremlinPipeline<Vertex, Vertex>(graph.getVertices()).start(start).as("x").both().groupCount(map).loop("x",
