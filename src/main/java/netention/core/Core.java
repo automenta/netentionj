@@ -22,6 +22,7 @@ import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
 import com.tinkerpop.gremlin.java.GremlinPipeline;
 import com.tinkerpop.pipes.PipeFunction;
 import com.tinkerpop.pipes.branch.LoopPipe;
+import com.tinkerpop.pipes.util.PipesFunction;
 import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -450,27 +451,57 @@ public class Core extends EventEmitter {
     /**
      * eigenvector centrality
      */    
-    public Map<Vertex, Number> centrality(final int iterations, Vertex start) {
+    public Map<Vertex, Number> centrality(final int iterations, Vertex start, Map<String, Double> edgeScale, double defaultEdgeScale) {
          Map<Vertex, Number> map = new HashMap();
          
-         new GremlinPipeline<Vertex, Vertex>(graph.getVertices()).start(start).as("x").both().groupCount(map).loop("x",
-                 new PipeFunction<LoopPipe.LoopBundle<Vertex>, Boolean>() {
-                     
-                     int c = 0;
-                     
-                     @Override
-                     public Boolean compute(LoopPipe.LoopBundle<Vertex> a) {
-                         return (c++ < iterations);
-                     }
-                }).iterate();
+         double defaultEdgeStrength = 1.0;
+         
+         new GremlinPipeline<Vertex, Vertex>(graph.getVertices()).start(start).as("x").bothE().filter(new PipeFunction<Edge, Boolean>() {
 
-         return map;
+             @Override public Boolean compute(final Edge e) {
+                 Object o = e.getProperty("s");
+                 
+                 double strength = (o!=null && (o instanceof Number)) ? ((Number)o).doubleValue() : defaultEdgeStrength;
+                 
+                 if (edgeScale!=null)  {
+                    String i = e.getProperty("i");
+                    Double d = edgeScale.get(i);
+                    double es = (d!=null) ? d : defaultEdgeScale;
+                    strength *= es;                    
+                 }
+                 
+                 return Math.random() < strength;                 
+             }
+             
+         }).bothV().groupCount(map).loop("x", new PipeFunction<LoopPipe.LoopBundle<Vertex>, Boolean>() {
+                     
+            int c = 0;
+
+            @Override public Boolean compute(final LoopPipe.LoopBundle<Vertex> a) {
+                return (c++ < iterations);
+            }
+            
+        }).iterate();
+                  
+        return map;
+
          //out(label);
          /*
          m = [:]; c = 0;
          g.V.as('x').out.groupCount(m).loop('x'){c++ < 1000}
          m.sort{-it.value}
          */
+     }
+
+    public Map<Vertex, Number> centrality(final int iterations, Vertex start) {
+        return centrality(iterations, start, null, 0);
+    }
+    
+     public List<Edge> getPath(Vertex a, Vertex b) {
+        return null;
+     }
+     public double getPathStrength(List<Edge> l) {
+         return 0;
      }
      
      public Core online(int listenPort) throws IOException, UnknownHostException, SocketException, InterruptedException {

@@ -226,9 +226,9 @@ addView({
             var goalTime = Date.now();
 
 
-            newGoalList(goalList, currentUser, centroids);
+            /*newGoalList(goalList, currentUser, centroids);
             panelContentRight.append(
-                    newBootstrapPanel('Agenda', goalList));
+                    newBootstrapPanel('Agenda', goalList));*/
 
         }
 
@@ -275,8 +275,8 @@ function objAddEdgeRange(x, subject, scale, predA, predB, predC, object) {
             edges.push( [ subject, predB, object, 1.0 - (-scale) ] );
         }
         else if (scale < 1) {
-            edges.push( [ subject, predA, object, 1.0 - scale  ] );
-            edges.push( [ subject, predB, object, scale ] );
+            edges.push( [ subject, predB, object, 1.0 - scale  ] );
+            edges.push( [ subject, predC, object, scale ] );
         }
     }    
 }

@@ -468,8 +468,25 @@ addView({
 						for (var j = 0; j < replies.length; j++) {
 							xxrr.push([replies[j], 1]);
 						}
-					}
-				}
+					}                                                                               
+
+                                }
+                                
+				for (var i = 0; i < xxrr.length; i++) {
+                                    var x = xxrr[i][0];
+                                    if ((includeEdges['Graph']) && (x.value) && (x.value.g)) {
+                                        objGraphEdges(x, function(s, p, o, str) {
+                                            console.log('graph edge', s,p,o,str);
+                                            addEdge(s, o, {
+                                                label: p,
+                                                stroke: 'rgba(200,200,200,' + (0.25 + 0.75 * str) + ')',
+                                                strokeWidth: Math.max(1.0, thickLine * str),
+                                                strength: str
+                                            });
+                                        });                                    
+                                    }
+                                    
+                                }
 
 				for (var i = 0; i < xxrr.length; i++) {
 					var x = xxrr[i][0];
@@ -492,6 +509,7 @@ addView({
 
 					if (includeEdges['Type']) {
 						_.each(ots, function(v, k) {
+                                                    if (k!==x.author)
 							rtags.push([k, {
 								stroke: 'rgba(64,64,64,0.5)',
 								strokeWidth: (thickLine * v),
@@ -506,14 +524,6 @@ addView({
 							rtags.push([x.author, {
 								stroke: 'rgba(128,64,64,0.5)',
 								strokeWidth: thinLine
-							}]);
-					}
-					if (includeEdges['Subject']) {
-						if (x.subject)
-							rtags.push([x.subject, {
-								stroke: 'rgba(64,64,128,0.5)',
-								strokeWidth: thinLine,
-								contains: true
 							}]);
 					}
 					if (includeEdges['Reply']) {
@@ -937,7 +947,7 @@ addView({
 		var edgeMenu = newDiv().addClass('HUDTopRight').appendTo(nd);
 		edgeMenu.css('text-align', 'right');
 
-		var edgeTypes = ['Type', 'Author', 'Object', 'Subject', 'Reply', 'trust', 'value', 'not', 'other'];
+		var edgeTypes = ['Type', 'Author', 'Object', 'Graph', 'Reply', 'trust', 'value', 'not', 'other'];
 		_.each(edgeTypes, function(e) {
 			var includeCheck = $('<input type="checkbox"/>');
 			includeCheck.click(function() {

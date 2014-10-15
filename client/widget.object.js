@@ -1175,6 +1175,10 @@ function newMetadataLine(x, showTime) {
         if ($N.property[t])
             continue;
 
+        if (t === x.author)
+            continue;
+        
+        
         var tt = $N.class[t];
 
         var taglink = newTagButton(tt || t, false, undefined, true);

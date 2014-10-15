@@ -346,6 +346,43 @@ function objTags(x, includePrimitives) {
 }
 exports.objTags = objTags;
 
+
+/** e is callback function: e(subj,pred,obj) */
+function objGraphEdges(x, withEdge) {
+    
+    if (!(x.value && x.value.g)) return;
+    
+    
+    function o(s, p, o, e) {
+        var strength = e[3] || 1;
+        withEdge(s, p, o, strength);
+    }
+    
+    function p(s, p, e) {
+        var obj = e[2];
+        if (typeof(obj)==="string")
+            o(s, p, obj, e);
+        else for (var k = 0; k < obj.length; k++)  o(s, p, obj[k], e);
+    }
+    
+    function s(s, e) {
+        var pred = e[1];
+        if (typeof(pred)==="string")
+            p(s, pred, e);
+        else for (var k = 0; k < pred.length; k++)  p(s, pred[k], e);        
+    }
+    
+    var edges = x.value.g;    
+    for (var i = 0; i < edges.length; i++) {
+        var e = edges[i];
+        var subj = e[0];
+        if (typeof(subj)==="string")
+            s(subj, e);
+        else for (var k = 0; k < subj.length; k++)  s(subj[k], e);
+    }
+
+}
+    
 function objTagStrength(x, normalize, noProperties) {
     // objTags(x) -> array of tags involved (except those with strength==0)
     
