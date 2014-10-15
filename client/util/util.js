@@ -80,6 +80,7 @@ function nobject(x, name, initialTags) {
     this.id = id || uuid();
     this.name = name || '';
     this.createdAt = Date.now();
+    this.value = { };
 
     if (initialTags) {
         if (!Array.isArray(initialTags))
@@ -217,7 +218,7 @@ exports.objRemoveTag = objRemoveTag;
 function objAddValue(x, a, b, strength) {
     var v;
     if (b === undefined)
-        b = 1;
+        b = strength || 1;
 
     if (!x.value)
         x.value = {  };
@@ -330,45 +331,6 @@ exports.objIncidentTags = objIncidentTags;
 
 
 
-function objTags(x, includePrimitives) {
-    // objTags(x) -> array of tags involved (except those with strength==0)
-    
-    if (!x.value)
-        return [];
-
-
-    var newValues = [];
-
-    function t(tag) {
-        if (typeof(tag) === "string")
-            newValues.push(tag);
-        else {
-            //array
-            for (var i = 0; i < tag.length; i++)
-                newValues.push(tag[i]);
-        }        
-    }
-    
-    for (var k in x.value) {
-        if (k === 'g') {
-            _.each(x.value.g, function(edge) {
-                t(edge[0]);
-                t(edge[1]);
-                t(edge[2]);
-            });
-        }
-        else {
-            if (!includePrimitives)
-                if (isPrimitive(k))
-                    continue;
-
-            t(k);
-        }        
-    }
-
-    return newValues;
-}
-exports.objTags = objTags;
 
 function objProperties(x) {
     if (!x.value)
@@ -378,56 +340,72 @@ function objProperties(x) {
 exports.objProperties = objProperties;
 
 
-function objTagStrength(x, normalize, noProperties) {
+function objTags(x, includePrimitives) {
     // objTags(x) -> array of tags involved
-    var t = {};
-    if (!x.value)
-        return t;
+    return _.keys(objTagStrength(x, false, false));
+}
+exports.objTags = objTags;
 
-    if (normalize === undefined)
-        normalize = true;
-
-    _.each(objTags(x), function(k) {
-        t[k] = 1.0;
-    });
-    return t;
+function objTagStrength(x, normalize, noProperties) {
+    // objTags(x) -> array of tags involved (except those with strength==0)
     
-//    for (var i = 0; i < x.value.length; i++) {
-//        var vv = x.value[i];
-//        var ii = vv.id;
-//        if (isPrimitive(ii))
-//            continue;
-//
-//        var s = vv.strength || 1.0;
-//
-//        if (noProperties) {
-//            if ($N.property[ii])
-//                continue;
-//        }
-//
-//
-//        if (!t[ii])
-//            t[ii] = s;
-//        else
-//            t[ii] = Math.max(s, t[ii]);
-//
-//    }
-//
-//
-//    if (normalize) {
-//        var total = 0.0;
-//        for (var k in t) {
-//            total += t[k];
-//        }
-//
-//        if (total > 0) {
-//            for (var k in t) {
-//                t[k] /= total;
-//            }
-//        }
-//    }
+    if (!x.value)
+        return [];
+
+
+    var newValues = { };
+
+    function t(tag, strength) {
+        if (strength === 0) return;
+        if (strength === undefined) strength = 1;
+        
+        if (typeof(tag) === "string")
+            newValues[tag] = strength + (newValues[tag] || 0);
+        else {
+            //array
+            for (var i = 0; i < tag.length; i++)
+                newValues[tag[i]] = strength + (newValues[tag[i]] || 0);  
+        }        
+    }
+    
+    for (var k in x.value) {
+        if (k === 'g') {
+            _.each(x.value.g, function(edge) {
+                var strength = edge[3] || 1;
+                t(edge[0], strength);
+                t(edge[1], strength);
+                t(edge[2], strength);
+            });
+        }
+        else {
+            /*if (!includePrimitives)
+                if (isPrimitive(k))
+                    continue;*/
+
+            t(k);
+        }        
+    }
+    
+    //remove object as its own tag
+    delete newValues[x.id];
+    
+    if (normalize) {
+        var total = 0.0;
+        for (var k in t) {
+            total += newValues[k];
+        }
+
+        if (total > 0) {
+            for (var k in t) {
+                newValues[k] /= total;
+            }
+        }
+    }    
+
+    return newValues;
 }
 exports.objTagStrength = objTagStrength;
+
 
 function objTagStrengthRelevance(xx, yy) {
     var xxc = 0, yyc = 0;

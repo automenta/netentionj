@@ -1,299 +1,322 @@
 addView({
-	id: 'us',
-	name: 'Users',
-	icon: 'icon/view.us.svg',
-	start: function(v) {
+    id: 'us',
+    name: 'Users',
+    icon: 'icon/view.us.svg',
+    start: function (v) {
 
-		var panel = newDiv().addClass('User ViewPage panel-default').appendTo(v);
-		var panelHeading = $('<div class="panel-heading"></div>').appendTo(panel);
+        var panel = newDiv().addClass('User ViewPage panel-default').appendTo(v);
+        var panelHeading = $('<div class="panel-heading"></div>').appendTo(panel);
 
-		panelHeading.append('<br/>');
+        panelHeading.append('<br/>');
 
-		var panelContent = newDiv().addClass('panel-body').appendTo(panel);
-		panel.append(panelContent);
+        var panelContent = newDiv().addClass('panel-body').appendTo(panel);
+        panel.append(panelContent);
 
-		var s = self;
-		var plan = getPlan();
+        var s = self;
+        var plan = getPlan();
 
-		var planTimes = _.keys(plan);
+        var planTimes = _.keys(plan);
 
 
 
 
 
-		var centroidTimes = $N.objectsWithTag('GoalCentroid');
-		if (!centroidTimes)
-			centroidTimes = [];
+        var centroidTimes = $N.objectsWithTag('GoalCentroid');
+        if (!centroidTimes)
+            centroidTimes = [];
 
-		var plans = [];
-		var centroids = [];
-		for (var k = 0; k < centroidTimes.length; k++) {
-			centroids.push($N.instance[centroidTimes[k]]);
-		}
+        var plans = [];
+        var centroids = [];
+        for (var k = 0; k < centroidTimes.length; k++) {
+            centroids.push($N.instance[centroidTimes[k]]);
+        }
 
 
-		function updateUsView(currentUser) {
-			panelContent.empty();
-			var panelContentLeft = newDiv().addClass('col-md-6').appendTo(panelContent);
-			var panelContentRight = newDiv().addClass('col-md-6').appendTo(panelContent);
+        function updateUsView(currentUser) {
+            panelContent.empty();
+            var panelContentLeft = newDiv().addClass('col-md-6').appendTo(panelContent);
+            var panelContentRight = newDiv().addClass('col-md-6').appendTo(panelContent);
 
-			var goalList = newDiv();
+            var goalList = newDiv();
 
-			//generate panelHeading
-			panelHeading.empty();
+            //generate panelHeading
+            panelHeading.empty();
 
-			var avatarButton = $('<span/>').appendTo(panelHeading);
-			newAvatarImage(currentUser).appendTo(avatarButton);
+            var avatarButton = $('<span/>').appendTo(panelHeading);
+            newAvatarImage(currentUser).appendTo(avatarButton);
 
-			var userSelect = newAuthorCombo(currentUser);
-			userSelect.change(function(v) {
-				updateUsView(userSelect.val());
-			});
-			panelHeading.append(userSelect);
+            var userSelect = newAuthorCombo(currentUser);
+            userSelect.change(function (v) {
+                updateUsView(userSelect.val());
+            });
+            panelHeading.append(userSelect);
 
 
-			var exportButton = $('<button title="Summarize"><i class="fa fa-trophy"></i> Summarize</button>');
-			exportButton.click(function() {
-				$N.saveAll();
-				newPopupObjectEdit(newSelfSummary(currentUser), true);
-			});
+            var exportButton = $('<button title="Summarize"><i class="fa fa-trophy"></i> Summarize</button>');
+            exportButton.click(function () {
+                $N.saveAll();
+                newPopupObjectEdit(newSelfSummary(currentUser), true);
+            });
 
-			panelHeading.append(exportButton);
+            panelHeading.append(exportButton);
 
 
-			var operators = getOperatorTags();
+            var operators = getOperatorTags();
 
-			var currentUserFilter = function(o) {
-				o = $N.instance[o];
-				if (!o) return false;
+            var currentUserFilter = function (o) {
+                o = $N.instance[o];
+                if (!o)
+                    return false;
 
-				if (o.subject)
-					if (o.subject != currentUser) return false;
+                if (o.subject)
+                    if (o.subject != currentUser)
+                        return false;
 
-				return (o.author == currentUser);
-			};
+                return (o.author == currentUser);
+            };
 
-			function addTheTag(T) {
-				return function() {
-					var d = newPopup('Add ' + T.name, {
-						width: 800,
-						height: 600,
-						modal: true
-					});
-					d.append(newTagger([], function(results) {
-						var property;
-						if ((T.id == 'Do') || (T.id == 'Learn') || (T.id == 'Teach'))
-							property = 'know';
-						else
-							property = _.keys(T.property)[0]; //first property of the tag
+            function addTheTag(T) {
+                return function () {
+                    var d = newPopup('Add ' + T.name, {
+                        width: 800,
+                        height: 600,
+                        modal: true
+                    });
+                    d.append(newTagger([], function (results) {
+                        var property;
+                        if ((T.id == 'Do') || (T.id == 'Learn') || (T.id == 'Teach'))
+                            property = 'know';
+                        else
+                            property = _.keys(T.property)[0]; //first property of the tag
 
-						saveAddedTags(results, T.id, property);
+                        saveAddedTags(results, T.id, property);
 
-						later(function() {
-							d.dialog('close');
-						});
-					}));
-				}
-			}
+                        later(function () {
+                            d.dialog('close');
+                        });
+                    }));
+                };
+            }
 
-			_.each(operators, function(o) {
-				var O = $N.class[o];
+            _.each(operators, function (o) {
+                var O = $N.class[o];
+
+
+                if ($N.getTag('DoLearn') || ((o != 'Do') && (o != 'Learn') && (o != 'Teach'))) {
+                    var sdd = newDiv();
 
 
-				if ($N.getTag('DoLearn') || ((o != 'Do') && (o != 'Learn') && (o != 'Teach'))) {
-					var sdd = newDiv();
-
-
-					//not a 3-vector system
-					var header = newTagButton(O, addTheTag(O)).addClass('goalRowHeading').append('&nbsp;[+]');
-
-					panelContentLeft.append(
-						newBootstrapPanel(header, sdd));
-
-					var nn = _.filter($N.objectsWithTag(O, false, true), currentUserFilter);
-
-					if (nn.length > 0) {
-						var uu = $('<ul></ul>');
-						_.each(nn, function(g) {
-							var G = $N.instance[g];
-							var ss = newObjectView(G, {
-								showAuthorIcon: false,
-								showAuthorName: false,
-								showMetadataLine: false,
-								showActionPopupButton: false,
-								titleClickMode: (G.author == $N.id() ? 'edit' : 'view')
-							}).removeClass('ui-widget-content ui-corner-all').addClass('objectViewBorderless');
-							if (G.name == O.name) {
-								ss.find('h1 a').html('&gt;&gt;');
-								ss.find('h1').replaceTag($('<div style="float: left">'), true);
-								ss.find('ul').replaceTag($('<div style="float: left">'), true);
-								ss.find('li').replaceTag($('<div>'), true);
-							}
-							uu.append(ss);
-						});
-						sdd.append(uu);
-					} else {
-						//header.attr('style', 'font-size: 75%');
-						sdd.append('<br/>');
-					}
-
-				}
-
-			});
-
-			{
-				//3-vector system : sliders
-				var nn = _.filter($N.objectsWithTag(['Do', 'Learn', 'Teach']), currentUserFilter);
-
-				var d = newDiv();
-				panelContentRight.append(newBootstrapPanel(null, d));
-
-				function rangeToTags(x, newValue) {
-					objRemoveTag(x, 'Do');
-					objRemoveTag(x, 'Learn');
-					objRemoveTag(x, 'Teach');
-
-					if (newValue == 0) {
-						objAddTag(x, 'Do');
-					} else if (newValue > 0) {
-						if (newValue < 1.0)
-							objAddTag(x, 'Do', (1.0 - newValue));
-						objAddTag(x, 'Teach', (newValue));
-					} else if (newValue < 0) {
-						if (newValue > -1.0)
-							objAddTag(x, 'Do', (1.0 + newValue));
-						objAddTag(x, 'Learn', (-newValue));
-					}
-					//console.log(x);
-				}
-
-				function newLeftColDiv() {
-					return $('<div style="width: 48%; float: left; clear: both"/>');
-				}
-
-				function newRightColDiv() {
-					return $('<div style="width: 48%; float: right"/>');
-				}
-
-				newLeftColDiv().addClass('goalRowHeading').appendTo(d).append('Know');
-
-				var kb = newDiv();
-				var lButton = $('<button title="Learn">Learn</button>').css('width', '32%').css('float', 'left').appendTo(kb);
-				var dButton = $('<button title="Do">Do</button>').css('float', 'left').css('width', '34%').appendTo(kb);
-				var tButton = $('<button title="Teach">Teach</button>').css('width', '32%').css('float', 'left').appendTo(kb);
-				lButton.css('color', '#aa0000').click(addTheTag($N.getTag('Learn')));
-				dButton.css('color', '#00aa00').click(addTheTag($N.getTag('Do')));
-				tButton.css('color', '#0000aa').click(addTheTag($N.getTag('Teach')));
-
-
-				newRightColDiv().appendTo(d).append(kb);
-
-				_.each(nn, function(x) {
-					var X = $N.instance[x];
-					var lc = newLeftColDiv().appendTo(d);
-					var rc = newRightColDiv().appendTo(d);
-
-					var nameLink = $('<a">' + X.name + '</a>');
-					nameLink.click(function(e) {
-						newPopupObjectView(x, e);
-					});
-					var colorSquare = $('<span>&nbsp;&nbsp;&nbsp;</span>&nbsp;');
-					lc.append(colorSquare, nameLink);
-
-					var slider = $('<input type="range" min="-1" max="1" step="0.05"/>').addClass('SkillSlider');
-
-					if (X.author != $N.id())
-						slider.attr('disabled', 'disabled');
-
-					slider.attr('value', knowTagsToRange(X));
-
-					var SLIDER_CHANGE_MS = 500;
-
-					var updateTags = _.throttle(function() {
-						rangeToTags(X, parseFloat(slider.val()));
-						$N.pub(X);
-					}, SLIDER_CHANGE_MS);
-
-
-					function updateColor() {
-						var sv = parseFloat(slider.val());
-						var cb = hslToRgb(((sv + 1.0) / 2.1 + 0.0) / 1.7, 0.9, 0.7);
-						var bgString = 'rgba(' + parseInt(cb[0]) + ',' + parseInt(cb[1]) + ',' + parseInt(cb[2]) + ',1.0)';
-						colorSquare.css('background-color', bgString);
-					}
-					updateColor();
-
-					slider.change(function() {
-						updateColor();
-						later(function() {
-							updateTags();
-						});
-					});
-					rc.append(slider);
-
-				});
-			}
-
-			var now = true;
-			var goalTime = Date.now();
-
-
-			newGoalList(goalList, currentUser, centroids);
-			panelContentRight.append(
-				newBootstrapPanel('Agenda', goalList));
-
-		}
-
-
-
-		if ($N.myself())
-			updateUsView($N.myself().id);
-		else {
-			var users = $N.objectsWithTag('User');
-			updateUsView(users[0]); //start with first user
-		}
-
-	},
-	stop : function() {
-	}
+                    //not a 3-vector system
+                    var header = newTagButton(O, addTheTag(O)).addClass('goalRowHeading').append('&nbsp;[+]');
+
+                    panelContentLeft.append(
+                            newBootstrapPanel(header, sdd));
+
+                    var nn = _.filter($N.objectsWithTag(O, false, true), currentUserFilter);
+
+                    if (nn.length > 0) {
+                        var uu = $('<ul></ul>');
+                        _.each(nn, function (g) {
+                            var G = $N.instance[g];
+                            var ss = newObjectView(G, {
+                                showAuthorIcon: false,
+                                showAuthorName: false,
+                                showMetadataLine: false,
+                                showActionPopupButton: false,
+                                titleClickMode: (G.author == $N.id() ? 'edit' : 'view')
+                            }).removeClass('ui-widget-content ui-corner-all').addClass('objectViewBorderless');
+                            if (G.name == O.name) {
+                                ss.find('h1 a').html('&gt;&gt;');
+                                ss.find('h1').replaceTag($('<div style="float: left">'), true);
+                                ss.find('ul').replaceTag($('<div style="float: left">'), true);
+                                ss.find('li').replaceTag($('<div>'), true);
+                            }
+                            uu.append(ss);
+                        });
+                        sdd.append(uu);
+                    } else {
+                        //header.attr('style', 'font-size: 75%');
+                        sdd.append('<br/>');
+                    }
+
+                }
+
+            });
+
+            {
+                //3-vector system : sliders
+                var nn = _.filter($N.objectsWithTag(['Do', 'Learn', 'Teach']), currentUserFilter);
+
+                var d = newDiv();
+                panelContentRight.append(newBootstrapPanel(null, d));
+
+                function rangeToTags(x, newValue, object) {
+                    x.value.g = [ ]; //clear existing tags
+                    objAddEdgeRange(x, currentUser, newValue, 'Learn', 'Do', 'Teach', object);
+                }
+
+                function newLeftColDiv() {
+                    return $('<div style="width: 48%; float: left; clear: both"/>');
+                }
+
+                function newRightColDiv() {
+                    return $('<div style="width: 48%; float: right"/>');
+                }
+
+                newLeftColDiv().addClass('goalRowHeading').appendTo(d).append('Know');
+
+                var kb = newDiv();
+                var lButton = $('<button title="Learn">Learn</button>').css('width', '32%').css('float', 'left').appendTo(kb);
+                var dButton = $('<button title="Do">Do</button>').css('float', 'left').css('width', '34%').appendTo(kb);
+                var tButton = $('<button title="Teach">Teach</button>').css('width', '32%').css('float', 'left').appendTo(kb);
+                lButton.css('color', '#aa0000').click(addTheTag($N.getTag('Learn')));
+                dButton.css('color', '#00aa00').click(addTheTag($N.getTag('Do')));
+                tButton.css('color', '#0000aa').click(addTheTag($N.getTag('Teach')));
+
+
+                newRightColDiv().appendTo(d).append(kb);
+
+                _.each(nn, function (x) {
+                    var X = $N.instance[x];
+                    var lc = newLeftColDiv().appendTo(d);
+                    var rc = newRightColDiv().appendTo(d);
+
+                    var nameLink = $('<a">' + X.name + '</a>');
+                    nameLink.click(function (e) {
+                        newPopupObjectView(x, e);
+                    });
+                    var colorSquare = $('<span>&nbsp;&nbsp;&nbsp;</span>&nbsp;');
+                    lc.append(colorSquare, nameLink);
+
+                    var slider = $('<input type="range" min="-1" max="1" step="0.05"/>').addClass('SkillSlider');
+
+                    if (X.author != $N.id())
+                        slider.attr('disabled', 'disabled');
+
+                    slider.attr('value', knowTagsToRange(X));
+
+                    var SLIDER_CHANGE_MS = 500;
+
+                    var updateTags = _.throttle(function () {
+                        rangeToTags(X, parseFloat(slider.val()), x);
+                        $N.pub(X);                        
+                    }, SLIDER_CHANGE_MS);
+
+
+                    function updateColor() {
+                        var sv = parseFloat(slider.val());
+                        var cb = hslToRgb(((sv + 1.0) / 2.1 + 0.0) / 1.7, 0.9, 0.7);
+                        var bgString = 'rgba(' + parseInt(cb[0]) + ',' + parseInt(cb[1]) + ',' + parseInt(cb[2]) + ',1.0)';
+                        colorSquare.css('background-color', bgString);
+                    }
+                    updateColor();
+
+                    slider.change(function () {
+                        updateColor();
+                        later(function () {
+                            updateTags();
+                        });
+                    });
+                    rc.append(slider);
+
+                });
+            }
+
+            var now = true;
+            var goalTime = Date.now();
+
+
+            newGoalList(goalList, currentUser, centroids);
+            panelContentRight.append(
+                    newBootstrapPanel('Agenda', goalList));
+
+        }
+
+
+
+        if ($N.myself())
+            updateUsView($N.myself().id);
+        else {
+            var users = $N.objectsWithTag('User');
+            updateUsView(users[0]); //start with first user
+        }
+
+    },
+    stop: function () {
+    }
 });
-	
+
+
+/**
+ * sets edges to interpolate between a range of predicates (specified by scale variable)
+ * predicates [a, b, c] will be selected according to scale
+ *      -1:  a
+ *           a,b
+ *      0:   b
+ *           b,c
+ *      +1:  c
+ * 
+ */
+function objAddEdgeRange(x, subject, scale, predA, predB, predC, object) {
+    
+    var edges = x.value.g;
+    if (scale === -1) {
+        edges.push( [ subject, predA, object ] );
+    }
+    else if (scale === 0) {
+        edges.push( [ subject, predB, object ] );
+    }
+    else if (scale === 1) {
+        edges.push( [ subject, predC, object ] );
+    }
+    else {
+        if(scale < 0) {
+            edges.push( [ subject, predA, object, -scale  ] );
+            edges.push( [ subject, predB, object, 1.0 - (-scale) ] );
+        }
+        else if (scale < 1) {
+            edges.push( [ subject, predA, object, 1.0 - scale  ] );
+            edges.push( [ subject, predB, object, scale ] );
+        }
+    }    
+}
+
 
 var GOAL_EXPIRATION_INTERVAL = 2 * 60 * 60 * 1000; //2 hours, in MS
 
 function knowTagsToRange(x) {
-	var s = objTagStrength(x, false);
+    var s = objTagStrength(x, false);
 
-	//if (s['DoLearn'])...
+    //if (s['DoLearn'])...
 
-	var DO = s['Do'] || 0;
-	var LEARN = s['Learn'] || 0;
-	var TEACH = s['Teach'] || 0;
+    var DO = s['Do'] || 0;
+    var LEARN = s['Learn'] || 0;
+    var TEACH = s['Teach'] || 0;
 
-	//console.log(LEARN, DO, TEACH);
+    //console.log(LEARN, DO, TEACH);
 
-	if (LEARN && TEACH) {
-		console.log(x + ' has conflicting Learn and Teach strengths');
-		TEACH = null;
-		LEARN = null;
-	}
-	if (LEARN) {
-		var total = LEARN + DO;
-		LEARN /= total;
-		DO /= total;
+    if (LEARN && TEACH) {
+        console.log(x + ' has conflicting Learn and Teach strengths');
+        TEACH = null;
+        LEARN = null;
+    }
+    if (LEARN) {
+        var total = LEARN + DO;
+        LEARN /= total;
+        DO /= total;
 
-		return -1 * LEARN;
-	}
-	else if (TEACH) {
-		var total = TEACH + DO;
-		TEACH /= total;
-		DO /= total;
+        return -1 * LEARN;
+    }
+    else if (TEACH) {
+        var total = TEACH + DO;
+        TEACH /= total;
+        DO /= total;
 
-		return 1 * TEACH;
-	}
-	else {
-		return 0;
-	}
+        return 1 * TEACH;
+    }
+    else {
+        return 0;
+    }
 }
 
 
@@ -321,8 +344,8 @@ function newGoalWidget(g) {
 
 function saveAddedTags(gt, tag, property, when) {
     _.each(gt, function (g) {
-		
-		var T = $N.class[tag];
+
+        var T = $N.class[tag];
         var G = $N.object[g];
         var ng = objNew();
 
@@ -334,26 +357,25 @@ function saveAddedTags(gt, tag, property, when) {
                 objAddValue(ng, 'spacepoint', location);
         }
 
-		var Tname = T.name;
-		if ((T.id == 'Learn') || (T.id == 'Do') || (T.id == 'Teach'))
-			Tname = 'Know';
-		
+        var Tname = T.name;
+        if ((T.id === 'Learn') || (T.id === 'Do') || (T.id === 'Teach'))
+            Tname = 'Know';
+
         ng.own();
-        ng.subject = $N.myself().id;		
-        ng = objName(ng, Tname + ': ' + (G ? G.name : g));
-        ng = objAddTag(ng, tag);
-        ng = objAddValue(ng, property, g);		
-        		
+        var subject = $N.myself().id;
+        ng = objName(ng, Tname + ': ' + (G ? G.name : g));        
+        ng.value.g = [ [ subject, tag, g ] ];
+
         $N.pub(ng, function (err) {
             notify({
                 title: 'Error: Unable to save.',
                 type: 'Error',
-				text: ng.name
+                text: ng.name
             });
         }, function () {
             notify({
                 title: 'Saved',
-				text: ng.name
+                text: ng.name
             });
         });
 
@@ -379,17 +401,18 @@ function newAuthorCombo(currentUser, includeAll) {
     }
 
     var users = $N.getTagged('User');
-	
+
     _.each(users, function (uid) {
         if ($N.myself())
             if (uid == $N.myself().id)
                 return; //skip self
 
         var u = $N.instance[uid];
-		if (!u) return;
-		
-		if (u.author !== u.id)
-			return;
+        if (!u)
+            return;
+
+        if (u.author !== u.id)
+            return;
 
         if (u) {
             var o = $('<option value="' + u.id + '">' + u.name + '</option>').appendTo(userSelect);
@@ -402,7 +425,7 @@ function newAuthorCombo(currentUser, includeAll) {
 
 
 
-	
+
 function getPlan() {
     if (!$N.myself())
         return {};
@@ -418,15 +441,15 @@ function getPlan() {
 
 
 function dloc(l) {
-	return [parseFloat(l[0].toFixed(3)), parseFloat(l[1].toFixed(3))];
+    return [parseFloat(l[0].toFixed(3)), parseFloat(l[1].toFixed(3))];
 }
 
 function isKnowledgeTag(t) {
-	return ['Do', 'DoTeach', 'DoLearn', 'LearnDo', 'TeachDo', 'Teach', 'Learn'].indexOf(t) != -1;
+    return ['Do', 'DoTeach', 'DoLearn', 'LearnDo', 'TeachDo', 'Teach', 'Learn'].indexOf(t) != -1;
 }
 
 function objIsPublic(o) {
-	return (o.scope || configuration.defaultScope) >= ObjScope.Global;
+    return (o.scope || configuration.defaultScope) >= ObjScope.Global;
 }
 function getKnowledgeCode(userid) {
     var tags = getKnowledgeCodeTags(userid);
@@ -436,136 +459,144 @@ function getKnowledgeCode(userid) {
 
 
 function getOperatorTags() {
-    return ['Trust','Can', 'Need', 'Not', 'Value','Learn','Do','Teach'];
+    return ['Trust', 'Can', 'Need', 'Not', 'Value', 'Learn', 'Do', 'Teach'];
 }
 
 function newSelfSummary(userid) {
-	
-	var U = $N.instance[userid];
-	
-	var operatorTags = getOperatorTags();
-	
-	var tags = $N.getIncidentTags(userid, operatorTags);
 
-	for (var k in tags) {
-		var l = tags[k];
-		tags[k] = _.map(tags[k], function(o) {
-			var O = $N.instance[o];
-			var strength = objTagStrength(O, false);
-			var firstNonOperatorTag = null;
-			var allTags = objTags(O, false);
-			for (var m = 0; m < allTags.length; m++) {
-				var s = allTags[m];
-				if (operatorTags.indexOf(s) == -1) {
-					firstNonOperatorTag = s;
-					break;
-				}
-			}
-			return [O.name, strength[k], O];
-		});
-		tags[k] = tags[k].sort(function(a, b) {
-			return b[1] - a[1];
-		});
+    var U = $N.instance[userid];
 
-		/*for (var i = 0; i < l.length; i++) {
-			l[i] = l[i].substring(l[i].indexOf('-')+1, l[i].length);
-		}*/
-	}
+    var operatorTags = getOperatorTags();
 
-	tags['@'] = objSpacePointLatLng(U);
-	tags['name'] = U.name;
+    var tags = $N.getIncidentTags(userid, operatorTags);
 
-	var n = new $N.nobject();
-	n.setName('Summary of ' + U.name );
-	n.addDescription('<pre>'+getUserTextCode(tags, U)+'</pre>');
-	return n;
+    for (var k in tags) {
+        var l = tags[k];
+        tags[k] = _.map(tags[k], function (o) {
+            var O = $N.instance[o];
+            var strength = objTagStrength(O, false);
+            var firstNonOperatorTag = null;
+            var allTags = objTags(O, false);
+            for (var m = 0; m < allTags.length; m++) {
+                var s = allTags[m];
+                if (operatorTags.indexOf(s) == -1) {
+                    firstNonOperatorTag = s;
+                    break;
+                }
+            }
+            return [O.name, strength[k], O];
+        });
+        tags[k] = tags[k].sort(function (a, b) {
+            return b[1] - a[1];
+        });
+
+        /*for (var i = 0; i < l.length; i++) {
+         l[i] = l[i].substring(l[i].indexOf('-')+1, l[i].length);
+         }*/
+    }
+
+    tags['@'] = objSpacePointLatLng(U);
+    tags['name'] = U.name;
+
+    var n = new $N.nobject();
+    n.setName('Summary of ' + U.name);
+    n.addDescription('<pre>' + getUserTextCode(tags, U) + '</pre>');
+    return n;
 }
 
 function getUserTextCode(tags, user) {
-	var s = '';
-	var nameline = user.name + ' (' + user.id + ')';
-	var location = objSpacePointLatLng(user);
-	if (location)
-		nameline += ' @' + JSON.stringify(dloc(location));
+    var s = '';
+    var nameline = user.name + ' (' + user.id + ')';
+    var location = objSpacePointLatLng(user);
+    if (location)
+        nameline += ' @' + JSON.stringify(dloc(location));
 
-	var operatorTags = getOperatorTags();
-	var processed = {};
+    var operatorTags = getOperatorTags();
+    var processed = {};
 
-	function getTitleString(tl) {
-		var name = tl[0];
-		var tagID = tl[3];
-		if (name != tagID)
-			return name + ' [' + tagID + ']';
-		return name;
-	}
+    function getTitleString(tl) {
+        var name = tl[0];
+        var tagID = tl[3];
+        if (name != tagID)
+            return name + ' [' + tagID + ']';
+        return name;
+    }
 
 
-	//Knowledge Tags
-	var header = 'Know                                    L=========D=========T\n';
-	var chartColumn = header.indexOf('L');
-	for (var j = operatorTags.length - 1; j >= 0; j--) {
-	   	var i = operatorTags[j];
-		if (isKnowledgeTag(i)) {
-			if (!tags[i]) continue;
-			for (var y = 0; y < tags[i].length; y++) {				
-				var O = tags[i][y][2];
-				var oid = O.id;
+    //Knowledge Tags
+    var header = 'Know                                    L=========D=========T\n';
+    var chartColumn = header.indexOf('L');
+    for (var j = operatorTags.length - 1; j >= 0; j--) {
+        var i = operatorTags[j];
+        if (isKnowledgeTag(i)) {
+            if (!tags[i])
+                continue;
+            for (var y = 0; y < tags[i].length; y++) {
+                var O = tags[i][y][2];
+                var oid = O.id;
 
-				if (!objIsPublic(O)) continue;
+                if (!objIsPublic(O))
+                    continue;
 
-				if (processed[oid]) continue;
-				processed[oid] = true;
+                if (processed[oid])
+                    continue;
+                processed[oid] = true;
 
-				var vv = tags[i][y][2].value;
-				vv.forEach(function(V) {
-					if (V.value) {
-						var line = V.value;
-						var spacePadding = chartColumn - line.length - 2;
-						for (var n = 0; n < spacePadding; n++)
-							line += ' ';
-						var knowLevel = knowTagsToRange(O);
-						var chartIndex = Math.round(knowLevel * 10);
-						for (var n = -10; n <= 10; n++) {
-							if (n == chartIndex) line += '|';
-							else line += '-';
-						}
+                var vv = tags[i][y][2].value;
+                vv.forEach(function (V) {
+                    if (V.value) {
+                        var line = V.value;
+                        var spacePadding = chartColumn - line.length - 2;
+                        for (var n = 0; n < spacePadding; n++)
+                            line += ' ';
+                        var knowLevel = knowTagsToRange(O);
+                        var chartIndex = Math.round(knowLevel * 10);
+                        for (var n = -10; n <= 10; n++) {
+                            if (n == chartIndex)
+                                line += '|';
+                            else
+                                line += '-';
+                        }
 
-						s += '  ' + line + '\n';
-					}
-				});
-						   
-				
-				
+                        s += '  ' + line + '\n';
+                    }
+                });
 
-			}
-		}
-	}
-	if (s.length > 0) s = header + s;
-	s = nameline + '\n' + s;
 
-	for (var j = 0; j < operatorTags.length; j++) {
-	   	var i = operatorTags[j];
-		if (!isKnowledgeTag(i)) {
-			if (!tags[i]) continue;
-			s += i + '\n';
-			for (var y = 0; y < tags[i].length; y++) {
-				var O = tags[i][y][2];
-				var oid = O.id;
 
-				if (!objIsPublic(O)) continue;
 
-				var vv = tags[i][y][2].value;
-				vv.forEach(function(V) {
-					if (V.value) {
-						var line = V.value;
-						s += '  ' + line + '\n';
-					}
-				});				
-			}
-		}
-	}
+            }
+        }
+    }
+    if (s.length > 0)
+        s = header + s;
+    s = nameline + '\n' + s;
 
-	return s;
+    for (var j = 0; j < operatorTags.length; j++) {
+        var i = operatorTags[j];
+        if (!isKnowledgeTag(i)) {
+            if (!tags[i])
+                continue;
+            s += i + '\n';
+            for (var y = 0; y < tags[i].length; y++) {
+                var O = tags[i][y][2];
+                var oid = O.id;
+
+                if (!objIsPublic(O))
+                    continue;
+
+                var vv = tags[i][y][2].value;
+                vv.forEach(function (V) {
+                    if (V.value) {
+                        var line = V.value;
+                        s += '  ' + line + '\n';
+                    }
+                });
+            }
+        }
+    }
+
+    return s;
 }
 
 
