@@ -525,18 +525,24 @@
 
 
         $N.once('session.start', function() { 
+            
             console.log('Session start for: ', $N.id());
+            var currentSelf = $N.myself();
+            if (currentSelf) {
+                console.log('  ' + $N.myself());
+            }
+            
             
 			
-			//init main menu
-			$('#MainMenu').show();
-			$('#View').show();
+            //init main menu
+            $('#MainMenu').show();
+            $('#View').show();
 			
-        	updateIndent(true);			
+            updateIndent(true);			
             updateBrand(); //TODO use backbone Model instead of global function
             updateViewLock(0);
-			if (configuration.device == configuration.DESKTOP)
-				$('.ViewControl').addClass('pulse');
+            if (configuration.device == configuration.DESKTOP)
+                $('.ViewControl').addClass('pulse');
 			
 			
             $N.saveAll();

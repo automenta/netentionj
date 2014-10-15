@@ -103,8 +103,9 @@ function netention(router) {
             var id = this.id();
             if (id) {
                 var o = this.getObject(id);
-                if (o)
+                if (o) {
                     return new nobject(o);
+                }
             }
             return undefined;
         },
@@ -125,27 +126,28 @@ function netention(router) {
             $N.router = w;
                         
             notify('Identified: ' + target + (previousSelf ? ' (was: ' + previousSelf  + ')' : ''));
+            
+            console.log($N.myself());
 
             $N.indexOntology();
 
-            console.log('getUserObjects()');
             $N.getUserObjects(function() {
+                               
                 $('#NotificationArea').html('Loading my objects...');
-                $N.getAuthorObjects(target, function() {
+                
+                $N.getAuthorObjects(target, function(err, objectsReceived) {
+                    if (!err)
+                        console.log('Received ' + objectsReceived.length + ' objects from server');
+                    else
+                        console.log('Error receiving user objects: ' + err);
+                    
                     $('#NotificationArea').html('Loading new public objects...');
                     $N.getLatestObjects(1000, function() {
                         
-
-                        
-                        
                         Backbone.history.start();
                         
-                        $N.loadAll(function() {                        
-                            if ($N.myself() === undefined) {
-                                $N.trigger('session.start');
-                            } else {                                
-                                $N.trigger('session.start');
-                            }
+                        $N.loadAll(function() {          
+                            $N.trigger('session.start');
                         });
 
                     }, true);
@@ -534,9 +536,6 @@ function netention(router) {
                     }
                 }
 
-                console.log('notice');
-                console.log(y);
-                
                 $N.add(y, undefined, noSave);
 
                 /*function objTagObjectToTag(x) {
@@ -765,7 +764,7 @@ function netention(router) {
         getAuthorObjects: function(userID, onFinished) {
             $.getJSON('/object/author/' + userID + '/json', function(j) {
                 $N.notice(j);
-                onFinished();
+                onFinished(null, j);
             }, function(err) {
                 onFinished(err);
             });            
@@ -1119,9 +1118,6 @@ function newPopup(title, p, isModal, existingDiv) {
     return d;
 }
 
-function isAnonymous() {
-    return (getCookie('authenticated') === 'anonymous');
-}
 
 function getCookie(name) {
     var nameEQ = name + '=';

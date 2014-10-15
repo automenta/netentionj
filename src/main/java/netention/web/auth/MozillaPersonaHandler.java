@@ -78,14 +78,14 @@ public class MozillaPersonaHandler implements Handler<HttpServerRequest> {
 
                     web.startSession(req, email, new Handler<Session>() {
                         @Override public void handle(Session e) {
-                            req.response().end("AUTHENTICATED! " + email);
+                            req.response().end("Mozilla Persona Authentication OK: " + email);
                         }                 
                     });
 
                 } else {
                     /* Authentication with Persona failed */
                     req.response().setStatusCode(403);
-                    req.response().end("Sign in failed: {}" +  personaResponse.getReason());
+                    req.response().end("Mozilla Persona Authentication Fail: {}" +  personaResponse.getReason());
                 }
 
             }

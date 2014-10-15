@@ -42,7 +42,7 @@ public class NClass extends NObject {
     public NClass(String id, String name, String... extend) {
         super(id, name);        
 
-        value(Tag.nclass.toString(), 1.0);        
+        set(Tag.nclass.toString(), 1.0);        
         
         if (extend!=null) {
             for (String e : extend) {
@@ -57,7 +57,7 @@ public class NClass extends NObject {
         if (className.length() == 0) return;
         
         this.extend.add(className.trim());
-        value(className, 1.0);        
+        set(className, 1.0);        
     }
     
     public void mergeFrom(NClass c) {

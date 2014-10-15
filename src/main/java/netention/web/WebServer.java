@@ -463,14 +463,15 @@ public class WebServer  {
         System.out.println(req.remoteAddress() + " new session (" + auth + ")");
         
         if (user.get("selves") == null) {
-            s = new Session(req, auth);                        
+            s = new Session(req, auth);               
+
             System.out.println("New user: " + req.remoteAddress() + " " + auth);
             v.setProperty("createdAt", System.currentTimeMillis());
             v.setProperty("lastLoginAt", System.currentTimeMillis());            
             v.setProperty("selves", s.selves);
             
             for (final String self : s.selves) {
-                NObject u = core.newUser(self);
+                NObject u = core.newUser(self);                
                 //s.addSelfObject(u);
             }
             

@@ -17,10 +17,13 @@
 package netention.possibility;
 
 import com.tinkerpop.blueprints.Vertex;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import netention.web.Bus;
@@ -81,9 +84,9 @@ public class Activity  implements Handler<Message> {
     }
     public static class ObjectCentrality {
         public final String uri;
-        public final Map<String, Integer> context;
-        final double threshold = 0.01;
-        final int iterations = 1600;
+        public final Map<String, Double> context;
+        int maxResults = 32;
+        final int iterations = 256;
 
         public ObjectCentrality(Core core, String uri) {
             this(core, uri, null);
@@ -106,11 +109,11 @@ public class Activity  implements Handler<Message> {
             
             m.remove(v); //exclude own vertex
             
-            Map<String, Integer> c = context;
+            Map<String, Double> c = context;
             
             double total = 0;
             int count = 0;
-            double max = 0;
+            double max = 0;            
             for (Number n : m.values()) {
                 double nv = n.doubleValue();
                 total += nv;
@@ -118,16 +121,28 @@ public class Activity  implements Handler<Message> {
                     max = nv;
                 count++;
             }
+            
             if (max > 0) {
-                for (Map.Entry<Vertex, Number> n : m.entrySet()) {
-                    String u = n.getKey().getProperty("i");
+                int num = 0;
+                List<Vertex> sorted = new ArrayList(m.keySet());
+                Collections.sort(sorted, new Comparator<Vertex>() {                    
+                    @Override public int compare(Vertex a, Vertex b) {
+                        return Double.compare( m.get(b).doubleValue(), m.get(a).doubleValue() );
+                    }
+                });
+                                        
+                for (Vertex k : sorted) {
+                    String u = k.getProperty("i");
  
                     if (u!=null) {
                         if (!excludeProperty.contains(u)) {
-                            double vv = n.getValue().doubleValue();
+                            double vv = m.get(k).doubleValue();
                             double pv = vv/total;
-                            if (pv >= threshold)
-                                c.put(u, (int)(pv*100.0));
+                            c.put(u, (pv*100.0));
+                            if (num++ > maxResults) {
+                                //TODO sort because this will truncate results too early
+                                break;
+                            }
                         }
                     }
                 }
@@ -140,16 +155,11 @@ public class Activity  implements Handler<Message> {
     
     @Override
     public void handle(Message e) {
-        String id = e.body().toString();
-                
-        //TODO avoid calling Core.vertex() twice by passing it as a parameter to both constructors
-       
+        String id = e.body().toString();       
         
         Map<String,Object> x = getActivity(core, id);
         if (x!=null)
             bus.publish(Bus.SAY, Json.encode(x));
-        
-        
     }    
     
     public static Map<String,Object> getActivity(Core core, String id) {

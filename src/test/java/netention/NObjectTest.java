@@ -53,7 +53,7 @@ public class NObjectTest {
         
         assertTrue("Vertex addition", c.vertex(n.id)!=null);
         assertTrue("Author addition", c.vertex(n.author)!=null);
-        assertTrue("Vertex -> Author tag edge", c.vertex(n.author).getEdges(Direction.IN,"tag").iterator().hasNext());
+        //assertTrue("Vertex -> Author tag edge", c.vertex(n.author).getEdges(Direction.IN,"tag").iterator().hasNext());
         assertTrue("Author -> Vertex author edge", c.vertex(n.author).getEdges(Direction.OUT,"author").iterator().hasNext());
         assertTrue("Edge inexistence", !c.vertex(n.author).getEdges(Direction.OUT,"non_existing").iterator().hasNext());                
                 

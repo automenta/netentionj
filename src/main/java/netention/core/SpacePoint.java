@@ -38,7 +38,7 @@ public class SpacePoint implements Serializable {
 //    }
     
     public static SpacePoint get(NObject n) {
-        return (SpacePoint)n.value("@");
+        return (SpacePoint)n.get("@");
     }
     
     public String toString() {

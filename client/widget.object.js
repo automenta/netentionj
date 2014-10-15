@@ -41,9 +41,9 @@ function newPopupObjectView(obj, popupParam, objectViewParam) {
         };
     }
 
-    var v;
     var p = newPopup(x.name, popupParam).append( 
-            v = newObjectView(x, objectViewParam).css('border', 'none') );
+            newObjectView(x, objectViewParam).css('border', 'none') 
+    );
     
 
     return p;
@@ -168,7 +168,7 @@ function newTagButton(t, onClicked, isButton, dom) {
         b = newEle('a', true);
     }
 
-    b.setAttribute('class', 'tagLink');
+    b.setAttribute('class', 'tagLink pulse outline-inward');
     b.style.backgroundImage = 'url(' + ti + ')';
 
     if (t && (t.name||t.id)) {
@@ -1117,180 +1117,6 @@ function newSubjectTagButton(buttonTitle, icon, params) {
             .click(_newSubjectTagButtonClick);
 }
 
-/**
- produces a self-contained widget representing a nobject (x) to a finite depth. activates all necessary renderers to make it presented
- */
-function newObjectView(x, options) {
-    if (!options)
-        options = {};
-    
-    var xid = x.id;
-    var scale = options.scale;
-    var transparent = (options.transparent !== undefined) ? options.transparent : true;
-    var showActionPopupButton = (options.showActionPopupButton !== undefined) ? options.showActionPopupButton : true;
-    var showSelectionCheck = (options.showSelectionCheck !== undefined) ? options.showSelectionCheck : true;
-
-    if (typeof(x) === "string") {
-        x = $N.object[x];
-    }
-
-    //var onRemoved = options.onRemoved;
-    var startMinimized = (options.startMinimized != undefined) ? options.startMinimized : false;
-
-    if (!x) {
-        return newDiv().html('Object Missing');
-    }
-
-    var d = newDiv().attr({
-        'xid': xid,
-        'class': 'objectView'
-    });
-
-    if (!transparent)
-        d.addClass('ui-widget-content ui-corner-all');
-
-    var oStyle = x.style;
-    if (scale !== undefined)
-        d.attr('style', 'font-size:' + ((scale) ? ((0.5 + scale) * 100.0 + '%') : ('100%')) + (oStyle ? '; ' + oStyle : ''));
-
-
-    //check for PDF
-    /*
-    if (objHasTag(x, 'PDF')) {
-        var ee = duid();
-        var cd = $('<canvas/>')
-        cd.attr('id', ee);
-
-        var pdfPage = objFirstValue(x, 'slideNumber');
-        var pdfPath = objFirstValue(x, 'pdfURL');
-        if (pdfPage && pdfPath) {
-
-            PDFJS.getDocument(pdfPath).then(function(pdf) {
-                // Using promise to fetch the page
-                pdf.getPage(pdfPage).then(function(page) {
-                    var viewport = page.getViewport(1.0);
-
-                    //
-                    // Prepare canvas using PDF page dimensions
-                    //
-                    var canvas = document.getElementById(ee);
-                    var context = canvas.getContext('2d');
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-
-                    //
-                    // Render PDF page into canvas context
-                    //
-                    var renderContext = {
-                        canvasContext: context,
-                        viewport: viewport
-                    };
-                    page.render(renderContext);
-                });
-            });
-        } else {
-            cd.prepend('Unable to find PDF source.');
-        }
-    }*/
-
-    var infoLabel = '<img class="TagButtonIcon" src="' + getTagIcon(x) + '"/>';
-    if (options.titleInInfoTab) {
-        infoLabel += x.name;
-    }
-
-    //var infoLabel = '<i title="Info" class="fa fa-bars"></i>';
-
-    function newActionButtons() {
-        
-        //Selection Checkbox
-        var selectioncheck = null;
-        if (showSelectionCheck) {
-            selectioncheck = newEle('input').attr({
-                'type': 'checkbox',
-                'class': 'ObjectSelection'
-            }).click(_refreshActionContext);
-        }
-
-        var buttons = newDiv().attr('class', 'tagButtons ObjectViewButtons').prependTo(d);
-
-        if (showActionPopupButton)
-            _addObjectViewPopupMenu($N.id() === x.author, buttons);
-
-        if (selectioncheck)
-            buttons.prepend(selectioncheck);
-        
-        return buttons;
-    }
-
-    /*
-    <ul class="nav nav-tabs" role="tablist"> <!-- Nav tabs -->
-      <li class="active"><a href="#home" role="tab" data-toggle="tab">Home</a></li>
-      <li><a href="#profile" role="tab" data-toggle="tab">Profile</a></li>
-    </ul>
-    
-    <div class="tab-content"> <!-- Tab panes -->
-      <div class="tab-pane active" id="home">...</div>
-      <div class="tab-pane" id="profile">...</div>
-    </div>
-    */
-    function addTabs() {
-
-        var tabNavs = $('<ul class="nav nav-tabs" role="tablist">').appendTo(d);
-        var tabContent = $('<div class="tab-content">').appendTo(d);
-
-        var _tabid = uuid();        
-        function addTab(label, view, active) {                            
-            var tabid = _tabid + '_' + view.id;
-            
-            var a = $('<a href="#' + tabid + '" role="tab" data-toggle="tab">' + label + '</a>');
-            var t = $('<li></li>').append(a).appendTo(tabNavs);
-            var c = $('<div class="tab-pane" id="' + tabid + '"></div>').appendTo(tabContent);
-            a.data('view', view);
-            a.data('viewTarget', c);
-            /*if (active) {
-                c.addClass('active');
-                t.addClass('active');
-                c.append(view.start(x, options));
-            }*/
-                
-        }
-        if (options.tabs) {
-            _.each(options.tabs, function(tab) {
-                addTab(tab.label, tab.view);
-            });
-        }
-        
-        addTab(infoLabel, objectView.info);
-        addTab('<i title="Chat" class="fa fa-smile-o"></i>', objectView.chat);
-        addTab('<i title="Value" class="fa fa-line-chart"></i>', objectView.value);
-        addTab('<i title="Links" class="fa fa-share-alt"></i>', objectView.links);
-        
-        tabNavs.on('shown.bs.tab', function (e) {
-            var active = e.target; // activated tab
-            //var previous = e.relatedTarget; // previous tab
-            var view = $(active).data('view');
-            $(active).data('viewTarget').html( view.start(x, options) );
-        });
-        
-        later(function() {
-            tabNavs.find('a:first').tab('show');
-        });
-        
-        tabNavs.append(newActionButtons());
-    }
-    
-    
-    if (!startMinimized) 
-        addTabs();    
-    else {
-        d.append(newActionButtons());
-        d.append(objectView.info.start(x, options));
-    }
-        
-    d.id = xid;
-
-    return d;
-}
 
 function addNewObjectDetails(x, d, excludeTags) {
     if (x.value) {

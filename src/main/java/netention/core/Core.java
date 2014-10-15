@@ -460,7 +460,6 @@ public class Core extends EventEmitter {
                 }).iterate();
 
          return map;
-         
          //out(label);
          /*
          m = [:]; c = 0;
@@ -578,8 +577,8 @@ public class Core extends EventEmitter {
      public NObject newUser(String id) {
         NObject n = new NObject(id, "Anonymous");
         n.author = n.id;
-        n.value("User");
-        n.value("Human");        
+        n.set("User");
+        n.set("Human");        
         add(n);
         return n;
     }

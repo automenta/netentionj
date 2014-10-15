@@ -67,7 +67,7 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
             //List va = Core.jsonList(valueJSON);
             for (Object property : va.keySet()) {                            
                 Object pv = va.get(property);
-                n.value((String)property, pv);
+                n.set((String)property, pv);
             }
         }
         
@@ -194,7 +194,7 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
             if (vv instanceof ValueMap) {
                 ValueMap vl = (ValueMap)vv;                
                 for (Object o : vl.keySet()) {
-                    n.value((String)o, vl.get(o));
+                    n.set((String)o, vl.get(o));
                 }
             }
             else {
@@ -352,7 +352,7 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
         subject = id;
     }
 
-    void value(String predicate, Object value) {        
+    void set(final String predicate, final Object value) {        
         if (value==null) {
             tags.remove(predicate);
             return;
@@ -364,15 +364,19 @@ public class NObject /*extends Value*/ implements Serializable, Comparable {
         values.put(predicate, value);
     }
     
-    void edge(String subject, String predicate, Object value) {
-    }
+    /*void edge(String subject, String predicate, Object value) {
+    }*/
     
-    public Object value(String id) {
+    public Object get(String id) {
         return values.get(id);
     }
 
-    public void value(Tag tag) {
-        value(tag.toString(), 1.0);
+    public void set(Tag tag) {
+        set(tag.toString());
+    }
+    
+    public void set(String tag) {
+        set(tag, 1.0);
     }
 
     protected static boolean e(String a, String b) {

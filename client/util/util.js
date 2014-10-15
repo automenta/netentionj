@@ -336,13 +336,34 @@ function objTags(x, includePrimitives) {
     if (!x.value)
         return [];
 
-    var newValues = [];
-    for (var t in x.value) {
-        if (!includePrimitives)
-            if (isPrimitive(t))
-                continue;
 
-        newValues.push(t);
+    var newValues = [];
+
+    function t(tag) {
+        if (typeof(tag) === "string")
+            newValues.push(tag);
+        else {
+            //array
+            for (var i = 0; i < tag.length; i++)
+                newValues.push(tag[i]);
+        }        
+    }
+    
+    for (var k in x.value) {
+        if (k === 'g') {
+            _.each(x.value.g, function(edge) {
+                t(edge[0]);
+                t(edge[1]);
+                t(edge[2]);
+            });
+        }
+        else {
+            if (!includePrimitives)
+                if (isPrimitive(k))
+                    continue;
+
+            t(k);
+        }        
     }
 
     return newValues;
