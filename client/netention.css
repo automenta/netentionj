@@ -230,6 +230,24 @@ select {
 	float: left;
 	width: 32%;
 }
+
+.object_edit_menu {
+    position: absolute;
+    bottom: 0;
+    right: 1.5em;
+}
+
+.object_edit_content {
+    overflow: auto;
+    height: 100%;
+    outline: none;   
+}
+.object_edit_content::first-line {
+    font-size: 150%;
+    font-weight: bold;
+}
+
+
 .valueArea {
 	overflow: auto;
 	width: 63%;
@@ -263,6 +281,7 @@ select {
 }
 .TagButtonIcon {
 	height: 1em;
+        margin-right: 0.3em;
 }
 .tagButtons {
 	font-weight: bold;

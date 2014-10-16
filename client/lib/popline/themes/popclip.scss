@@ -1,0 +1,90 @@
+@mixin rounded-corners($radius) {
+  -webkit-border-radius: $radius;
+  -moz-border-radius: $radius;
+  -ms-border-radius: $radius;
+  -o-border-radius: $radius;
+  border-radius: $radius;
+}
+
+@mixin line-gradient($colors...) {
+  background: -moz-linear-gradient(top, $colors);
+  background: -webkit-linear-gradient(top, $colors);
+  background: -o-linear-gradient(top, $colors);
+  background: -ms-linear-gradient(top, $colors);
+  $start: str-slice(inspect(nth($colors, 1)), 1, 7);
+  $end: str-slice(inspect(nth($colors, length($colors))), 1, 7);
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#{$start}', endColorstr='#{$end}',GradientType=0 );
+  background: linear-gradient(to bottom, $colors);
+}
+
+$font-size: 14px;
+.popline {
+  position: absolute;
+  @include rounded-corners(5px);
+  @include line-gradient(#858585 0%, #3E3E3E 50%, #303030 51%, #303030 100%);
+  opacity: 0.95;
+  border: 1px solid #3B3B3A;
+  display: none;
+  margin: 0;
+  list-style: none;
+  padding: 0px 2px;
+  font-family: Arial, Helvetica, "Hiragino Sans GB", sans-serif;
+  text-rendering: optimizeLegibility;
+  li {
+    color: white;
+    font-size: $font-size;
+    font-weight: bold;
+    float: left;
+    cursor: pointer;
+    text-align: center;
+    @media screen and (-webkit-min-device-pixel-ratio:0) {
+      i { font-weight: bold; }
+    }
+    .popline-text {
+      font-size: $font-size * 1.1;
+      top: -2px;
+      display: inline-block;
+      position: relative;
+    }
+    .fa, .popline-background-fix {
+      -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
+    }
+    a {
+      background: url("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBR‌​AA7") 0 0 repeat\9;
+      outline: none;
+      display: inline-block;
+      padding: 8px;
+      height: 14px;
+      vertical-align: middle;
+      min-width: 14px;
+      &:link, &:hover, &:visited, &:active {
+        color: white;
+        text-decoration: none;
+      }
+    }
+  }
+  .popline-hover {
+    @include line-gradient(#7096F8 0%, #3A6FF3 50%, #2B64F3 51%, #2B64F3 100%);
+  }
+  .popline-boxed {
+    padding: 0;
+  }
+  .popline-lighter {
+    font-weight: lighter;
+  }
+  .popline-subbar {
+    display: none;
+    list-style: none;
+    padding: 0;
+  }
+  .popline-textfield {
+    border: none;
+    padding: 4px;
+    padding: 4px 4px 5px 4px\9;
+    margin-left: 5px;
+    @include rounded-corners(5px);
+    display: none;
+    outline: none;
+    width: 150px;
+  }
+}
