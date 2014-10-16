@@ -383,7 +383,9 @@ function objGraphEdges(x, withEdge) {
 
 }
     
-function objTagStrength(x, normalize, noProperties) {
+        
+function objTagStrength(x, normalize, noProperties, includePrimitive) {
+    //TODO make noProperties -> includeProperties
     // objTags(x) -> array of tags involved (except those with strength==0)
     
     if (!x.value)
@@ -393,6 +395,7 @@ function objTagStrength(x, normalize, noProperties) {
     var newValues = { };
 
     function t(tag, strength) {
+        if (!includePrimitive && isPrimitive(tag)) return;
         if (strength === 0) return;
         if (strength === undefined) strength = 1;
         

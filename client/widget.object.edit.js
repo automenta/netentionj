@@ -13,7 +13,7 @@ function newObjectEdit(target, ix, editable) {
 
 function newObjectEdit2(D, ix, editable) {
     if (typeof ix === 'string')
-        ix = $N.instance[ix];
+        ix = $N.object[ix];
 
 
     var edit = newDiv().addClass('object_edit_content').attr({
@@ -34,15 +34,38 @@ function newObjectEdit2(D, ix, editable) {
         edit.html( ix.name );
     
     
+    function getTitle() {
+        return $(edit[0].firstChild).text().trim();
+    }
     
     function getEditedFocus() {
         if (edit && edit.children() && (edit.children().length > 0) ) {
-            ix.name = $(edit[0].firstChild).text();
+            ix.name = getTitle();;
+            if (!ix.value) ix.value = { };
+            //TODO avoid repeating name in description by comparing common prefix
             ix.value.html = edit.html();
         }
         
         return ix;
     }
+    
+    function insertTag(t) {
+        if (!getTitle()) edit.append('?<br/>');
+        else if (edit.children().length < 2) edit.append('<br/>');
+        
+        var x = newDiv().attr('contenteditable', 'false').css('display', 'inline').append(newTagButton(t));
+        edit.append('&nbsp;', x, '&nbsp;');
+        
+        /*
+         if(document.getSelection){
+            var range = document.getSelection().getRangeAt(0);
+            var nnode = document.createElement("b");
+            range.surroundContents(nnode);
+            nnode.innerHTML = "Some bold text";
+        }
+        */
+    }
+    
 
     /*if ((hideWidgets !== true) && (!x.readonly))*/ {
 
@@ -62,10 +85,11 @@ function newObjectEdit2(D, ix, editable) {
                     if ((T) && (T.reserved)) {
                         notify('Tag "' + T.name + '" can not be added to objects.');
                     } else {
-                        y = objAddTag(y, t[i]);
+                        //y = objAddTag(y, t[i]);
                     }
+                    insertTag(T);
                 }
-                update(y);
+                //update(y);
 
                 if (p && p.dialog)
                     p.dialog('close');

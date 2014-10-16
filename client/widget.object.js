@@ -435,7 +435,7 @@ function _refreshActionContext() {
     return true;
 }
 function _objectViewEdit() {
-    var xid = $(this).parent().parent().attr('xid');
+    var xid = $(this).parent().attr('xid') || $(this).parent().parent().attr('xid') || $(this).parent().parent().parent().attr('xid');
     var x = $N.object[xid];
     var windowParent = $(this).parent().parent().parent().parent();
     if (windowParent.hasClass('ui-dialog-content')) {
