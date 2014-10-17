@@ -289,7 +289,10 @@ exports.objTime = objTime;
 
 function objDescription(x, maxlen) {
     /* concatenates all 'description' tag values */    
-    var c = x.value['html'] || '';
+    if (!x.value.html)
+        return '';
+    
+    var c = x.value.html || '';
 
     c = c.trim();
     if (maxlen) {

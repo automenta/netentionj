@@ -93,6 +93,18 @@ addView({
 
         var defaultIcon = getTagIcon('unknown');
 
+        function translate( _element , _x , _y )  {
+
+            if (_element.transform.baseVal.length === 0) {
+                _element.setAttribute('transform', 'translate(' + _x + ',' + _y + ')');
+            }
+            else {
+                var mat = _element.transform.baseVal.getItem(0).matrix;
+                // [1 0 0 1 tx ty], 
+                mat.a = 1; mat.b = 0; mat.c = 0; mat.d = 1; mat.e = _x; mat.f = _y;
+            }
+        }
+                    
         function addNode(i, name, color, width, height, icon, shape, spacepoint) {
             if (!icon)
                 icon = defaultIcon;
@@ -433,7 +445,7 @@ addView({
             force.stop();
 
             svg.selectAll('.node').remove();
-            svg.selectAll('.edge').remove();
+            svg.selectAll('.edgeGroup').remove();
 
             var nodeTags = {};
 
@@ -791,18 +803,25 @@ addView({
 
                 node = svg.selectAll('.node').data(nodes).enter().append('g').attr('class', 'node');
 
-                var link = svg.selectAll('.edge')
+                var linkGroup = svg.selectAll('.edge')
                         .data(edges)
-                        .enter().append('line')
-                        .attr('class', 'edge')
-                        .attr('marker-end', function (l) {
-                            if (l.style)
-                                if (l.style.undirected)
-                                    return '';
-                            return 'url(#end)';
-                        });
+                        .enter().append('g').attr('class', 'edgeGroup');
 
 
+                var link = linkGroup.append('line')
+                            .attr('class', 'edge')
+                            .attr('marker-end', function (l) {
+                                if (l.style)
+                                    if (l.style.undirected)
+                                        return '';
+                                return 'url(#end)';
+                            });
+                            
+                linkGroup.append('text').each(function(d) { 
+                    d3.select(this).attr({
+                        'text-anchor': 'middle'
+                    }).text(d.style.label || '?');
+                });
 
 
 
@@ -850,8 +869,8 @@ addView({
                     var s = ((l.style) && (l.style.stroke)) ? l.style.stroke : 'black';
                     d3.select(this).attr({
                         'stroke-width': sw,
-                        'stroke': s
-                    });
+                        'stroke': s                        
+                    });                         
                 });
 
                 force.linkDistance(function (d) {
@@ -870,33 +889,64 @@ addView({
                 force.theta(0.5); //default=0.8
 
 
-                force.on('tick', function () {
-                    node.attr('transform', function (d) {
-                        if (timeline) {
-                            if (d.fixedX !== undefined)
-                                d.x = d.fixedX;
-                        }
-                        if (geographic) {
-                            //TODO project
-                            if ((d.lon !== undefined) && (d.lat !== undefined)) {
-                                d.x = d.lon * 35;
-                                d.y = d.lat * -50;
-                            }
-                        }
-                        return 'translate(' + d.x + ',' + d.y + ')';
-                    });
+                var nodeUpdate = function(d) {
+                    if (!d.group) {
+                        d.group = d3.select(this);
+                    }
 
-                    link.each(function (d) {
-                        if (d.link === undefined)
-                            d.link = d3.select(this);
+                    if (timeline) {
+                        if (d.fixedX !== undefined)
+                            d.x = d.fixedX;
+                    }
+                    if (geographic) {
+                        //TODO project
+                        if ((d.lon !== undefined) && (d.lat !== undefined)) {
+                            d.x = d.lon * 35;
+                            d.y = d.lat * -50;
+                        }
+                    }
+
+                    translate(d.group[0][0], d.x, d.y);
+
+                };
+                var linkUpdate = function(d) {
+                    if (d.link === undefined) {
+                        d.link = d3.select(this);
+                        d.label = d3.select(d.link[0][0].parentNode).select('text');
+                    }
+
+                    var dsx = d.source.x;
+                    var dsy = d.source.y;
+                    var dtx = d.target.x;
+                    var dty = d.target.y;
+                    
+                    var cx = (dsx + dtx) / 2.0;
+                    var cy = (dsy + dty) / 2.0;
+
+                    translate(d.label[0][0], cx, cy);                    
+
+                    var le = d.link[0][0];
+                    if (le.x1.baseVal) {
+                        le.x1.baseVal.value = dsx;
+                        le.y1.baseVal.value = dsy;
+                        le.x2.baseVal.value = dtx;
+                        le.y2.baseVal.value = dty;                        
+                    }                    
+                    else {
+                        //le.x1.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PERCENTAGE, 100);
                         d.link.attr({
-                            x1: d.source.x,
-                            y1: d.source.y,
-                            x2: d.target.x,
-                            y2: d.target.y
+                            x1: dsx,
+                            y1: dsy,
+                            x2: dtx,
+                            y2: dty
                         });
-                    });
+                        
+                    }
+                };
 
+                force.on('tick', function () {
+                    node.each(nodeUpdate);
+                    link.each(linkUpdate);
                 });
 
 

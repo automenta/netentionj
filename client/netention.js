@@ -52,15 +52,15 @@ function netention(router) {
         },
         ////DEPRECATED
         objects: function() {
-            return this.instance;
+            return this.object;
         },
         //deprecated
         getObject: function(id) {
-            return this.instance[id];
+            return this.object[id];
         },
         //deprecated
         object: function(id) {
-            return this.instance[id];
+            return this.object[id];
         },
         //deprecated
         getTag: function(t) {
@@ -127,8 +127,6 @@ function netention(router) {
                         
             notify('Identified: ' + target + (previousSelf ? ' (was: ' + previousSelf  + ')' : ''));
             
-            console.log($N.myself());
-
             $N.indexOntology();
 
             $N.getUserObjects(function() {
