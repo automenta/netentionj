@@ -632,20 +632,22 @@ function newMetadataLine(x, showTime) {
         }
     }
 
-    var numIn = $N.dgraph.inEdges(x.id);
-    var numOut = $N.dgraph.outEdges(x.id);
-    if ((numIn.length > 0) || (numOut.length > 0)) {
-        e.push(' ');
-    }
+    if ($N.dgraph.hasNode(x.id)) { 
+        var numIn = $N.dgraph.inEdges(x.id);
+        var numOut = $N.dgraph.outEdges(x.id);
+        if ((numIn.length > 0) || (numOut.length > 0)) {
+            e.push(' ');
+        }
 
-    if (numIn.length > 0) {
-        e.push(newA('&Larr;' + numIn.length, 'In links'));
-    }
+        if (numIn.length > 0) {
+            e.push(newA('&Larr;' + numIn.length, 'In links'));
+        }
 
-    if (numOut.length > 0) {
-        if (numIn.length > 0)
-            e.push('|');
-        e.push(newA(numOut.length + '&Rarr;', 'Out links'));
+        if (numOut.length > 0) {
+            if (numIn.length > 0)
+                e.push('|');
+            e.push(newA(numOut.length + '&Rarr;', 'Out links'));
+        }
     }
 
     mdline.append(e);

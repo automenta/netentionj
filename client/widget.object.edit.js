@@ -21,11 +21,13 @@ function newObjectEdit2(D, ix, editable) {
         'autofocus': true
     }).appendTo(D);
 
-    var menuWrap = newDiv().addClass('nav object_edit_menu').appendTo(D);
-
     edit.popline({position: "relative"});
 
 
+    var menuWrap = newDiv().addClass('nav object_edit_menu').appendTo(D);
+
+    //TODO editable mode of Metadata line for editing tags directly
+    newMetadataLine(ix, false).appendTo(menuWrap);
 
     //load from object into edit area
     if (ix.value && ix.value.html)
