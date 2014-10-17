@@ -465,6 +465,10 @@ addView({
                 }
 
                 function addNodeForObject(x, ots) {
+                    
+                    if (nodeIndex[x.id])                        
+                        return; //already added
+                    
                     var size = defaultNodeSize;
 
                     if (ots) {
@@ -1041,9 +1045,9 @@ addView({
         var edgeMenu = newDiv().addClass('HUDTopRight').appendTo(nd);
         edgeMenu.css('text-align', 'right');
 
-        var defaultEdgeTypes = ['Graph', 'Type'];
+        var defaultEdgeTypes = ['Graph'/*, 'Type'*/];
         
-        var edgeTypes = ['Type', 'Author', 'Object', 'Graph', 'Reply', 'trust', 'value', 'not', 'other'];
+        var edgeTypes = ['Graph', 'Type', 'Author', 'Object', 'Reply', 'trust', 'value', 'not', 'other'];
         
         _.each(edgeTypes, function (e) {
             var includeCheck = $('<input type="checkbox"/>');

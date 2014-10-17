@@ -326,7 +326,7 @@ objectView.info = {
 
 
             if ((showMetadataLine) && (!x._class) && (!x._property)) {
-                var mdl = newMetadataLine(x, showTime).appendTo(d);
+                var mdl = newMetadataLine(x, showTime).data('id', x.id).appendTo(d);
 
                 if (showReplyButton && (x.id !== $N.id())) {
                     mdl.append(

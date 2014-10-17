@@ -494,24 +494,16 @@ var subjectTag = {
 function _newSubjectTagButtonClick() {
     var data = $(this).data();
 
-    var x = $N.instance[$(this).parent().parent().attr('xid')];
+    var x = $N.instance[$(this).parent().data('id')];
     if (!x) return;
-    x = x.id;
+    
 
     var defaultLikesID = $N.id() + data.objSuffix;
     var defaultLikes = $N.instance[defaultLikesID];
 
-    if (!defaultLikes) {
-        defaultLikes = new $N.nobject(defaultLikesID, data.objName, data.objTag);
-        defaultLikes.author = defaultLikes.subject = $N.id();
-		defaultLikes.add(data.objProperty, x);
-    }
-    else {
-        //TODO use getObject if it will return a nobject object
-        defaultLikes = new $N.nobject(defaultLikes); //wrap it
-        defaultLikes.add(data.objProperty, x);
-        defaultLikes.touch();
-    }
+    defaultLikes = new $N.nobject(defaultLikesID, data.objName + ': ' + objName(x), data.objTag);
+    defaultLikes.author = $N.id();
+    defaultLikes.value.g = [ [ $N.id(), data.objTag, x.id ] ];
 
     $N.pub(defaultLikes, null, function(x) {
 		notify({
