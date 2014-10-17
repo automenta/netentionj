@@ -490,10 +490,11 @@
 
             $('#AddContentButton').click(function() {
                 var o = objNew();
-                var focus = $N.focus();
+                /*var focus = $N.focus();
                 if (focus)
-                        if (focus.value)
-                                o.value = focus.value;
+                    if (focus.value)
+                        o.value = focus.value;*/
+               
                 newPopupObjectEdit(o, {width: '50%'});
             });
             $('#SelectProfileButton').click(function() {
@@ -540,11 +541,6 @@
             
             console.log('Session start for: ', $N.id());
             var currentSelf = $N.myself();
-            if (currentSelf) {
-                console.log('  ' + $N.myself());
-            }
-            
-            
 			
             //init main menu
             $('#MainMenu').show();

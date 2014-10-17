@@ -477,8 +477,8 @@ select {
 	opacity: 0.8;
 	word-wrap: break-word;
 	font-weight: normal;
-	clear: both;
-	padding-top: 2px;
+	clear: both;	
+        float: right;
 }
 .MetadataLine a,
 .MetadataLine button {
@@ -488,13 +488,7 @@ select {
 	font-size: 100%;
 	float: inherit !important;
 }
-.MetadataLine img {
-	height: 1em;
-}
-/*
-.MetadataLine img:hover {
-    height: 2em;
-}*/
+
 
 #FocusTypes img {
 	height: 1em;

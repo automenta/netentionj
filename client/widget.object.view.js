@@ -319,6 +319,10 @@ objectView.info = {
             if (replies)
                 replies.detach();
 
+            var desc = objDescription(x);
+            if (desc)
+                d.append(newDiv().html(desc));
+            
 
 
             if ((showMetadataLine) && (!x._class) && (!x._property)) {

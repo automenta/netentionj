@@ -32,8 +32,8 @@ function newObjectEdit2(D, ix, editable) {
         edit.html( ix.value.html);
     else if (ix.name)
         edit.html( ix.name );
-    
-    
+
+        
     function getTitle() {
         return $(edit[0].firstChild).text().trim();
     }
