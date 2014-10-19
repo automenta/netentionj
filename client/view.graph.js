@@ -465,6 +465,7 @@ addView({
                 }
 
                 function addNodeForObject(x, ots) {
+                    if (!x) return; //why?
                     
                     if (nodeIndex[x.id])                        
                         return; //already added
