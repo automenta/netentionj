@@ -241,6 +241,7 @@ select {
     overflow: auto;
     height: 100%;
     outline: none;   
+    margin-bottom: 2em;
 }
 .object_edit_content::first-line {
     font-size: 150%;

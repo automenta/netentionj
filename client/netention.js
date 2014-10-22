@@ -1042,9 +1042,11 @@ function newPopup(title, p, isModal, existingDiv) {
 
     d.attr('title', title);
 
+    var clientHeight = $(document).height();
+
     $('body').append(d);
-    if (p === true) {
-        var clientHeight = $(document).height();
+    if (p === true) {   
+        //fullscreen size
         var clientWidth = $(document).width();
         var margin = 24;
         var leftMargin = 64;
@@ -1059,6 +1061,9 @@ function newPopup(title, p, isModal, existingDiv) {
             //position: [leftMargin, margin]
             position: {my: 'center', at: 'center', of: window}
         };
+    }
+    else {
+        //floating dialog
     }
 
 

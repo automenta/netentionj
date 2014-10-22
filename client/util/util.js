@@ -365,14 +365,14 @@ function objGraphEdges(x, withEdge) {
         var obj = e[2];
         if (typeof(obj)==="string")
             o(s, p, obj, e);
-        else for (var k = 0; k < obj.length; k++)  o(s, p, obj[k], e);
+        else  if (Array.isArray(obj)) for (var k = 0; k < obj.length; k++)  o(s, p, obj[k], e);
     }
     
     function s(s, e) {
         var pred = e[1];
         if (typeof(pred)==="string")
             p(s, pred, e);
-        else for (var k = 0; k < pred.length; k++)  p(s, pred[k], e);        
+        else if (Array.isArray(pred)) for (var k = 0; k < pred.length; k++)  p(s, pred[k], e);        
     }
     
     var edges = x.value.g;    
@@ -381,7 +381,7 @@ function objGraphEdges(x, withEdge) {
         var subj = e[0];
         if (typeof(subj)==="string")
             s(subj, e);
-        else for (var k = 0; k < subj.length; k++)  s(subj[k], e);
+        else  if (Array.isArray(subj)) for (var k = 0; k < subj.length; k++)  s(subj[k], e);
     }
 
 }
@@ -400,6 +400,8 @@ function objTagStrength(x, normalize, noProperties, includePrimitive) {
     var newValues = { };
 
     function t(tag, strength) {
+        if (!tag) return;
+        
         if (!includePrimitive && isPrimitive(tag)) return;
         if (strength === 0) return;
         if (strength === undefined) strength = 1;
@@ -408,8 +410,9 @@ function objTagStrength(x, normalize, noProperties, includePrimitive) {
             newValues[tag] = strength + (newValues[tag] || 0);
         else {
             //array
-            for (var i = 0; i < tag.length; i++)
-                newValues[tag[i]] = strength + (newValues[tag[i]] || 0);  
+            if (tag.length)
+                for (var i = 0; i < tag.length; i++)
+                    newValues[tag[i]] = strength + (newValues[tag[i]] || 0);  
         }        
     }
     
@@ -1252,15 +1255,17 @@ var Ontology = function (db, tagInclude, target) {
 
             //this object's replies to other object
             if (x.replyTo) {
-                that.reply[x.id] = x;
-                for (var i = 0; i < x.replyTo.length; i++) {
-                    var t = x.replyTo[i];
-                    var T = that.instance[t];
-                    if (T) {
-                        T.reply[x.id] = x;
-                    }
-                    else {
-                        //console.error(x, 'orphan reply object to', t);
+                if (that.reply) {
+                    that.reply[x.id] = x;
+                    for (var i = 0; i < x.replyTo.length; i++) {
+                        var t = x.replyTo[i];
+                        var T = that.instance[t];
+                        if (T) {
+                            T.reply[x.id] = x;
+                        }
+                        else {
+                            //console.error(x, 'orphan reply object to', t);
+                        }
                     }
                 }
             }
