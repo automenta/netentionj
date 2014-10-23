@@ -1976,6 +1976,8 @@ div.olControlZoom {
 	font-size: 75%;
 	opacity: 0.85;
 	max-width: 40%;
+        overflow: scroll;
+        max-height: 95%;
 }
 .HUDTopLeft {
 	left: 8px;
